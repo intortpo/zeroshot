@@ -200,7 +200,11 @@ fn validate_revision(value: &str) -> Result<(), NativeV2RunValueError> {
 }
 
 fn validate_model(value: &str) -> Result<(), NativeV2RunValueError> {
-    validate_non_control_bytes(value, 128, "model ID must be 1..=128 non-control bytes")
+    validate_non_control_text(
+        value,
+        2_048,
+        "model ID must be 1..=2048 non-control characters",
+    )
 }
 
 fn validate_environment_name(value: &str) -> Result<(), NativeV2RunValueError> {
@@ -304,7 +308,7 @@ native_v2_string_kind!(
     ModelIdKind,
     ModelId,
     validate_model,
-    json_schema!({ "type": "string", "minLength": 1, "maxLength": 128 })
+    json_schema!({ "type": "string", "minLength": 1, "maxLength": 2048 })
 );
 native_v2_string_kind!(
     EnvironmentVariableNameKind,
@@ -367,6 +371,7 @@ pub enum CodexProvider {
     OpenAi,
     #[serde(rename = "openrouter")]
     OpenRouter,
+    Bedrock,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, JsonSchema, PartialEq, Serialize)]
@@ -375,6 +380,7 @@ pub enum ClaudeProvider {
     Anthropic,
     #[serde(rename = "openrouter")]
     OpenRouter,
+    Bedrock,
 }
 
 #[derive(
@@ -423,6 +429,22 @@ mod tests {
     use openengine_cluster_testkit::assertions::AssertValue;
 
     use super::*;
+
+    #[test]
+    fn model_ids_allow_bedrock_application_inference_profile_arns() {
+        let profile = format!(
+            "arn:aws:bedrock:us-east-1:123456789012:application-inference-profile/{}",
+            "profile".repeat(20)
+        );
+        assert!(profile.len() > 128);
+        assert!(ModelId::new(profile).is_ok());
+    }
+
+    #[test]
+    fn model_id_length_matches_json_schema_character_semantics() {
+        assert!(ModelId::new("é".repeat(2_048)).is_ok());
+        assert!(ModelId::new("é".repeat(2_049)).is_err());
+    }
 
     #[test]
     fn node_connections_reject_ambiguous_or_empty_shapes() {
