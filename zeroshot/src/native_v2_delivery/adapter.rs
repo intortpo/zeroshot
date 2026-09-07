@@ -3,6 +3,7 @@ use super::*;
 mod head;
 mod input;
 mod review;
+mod sync;
 use input::source_issue;
 use review::{crash_outcome, review_completion, ReviewProgress, ReviewStep};
 
@@ -83,7 +84,7 @@ impl NodeDriver for NativeV2DeliveryAdapter {
         invocation: DriverInvocation,
         mut control: DriverControl,
     ) -> Result<WorkerOutcome, NodeRunnerError> {
-        let (session, credentials, mode) = match self.authorize(&invocation) {
+        let (session, mut credentials, mode) = match self.authorize(&invocation) {
             Ok(authority) => authority,
             Err(stop) => return stop.result(),
         };
@@ -94,7 +95,7 @@ impl NodeDriver for NativeV2DeliveryAdapter {
             .prepare_review(DeliveryPreparation {
                 invocation: &invocation,
                 session,
-                credential: credentials.current(),
+                credentials: &mut credentials,
                 control: &control,
             })
             .await
@@ -118,10 +119,10 @@ enum DeliveryStop {
     Outcome(WorkerOutcome),
 }
 
-struct DeliveryPreparation<'a> {
+struct DeliveryPreparation<'a, 'environment> {
     invocation: &'a DriverInvocation,
     session: &'a DeliverySession,
-    credential: GitHubCredential<'a>,
+    credentials: &'a mut DeliveryCredentials<'environment>,
     control: &'a DriverControl,
 }
 
@@ -156,6 +157,10 @@ struct DeliveryCredentials<'a> {
 impl<'a> DeliveryCredentials<'a> {
     fn current(&self) -> GitHubCredential<'_> {
         GitHubCredential(&self.token)
+    }
+
+    fn can_refresh(&self) -> bool {
+        self.environment.is_some()
     }
 
     async fn refresh(&mut self) -> Result<(), DeliveryStop> {
@@ -207,7 +212,7 @@ impl NativeV2DeliveryAdapter {
 
     async fn prepare_review(
         &self,
-        preparation: DeliveryPreparation<'_>,
+        preparation: DeliveryPreparation<'_, '_>,
     ) -> Result<GitHubReviewReceipt, DeliveryStop> {
         let source_issue = source_issue(&preparation.invocation.node.input)?;
         let head_revision = self
@@ -221,7 +226,11 @@ impl NativeV2DeliveryAdapter {
         };
         self.push_review_head(&preparation, &review_request).await?;
         let review = self
-            .synchronize_review(&review_request, preparation.credential, preparation.control)
+            .synchronize_review(
+                &review_request,
+                preparation.credentials,
+                preparation.control,
+            )
             .await?;
         if !valid_review(&review_request, &review) {
             return Err(DeliveryStop::Outcome(WorkerOutcome::malformed()));
@@ -232,29 +241,6 @@ impl NativeV2DeliveryAdapter {
         )
         .await?;
         Ok(review)
-    }
-
-    async fn synchronize_review(
-        &self,
-        request: &GitHubReviewRequest,
-        credential: GitHubCredential<'_>,
-        control: &DriverControl,
-    ) -> Result<GitHubReviewReceipt, DeliveryStop> {
-        for attempt in 0..REVIEW_SYNC_ATTEMPTS {
-            match self
-                .authority
-                .open_or_update_review(request, credential)
-                .await
-            {
-                Ok(review) => return Ok(review),
-                Err(_) if attempt + 1 < REVIEW_SYNC_ATTEMPTS => {
-                    emit(control, "delivery: waiting for pushed review head").await?;
-                    tokio::time::sleep(REVIEW_SYNC_INTERVAL).await;
-                }
-                Err(_) => return Err(crash_outcome()),
-            }
-        }
-        Err(crash_outcome())
     }
 
     async fn prepare_head(
@@ -284,7 +270,7 @@ impl NativeV2DeliveryAdapter {
 
     async fn push_review_head(
         &self,
-        preparation: &DeliveryPreparation<'_>,
+        preparation: &DeliveryPreparation<'_, '_>,
         review: &GitHubReviewRequest,
     ) -> Result<(), DeliveryStop> {
         let push = GitHubPushRequest {
@@ -295,7 +281,7 @@ impl NativeV2DeliveryAdapter {
         };
         emit(preparation.control, "delivery: pushing run branch").await?;
         self.authority
-            .push_branch(&push, preparation.credential)
+            .push_branch(&push, preparation.credentials.current())
             .await
             .map_err(|_| crash_outcome())?;
         Ok(())

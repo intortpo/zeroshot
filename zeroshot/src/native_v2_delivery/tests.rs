@@ -37,6 +37,8 @@ use crate::v2_run_ledger::{CreateRun, RunLedger};
 mod github_fixture;
 #[path = "tests/head_update.rs"]
 mod head_update;
+#[path = "tests/review_sync.rs"]
+mod review_sync;
 #[path = "tests/routing.rs"]
 mod routing;
 
@@ -170,17 +172,6 @@ async fn repeated_merge_deferral_is_not_misclassified_as_policy_refusal() {
 }
 
 #[tokio::test]
-async fn pushed_review_head_is_retried_during_github_visibility_lag() {
-    let repo = TempRepo::delivery();
-    let authority = Arc::new(FakeGitHub::new(repo.remote.clone(), Script::ReviewSyncRace));
-
-    let outcome = run_delivery(&repo, authority.clone(), 3, DeliveryMode::Merge).await;
-
-    assert_delivery_signal(&outcome, DELIVERY_MERGED_LABEL);
-    assert_eq!(authority.review_sync_attempts.load(Ordering::SeqCst), 2);
-}
-
-#[tokio::test]
 async fn accepted_merge_request_is_reasserted_until_authoritative_success() {
     let repo = TempRepo::delivery();
     let authority = Arc::new(FakeGitHub::new(
@@ -197,6 +188,16 @@ async fn accepted_merge_request_is_reasserted_until_authoritative_success() {
 
 struct RefreshedDeliveryEnvironment {
     binding: NodeRuntimeBinding,
+}
+
+async fn delivery_runtime_binding(repo: &TempRepo, mode: DeliveryMode) -> NodeRuntimeBinding {
+    let admitted = admitted(repo, mode).await;
+    admitted
+        .runtime
+        .nodes()
+        .get(&NodeName::new("deliver").assert_value())
+        .assert_value()
+        .clone()
 }
 
 #[async_trait]
@@ -222,13 +223,7 @@ async fn delivery_refreshes_an_expired_dynamic_github_credential() {
         repo.remote.clone(),
         Script::CredentialExpires,
     ));
-    let admitted = admitted(&repo, DeliveryMode::Merge).await;
-    let binding = admitted
-        .runtime
-        .nodes()
-        .get(&NodeName::new("deliver").assert_value())
-        .assert_value()
-        .clone();
+    let binding = delivery_runtime_binding(&repo, DeliveryMode::Merge).await;
     let outcome = run_delivery_with_id(
         DeliveryRunRequest {
             repo: &repo,
