@@ -1,17 +1,13 @@
 import React from 'react';
 import {
-  Wifi,
-  Activity,
   Minus,
   X,
-  FolderGit2,
   ChevronDown,
   Kanban,
   Sparkles,
   Brain,
   BarChart3,
   Terminal,
-  User,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile } from '../types';
 
@@ -45,68 +41,60 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   return (
     <header
       data-tauri-drag-region
-      className="bg-white/60 backdrop-blur-2xl border-b border-stone-200/60 px-5 sm:px-8 py-3.5 flex items-center justify-between text-sm text-stone-600 select-none z-30 font-sans"
+      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-6 sm:px-10 py-3.5 flex items-center justify-between text-sm select-none z-30 font-sans"
     >
-      {/* Left: Logo, User Switcher, Workspace Switcher */}
+      {/* Left: Brand, Breadcrumbs, User & Workspace (Flat, No Rounded Boxes) */}
       <div className="flex items-center space-x-4">
-        {/* Brand / Logo */}
-        <div className="flex items-center space-x-2.5 font-medium tracking-wide">
+        {/* Brand */}
+        <div className="flex items-center space-x-2.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
-          <span className="text-base font-mono font-bold tracking-tight text-stone-900">
+          <span className="text-lg font-mono font-bold tracking-tight text-stone-900">
             Petri
-          </span>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4] font-semibold">
-            ENTERPRISE
           </span>
         </div>
 
-        {/* User Identity Switcher */}
+        <span className="text-stone-300 font-light">/</span>
+
+        {/* User Identity (Flat Link, No Box) */}
         <button
           onClick={onOpenUserModal}
-          className="flex items-center space-x-2 bg-stone-100/70 hover:bg-stone-200/70 border border-stone-200/80 px-3 py-1.5 rounded-xl transition-all text-stone-800 group"
+          className="flex items-center space-x-1.5 text-stone-700 hover:text-stone-950 transition-colors font-mono text-xs font-semibold py-1 group"
           title="Switch User & Identity"
         >
-          <User className="w-4 h-4 text-stone-500 group-hover:text-stone-800 transition-colors" />
-          <span className="font-mono text-xs font-semibold text-stone-900">
-            {activeUser?.name.split(' ')[0] || 'User'}
-          </span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white text-stone-600 border border-stone-200/80">
-            {activeUser?.role.replace('_', ' ') || 'owner'}
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
+          <span>{activeUser?.name.split(' ')[0] || 'User'}</span>
+          <span className="text-stone-400 font-normal">({activeUser?.role.replace('_', ' ') || 'owner'})</span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
         </button>
 
-        {/* Workspace Switcher Trigger */}
+        <span className="text-stone-300 font-light">/</span>
+
+        {/* Workspace Switcher (Flat Link, No Box) */}
         <button
           onClick={onOpenWorkspaceModal}
-          className="hidden sm:flex items-center space-x-2 bg-stone-100/50 hover:bg-stone-200/60 border border-stone-200/80 px-3 py-1.5 rounded-xl transition-all text-stone-700 group"
+          className="hidden sm:flex items-center space-x-1.5 text-stone-700 hover:text-stone-950 transition-colors font-mono text-xs font-medium py-1 group"
           title="Switch active workspace"
         >
-          <FolderGit2 className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors" />
-          <span className="font-mono text-xs font-medium text-stone-700">
-            {activeWorkspace?.name || 'Workspace'}
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
+          <span className="font-semibold text-stone-900">{activeWorkspace?.name || 'zero-petri'}</span>
+          <span className="text-stone-400">@main</span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
         </button>
 
-        {/* Local Node Tag */}
-        <div className="hidden lg:flex items-center space-x-2 bg-stone-100/50 border border-stone-200/80 px-3 py-1.5 rounded-xl">
-          <span className="text-stone-400 text-xs font-mono">HOST:</span>
-          <span className="text-stone-800 font-mono text-xs font-medium">{localNode.deviceName}</span>
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-white text-stone-600 border border-stone-200">
-            {localNode.role}
-          </span>
+        {/* Host Spec (Subtle Text, No Box) */}
+        <div className="hidden xl:flex items-center space-x-2 text-stone-400 text-xs font-mono pl-2">
+          <span>·</span>
+          <span>{localNode.deviceName}</span>
+          <span>(po)</span>
         </div>
       </div>
 
-      {/* Center: Main Enterprise View Navigation */}
-      <div className="flex items-center space-x-1 bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/80">
+      {/* Center: Main Enterprise View Navigation (Flat Tabs, No Rounded Box Container) */}
+      <nav className="flex items-center space-x-6 sm:space-x-8">
         <button
           onClick={() => onSelectView('board')}
-          className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-medium transition-all ${
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'board'
-              ? 'bg-white text-[#0A7B76] font-semibold border border-[#B4E8E4]'
-              : 'text-stone-500 hover:text-stone-900'
+              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
           <Kanban className="w-4 h-4 text-[#0ABAB5]" />
@@ -115,10 +103,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('skills')}
-          className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-medium transition-all ${
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'skills'
-              ? 'bg-white text-[#0A7B76] font-semibold border border-[#B4E8E4]'
-              : 'text-stone-500 hover:text-stone-900'
+              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
           <Sparkles className="w-4 h-4 text-[#0ABAB5]" />
@@ -127,10 +115,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('memory')}
-          className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-medium transition-all ${
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'memory'
-              ? 'bg-white text-[#0A7B76] font-semibold border border-[#B4E8E4]'
-              : 'text-stone-500 hover:text-stone-900'
+              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
           <Brain className="w-4 h-4 text-[#0ABAB5]" />
@@ -139,10 +127,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('stats')}
-          className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-medium transition-all ${
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'stats'
-              ? 'bg-white text-[#0A7B76] font-semibold border border-[#B4E8E4]'
-              : 'text-stone-500 hover:text-stone-900'
+              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
           <BarChart3 className="w-4 h-4 text-[#0ABAB5]" />
@@ -151,23 +139,23 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('tui')}
-          className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-medium transition-all ${
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'tui'
-              ? 'bg-stone-900 text-white font-semibold border border-stone-900'
-              : 'text-stone-500 hover:text-stone-900'
+              ? 'border-stone-900 text-stone-950 font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
           <Terminal className="w-4 h-4" />
           <span>TUI</span>
         </button>
-      </div>
+      </nav>
 
-      {/* Right Controls */}
-      <div className="flex items-center space-x-3">
+      {/* Right Controls: Flat Indicators & Actions (No Rounded Boxes) */}
+      <div className="flex items-center space-x-5 text-xs font-mono">
         {/* Google Workspace DWD Trigger */}
         <button
           onClick={onOpenDwdModal}
-          className="flex items-center space-x-2 bg-stone-100/70 hover:bg-stone-200/70 border border-stone-200/80 px-3 py-1.5 rounded-xl transition-colors font-mono text-xs"
+          className="flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-medium"
           title="Google Workspace Domain-Wide Delegation (.json)"
         >
           <span
@@ -175,34 +163,33 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               isDwdConfigured ? 'bg-emerald-500' : 'bg-stone-400'
             }`}
           />
-          <span className="text-stone-700 font-medium">Google DWD</span>
+          <span>Google DWD</span>
         </button>
 
-        <div className="hidden md:flex items-center space-x-2 bg-stone-100/70 border border-stone-200/80 px-3 py-1.5 rounded-xl text-xs font-mono">
-          <Wifi className="w-3.5 h-3.5 text-stone-400" />
-          <span className="text-stone-400">Peers:</span>
+        {/* Peers Count */}
+        <div className="hidden md:flex items-center space-x-1.5 text-stone-500">
+          <span>Peers:</span>
           <span className="text-stone-800 font-semibold">{peers.length}</span>
         </div>
 
-        {/* Active Runs */}
-        <div className="flex items-center space-x-2 bg-stone-100/70 border border-stone-200/80 px-3 py-1.5 rounded-xl text-xs font-mono">
-          <Activity className="w-3.5 h-3.5 text-[#0ABAB5]" />
-          <span className="text-stone-400">Jobs:</span>
+        {/* Active Jobs */}
+        <div className="flex items-center space-x-1.5 text-stone-500">
+          <span>Jobs:</span>
           <span className="text-stone-800 font-semibold">{activeRunsCount}</span>
         </div>
 
-        {/* Minimal Frameless Window Controls */}
-        <div className="hidden sm:flex items-center space-x-1 pl-2 border-l border-stone-200/80">
+        {/* Frameless Window Controls */}
+        <div className="hidden sm:flex items-center space-x-1 pl-3 border-l border-stone-200">
           <button
             onClick={() => {
               if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 import('@tauri-apps/api/window').then(({ getCurrentWindow }) => getCurrentWindow().minimize());
               }
             }}
-            className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
+            className="p-1 text-stone-400 hover:text-stone-700 transition-colors"
             title="Minimize"
           >
-            <Minus className="w-3.5 h-3.5" />
+            <Minus className="w-4 h-4" />
           </button>
           <button
             onClick={() => {
@@ -210,10 +197,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                 import('@tauri-apps/api/window').then(({ getCurrentWindow }) => getCurrentWindow().close());
               }
             }}
-            className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+            className="p-1 text-stone-400 hover:text-rose-600 transition-colors"
             title="Close"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
