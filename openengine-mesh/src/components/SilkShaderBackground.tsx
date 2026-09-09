@@ -105,14 +105,14 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
         silk2 = pow(silk2, 2.0);
         float silk = mix(silk1, silk2, 0.5);
 
-        // Base soft porcelain alabaster background
-        vec3 lightBg = vec3(0.960, 0.972, 0.970);
+        // Base pure warm white / alabaster
+        vec3 lightBg = vec3(0.988, 0.988, 0.990);
 
-        // Soft Tiffany pastel silk ribbons
-        vec3 silkColor = mix(u_color_primary, u_color_secondary, f * 0.75 + silk * 0.25);
+        // Subtle pearlescent white silk ribbons
+        vec3 silkColor = mix(u_color_primary, u_color_secondary, f * 0.7 + silk * 0.3);
         
-        // Visible, graceful flowing silk opacity under frosted glass
-        float alpha = clamp(silk * 0.38 + f * 0.22, 0.0, 0.60);
+        // Subtle, elegant flowing silk opacity
+        float alpha = clamp(silk * 0.28 + f * 0.16, 0.0, 0.45);
 
         vec3 finalColor = mix(lightBg, silkColor, alpha);
 
@@ -181,32 +181,32 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
       gl.uniform1f(uTime, elapsed);
       gl.uniform2f(uResolution, width, height);
 
-      // Soft Tiffany pastel palette: robin's egg blue (#81D8D0) & pastel seafoam mint
-      let primary = [0.51, 0.85, 0.82]; // Tiffany pastel (#81D8D0)
-      let secondary = [0.73, 0.93, 0.91]; // Pastel seafoam (#BAECE8)
-      let activity = 0.15;
+      // Subtle monochromatic white & silver silk palette (no green)
+      let primary = [0.91, 0.92, 0.94]; // Pearl silver white
+      let secondary = [0.96, 0.96, 0.98]; // Luminous ivory white
+      let activity = 0.12;
 
       switch (workflowStatus) {
         case 'running':
-          primary = [0.44, 0.82, 0.79]; // Active vibrant Tiffany pastel
-          secondary = [0.65, 0.91, 0.88];
-          activity = 0.35;
+          primary = [0.89, 0.91, 0.93]; // Deep pearl fold
+          secondary = [0.95, 0.96, 0.97];
+          activity = 0.22;
           break;
         case 'gated':
-          primary = [0.93, 0.86, 0.74]; // Soft pastel champagne cream
-          secondary = [0.55, 0.84, 0.81];
-          activity = 0.22;
+          primary = [0.93, 0.92, 0.90]; // Warm parchment pearl
+          secondary = [0.97, 0.96, 0.95];
+          activity = 0.15;
           break;
         case 'passed':
         case 'delivered':
-          primary = [0.42, 0.82, 0.78]; // Pure jewel Tiffany
-          secondary = [0.78, 0.95, 0.93];
-          activity = 0.18;
+          primary = [0.92, 0.93, 0.94];
+          secondary = [0.97, 0.98, 0.99];
+          activity = 0.14;
           break;
         case 'failed':
-          primary = [0.94, 0.78, 0.80]; // Soft pastel blush rose
-          secondary = [0.75, 0.88, 0.86];
-          activity = 0.25;
+          primary = [0.94, 0.91, 0.91]; // Faint rose pearl
+          secondary = [0.97, 0.95, 0.95];
+          activity = 0.18;
           break;
       }
 

@@ -47,7 +47,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       <div className="flex items-center space-x-4">
         {/* Brand */}
         <div className="flex items-center space-x-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-stone-900" />
           <span className="text-lg font-mono font-bold tracking-tight text-stone-900">
             Petri
           </span>
@@ -93,11 +93,11 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           onClick={() => onSelectView('board')}
           className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'board'
-              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              ? 'border-stone-900 text-stone-950 font-bold'
               : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
-          <Kanban className="w-4 h-4 text-[#0ABAB5]" />
+          <Kanban className={`w-4 h-4 ${currentView === 'board' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Board</span>
         </button>
 
@@ -105,11 +105,11 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           onClick={() => onSelectView('skills')}
           className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'skills'
-              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              ? 'border-stone-900 text-stone-950 font-bold'
               : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-[#0ABAB5]" />
+          <Sparkles className={`w-4 h-4 ${currentView === 'skills' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Skills</span>
         </button>
 
@@ -117,11 +117,11 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           onClick={() => onSelectView('memory')}
           className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'memory'
-              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              ? 'border-stone-900 text-stone-950 font-bold'
               : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
-          <Brain className="w-4 h-4 text-[#0ABAB5]" />
+          <Brain className={`w-4 h-4 ${currentView === 'memory' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Memory</span>
         </button>
 
@@ -129,11 +129,11 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           onClick={() => onSelectView('stats')}
           className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
             currentView === 'stats'
-              ? 'border-[#0ABAB5] text-[#0A7B76] font-bold'
+              ? 'border-stone-900 text-stone-950 font-bold'
               : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
           }`}
         >
-          <BarChart3 className="w-4 h-4 text-[#0ABAB5]" />
+          <BarChart3 className={`w-4 h-4 ${currentView === 'stats' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Stats</span>
         </button>
 

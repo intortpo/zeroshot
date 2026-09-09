@@ -109,7 +109,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-8">
         <div>
           <div className="flex items-center space-x-2.5 text-xs font-mono text-stone-500 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-stone-900" />
             <span className="font-semibold tracking-wider">GENUINE RUNTIME TELEMETRY</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
@@ -126,7 +126,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             disabled={isReflecting}
             className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-white/80 hover:bg-white border border-stone-200/80 text-stone-800 text-xs sm:text-sm font-semibold transition-all"
           >
-            <RotateCw className={`w-4 h-4 text-[#0A7B76] ${isReflecting ? 'animate-spin' : ''}`} />
+            <RotateCw className={`w-4 h-4 text-stone-700 ${isReflecting ? 'animate-spin' : ''}`} />
             <span>{isReflecting ? 'Analyzing Invariants...' : 'Run Self-Learning Reflection'}</span>
           </button>
         </div>
@@ -153,7 +153,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-3">
           <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
             <span>ACTIVE IN-FLIGHT</span>
-            <Sparkles className="w-5 h-5 text-[#0A7B76]" />
+            <Sparkles className="w-5 h-5 text-stone-700" />
           </div>
           <div className="text-4xl sm:text-5xl font-extrabold text-stone-900 font-mono tracking-tight">
             {inFlightCount}
@@ -198,7 +198,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         <div className="lg:col-span-5 p-7 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-5">
           <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
             <div className="flex items-center space-x-2.5">
-              <Cpu className="w-5 h-5 text-[#0A7B76]" />
+              <Cpu className="w-5 h-5 text-stone-700" />
               <h3 className="text-base font-bold text-stone-900">Host Hardware & Environment</h3>
             </div>
             <span className="text-xs font-mono px-2.5 py-0.5 rounded-lg bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
@@ -244,12 +244,12 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         <div className="lg:col-span-7 p-7 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-5">
           <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
             <div className="flex items-center space-x-2.5">
-              <Brain className="w-5 h-5 text-[#0A7B76]" />
+              <Brain className="w-5 h-5 text-stone-700" />
               <h3 className="text-base font-bold text-stone-900">
                 Architectural Invariants & Heuristics ({rules.length})
               </h3>
             </div>
-            <span className="text-xs font-mono text-[#0A7B76] bg-[#E0F7F6] px-2.5 py-0.5 rounded-lg border border-[#B4E8E4] font-semibold">
+            <span className="text-xs font-mono text-stone-800 bg-stone-100 px-2.5 py-0.5 rounded-lg border border-stone-200 font-semibold">
               self-learning active
             </span>
           </div>
@@ -260,11 +260,11 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
               value={newRuleInput}
               onChange={(e) => setNewRuleInput(e.target.value)}
               placeholder="Add distilled invariant rule to memory..."
-              className="flex-1 px-4 py-2.5 rounded-2xl border border-stone-200 text-sm bg-white/80 text-stone-900 focus:outline-none focus:border-[#0ABAB5] font-sans"
+              className="flex-1 px-4 py-2.5 rounded-2xl border border-stone-200 text-sm bg-white/80 text-stone-900 focus:outline-none focus:border-stone-900 font-sans"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-2xl bg-[#E0F7F6] hover:bg-[#B4E8E4] text-[#0A7B76] text-sm font-semibold border border-[#B4E8E4] flex items-center space-x-1.5 transition-colors"
+              className="px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-sm font-semibold border border-stone-900 flex items-center space-x-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Add</span>
@@ -275,10 +275,10 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="p-4 rounded-2xl bg-white/80 border border-stone-200/80 hover:border-[#0ABAB5]/50 transition-all text-sm"
+                className="p-4 rounded-2xl bg-white/80 border border-stone-200/80 hover:border-stone-400 transition-all text-sm"
               >
                 <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-                  <span className="text-[#0A7B76] font-bold">{rule.category}</span>
+                  <span className="text-stone-900 font-bold">{rule.category}</span>
                   <span className="text-stone-400 font-medium">{rule.source}</span>
                 </div>
                 <div className="text-stone-800 leading-relaxed font-sans font-medium">

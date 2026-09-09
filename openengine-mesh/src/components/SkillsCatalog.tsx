@@ -447,7 +447,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
     {
       category: 'agy',
       label: 'Antigravity (AGY)',
-      icon: <Cpu className="w-3.5 h-3.5 text-[#0A7B76]" />,
+      icon: <Cpu className="w-3.5 h-3.5 text-stone-700" />,
       count: skills.filter((s) => s.category === 'agy').length,
     },
   ];
@@ -458,7 +458,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
           <h1 className="text-xl font-bold font-mono text-stone-900 flex items-center space-x-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-stone-900 animate-pulse" />
             <span>Skills Registry</span>
             <span className="text-xs font-mono font-normal text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
               {skills.length} Capabilities
@@ -476,7 +476,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search skills, tags, workflows..."
-            className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2 text-xs font-mono text-stone-900 placeholder-[#555555] focus:outline-none focus:border-[#0ABAB5]/40 transition-all"
+            className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2 text-xs font-mono text-stone-900 placeholder-[#555555] focus:outline-none focus:border-stone-900 transition-all"
           />
         </div>
       </div>
@@ -489,7 +489,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             onClick={() => setSelectedCategory(tab.category)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-mono font-medium transition-all ${
               selectedCategory === tab.category
-                ? 'bg-[#E0F7F6] text-stone-900 border border-[#B4E8E4] font-semibold'
+                ? 'bg-stone-900 text-white font-semibold'
                 : 'bg-white/60 text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-white/90'
             }`}
           >
@@ -507,13 +507,13 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             <div
               key={skill.id}
               onClick={() => setSelectedSkill(skill)}
-              className="bg-white/70 border border-stone-200/80 hover:border-[#0ABAB5] rounded-3xl p-7 flex flex-col justify-between space-y-5 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
+              className="bg-white/70 border border-stone-200/80 hover:border-stone-400 rounded-3xl p-7 flex flex-col justify-between space-y-5 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
             >
               <div className="space-y-3.5">
                 {/* Header: Category Badge, Version, and Active Switch */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold uppercase bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4]">
+                    <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold uppercase bg-stone-100 text-stone-800 border border-stone-200">
                       {skill.category}
                     </span>
                     <span className="text-xs font-mono text-stone-400">
@@ -526,7 +526,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                     onClick={(e) => toggleSkillActive(skill.id, e)}
                     className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-mono transition-colors ${
                       skill.isActive
-                        ? 'bg-[#E0F7F6] border border-[#B4E8E4] text-[#0A7B76] font-semibold'
+                        ? 'bg-stone-100 border border-stone-200 text-stone-800 font-semibold'
                         : 'bg-stone-100 border border-stone-200 text-stone-400'
                     }`}
                   >
@@ -578,12 +578,12 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                     e.stopPropagation();
                     onDispatchSkill(skill.samplePrompts[0], skill.category);
                   }}
-                  className="w-full py-2.5 px-3.5 rounded-2xl bg-white/80 hover:bg-white border border-stone-200 hover:border-[#0ABAB5] text-stone-800 text-xs font-mono transition-all flex items-center justify-between group/btn"
+                  className="w-full py-2.5 px-3.5 rounded-2xl bg-white/80 hover:bg-white border border-stone-200 hover:border-stone-400 text-stone-800 text-xs font-mono transition-all flex items-center justify-between group/btn"
                 >
                   <span className="truncate text-left mr-2 font-medium">
                     {skill.samplePrompts[0]}
                   </span>
-                  <Play className="w-3.5 h-3.5 text-[#0A7B76] flex-shrink-0 group-hover/btn:translate-x-0.5 transition-transform" />
+                  <Play className="w-3.5 h-3.5 text-stone-700 flex-shrink-0 group-hover/btn:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             </div>
@@ -599,7 +599,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             <div className="border-b border-stone-200 p-6 flex items-center justify-between bg-stone-50">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-stone-100 border border-stone-200 text-[#d4d4d4]">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-stone-100 border border-stone-200 text-stone-600">
                     {selectedSkill.category}
                   </span>
                   <span className="text-xs font-mono text-stone-400">
@@ -628,7 +628,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                 <h4 className="text-xs font-mono text-stone-400 uppercase mb-1.5">
                   Specification & Architecture
                 </h4>
-                <p className="text-xs text-[#cccccc] leading-relaxed">
+                <p className="text-xs text-stone-600 leading-relaxed">
                   {selectedSkill.description}
                 </p>
               </div>
@@ -641,7 +641,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                   {selectedSkill.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-mono text-[#a3a3a3]"
+                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600"
                     >
                       #{tag}
                     </span>
@@ -661,13 +661,13 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                         onDispatchSkill(prompt, selectedSkill.category);
                         setSelectedSkill(null);
                       }}
-                      className="w-full text-left p-3 rounded-xl bg-[#121212] hover:bg-[#1a1a1a] border border-stone-200 hover:border-[#B4E8E4] text-xs font-mono text-[#e0e0e0] hover:text-white transition-all flex items-center justify-between group"
+                      className="w-full text-left p-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-stone-400 text-xs font-mono text-stone-800 hover:text-stone-950 transition-all flex items-center justify-between group"
                     >
                       <div className="flex items-center space-x-2.5">
                         <span className="text-stone-400 font-bold">0{pIdx + 1}</span>
                         <span>{prompt}</span>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#0ABAB5] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-stone-900 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -677,13 +677,13 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             {/* Modal Footer */}
             <div className="p-5 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
               <div className="flex items-center space-x-2 text-xs font-mono text-stone-400">
-                <ShieldCheck className="w-4 h-4 text-[#0A7B76]" />
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Verified autonomous capability</span>
               </div>
 
               <button
                 onClick={() => setSelectedSkill(null)}
-                className="px-4 py-2 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] border border-stone-200 text-xs font-mono text-stone-900 transition-colors"
+                className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black border border-stone-900 text-xs font-mono text-white transition-colors"
               >
                 Close
               </button>

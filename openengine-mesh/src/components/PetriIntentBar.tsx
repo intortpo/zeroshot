@@ -53,8 +53,8 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
     {
       kind: 'feat',
       label: 'feat',
-      icon: <Sparkles className="w-3.5 h-3.5 text-[#0A7B76]" />,
-      style: 'bg-[#E0F7F6] text-[#0A7B76] border-[#B4E8E4]',
+      icon: <Sparkles className="w-3.5 h-3.5 text-stone-900" />,
+      style: 'bg-stone-900 text-white border-stone-900',
     },
     {
       kind: 'bug',
@@ -78,7 +78,7 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
 
   return (
     <div className="w-full px-5 sm:px-8 pt-6 pb-3">
-      <div className="max-w-5xl mx-auto backdrop-blur-2xl bg-white/60 border border-stone-200/80 rounded-3xl p-4 sm:p-5 transition-colors hover:border-[#0ABAB5]/50">
+      <div className="max-w-5xl mx-auto backdrop-blur-2xl bg-white/60 border border-stone-200/80 rounded-3xl p-4 sm:p-5 transition-colors hover:border-stone-400">
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-3.5">
           {/* Kind Selector Pills */}
           <div className="flex items-center space-x-1.5 bg-stone-100/70 p-1.5 rounded-2xl border border-stone-200/80 self-stretch sm:self-auto justify-center">
@@ -108,7 +108,7 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
               value={intent}
               onChange={handleInputChange}
               placeholder="What do you want to happen or change in the codebase?"
-              className="w-full bg-white/70 border border-stone-200/80 rounded-2xl px-5 py-3 text-base sm:text-lg font-sans text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#0ABAB5] focus:bg-white transition-all font-medium"
+              className="w-full bg-white/70 border border-stone-200/80 rounded-2xl px-5 py-3 text-base sm:text-lg font-sans text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:bg-white transition-all font-medium"
             />
           </div>
 
@@ -116,7 +116,7 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
           <button
             type="submit"
             disabled={!intent.trim() || isSubmitting}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2.5 px-6 py-3 rounded-2xl bg-[#0ABAB5] hover:bg-[#099E99] text-white text-sm sm:text-base font-mono font-bold transition-all border border-[#0A9E99] disabled:opacity-30 disabled:hover:bg-[#0ABAB5]"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2.5 px-6 py-3 rounded-2xl bg-stone-900 hover:bg-black text-white text-sm sm:text-base font-mono font-bold transition-all border border-stone-900 disabled:opacity-30 disabled:hover:bg-stone-900"
           >
             <span>{isSubmitting ? 'Logging...' : 'Launch'}</span>
             <ArrowRight className="w-4 h-4 text-white" />

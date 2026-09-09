@@ -63,7 +63,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-stone-100 pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-2xl bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-2xl bg-stone-100 text-stone-700 border border-stone-200 flex items-center justify-center">
               <User className="w-4 h-4" />
             </div>
             <div>
@@ -89,7 +89,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div>
                 <div className="text-sm font-bold text-stone-900 flex items-center space-x-2">
                   <span>{activeUser.name}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4] font-medium">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
                     ACTIVE OPERATOR
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAdding(true)}
-                className="text-xs font-medium text-[#0A7B76] hover:underline flex items-center space-x-1"
+                className="text-xs font-medium text-stone-900 hover:underline flex items-center space-x-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Operator Identity</span>
@@ -142,7 +142,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   onClick={() => onSelectUser(u.id)}
                   className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all border ${
                     isSelected
-                      ? 'bg-[#E0F7F6]/60 border-[#B4E8E4]'
+                      ? 'bg-stone-100 border-stone-400 font-semibold'
                       : 'bg-white hover:bg-stone-50 border-stone-200/70'
                   }`}
                 >
@@ -160,7 +160,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 capitalize">
                       {u.role.replace('_', ' ')}
                     </span>
-                    {isSelected && <Check className="w-4 h-4 text-[#0A7B76]" />}
+                    {isSelected && <Check className="w-4 h-4 text-emerald-600" />}
                   </div>
                 </div>
               );
@@ -178,7 +178,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Full Name (e.g. Sarah Connor)"
-                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900"
                 required
               />
               <input
@@ -186,7 +186,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email Address"
-                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900"
                 required
               />
             </div>
@@ -194,7 +194,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserProfile['role'])}
-                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900"
               >
                 <option value="owner">Owner</option>
                 <option value="lead_architect">Lead Architect</option>
@@ -207,7 +207,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 value={org}
                 onChange={(e) => setOrg(e.target.value)}
                 placeholder="Organization"
-                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900"
               />
             </div>
             <div className="flex items-center justify-end space-x-2 pt-1">
@@ -220,7 +220,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 rounded-xl bg-[#E0F7F6] text-[#0A7B76] font-medium border border-[#B4E8E4] hover:bg-[#B4E8E4] transition-colors"
+                className="px-3.5 py-1.5 rounded-xl bg-stone-900 text-white font-medium border border-stone-900 hover:bg-black transition-colors"
               >
                 Save Identity
               </button>

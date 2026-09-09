@@ -54,7 +54,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         {/* Header */}
         <div className="border-b border-stone-200 p-5 flex items-center justify-between bg-stone-50">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-[#E0F7F6] border border-stone-200">
+            <div className="p-2 rounded-xl bg-stone-100 border border-stone-200">
               <Layers className="w-4 h-4 text-stone-900" />
             </div>
             <div>
@@ -92,15 +92,15 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       }}
                       className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${
                         isActive
-                          ? 'border-[#0ABAB5] bg-[#E0F7F6] text-stone-900 shadow-lg'
-                          : 'border-stone-200 bg-[#0f0f0f] text-stone-600 hover:border-stone-200 hover:bg-stone-50'
+                          ? 'border-stone-400 bg-stone-100 text-stone-900 font-semibold'
+                          : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:bg-stone-50'
                       }`}
                     >
                       <div className="flex items-center space-x-3.5">
                         <div
                           className={`p-2 rounded-lg border ${
                             isActive
-                              ? 'bg-[#E0F7F6] border-[#B4E8E4] text-white'
+                              ? 'bg-stone-900 border-stone-900 text-white'
                               : 'bg-stone-50 border-stone-200 text-stone-400'
                           }`}
                         >
@@ -111,23 +111,23 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           <div className="text-xs font-semibold text-stone-900 flex items-center space-x-2">
                             <span>{ws.name}</span>
                             {isActive && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/70 border border-emerald-500/40 text-emerald-300">
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-stone-200 border border-stone-300 text-stone-800">
                                 ACTIVE
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] font-mono text-[#525252] mt-0.5">
+                          <div className="text-[11px] font-mono text-stone-400 mt-0.5">
                             {ws.repo} · {ws.path}
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="text-[11px] font-mono text-[#525252]">
+                        <span className="text-[11px] font-mono text-stone-400">
                           {ws.itemCount} items
                         </span>
                         {isActive ? (
-                          <Check className="w-4 h-4 text-emerald-400" />
+                          <Check className="w-4 h-4 text-emerald-600" />
                         ) : (
                           <ArrowRight className="w-4 h-4 text-transparent group-hover:text-stone-400 transition-colors" />
                         )}
@@ -140,7 +140,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               {/* Add New Workspace Action */}
               <button
                 onClick={() => setIsCreating(true)}
-                className="w-full py-3 rounded-xl border border-dashed border-stone-200 hover:border-[#0ABAB5] hover:bg-white/[0.02] text-xs font-mono text-stone-600 hover:text-stone-900 transition-all flex items-center justify-center space-x-2"
+                className="w-full py-3 rounded-xl border border-dashed border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-xs font-mono text-stone-600 hover:text-stone-900 transition-all flex items-center justify-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Initialize New Workspace</span>
@@ -194,7 +194,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0ABAB5] hover:bg-[#099E99] text-white shadow-md text-xs font-mono font-bold transition-all"
+                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-mono font-bold transition-all border border-stone-900"
                 >
                   Create & Open
                 </button>

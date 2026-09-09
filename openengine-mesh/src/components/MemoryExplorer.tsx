@@ -251,8 +251,8 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
       case 'semantic':
         return {
           label: 'SEMANTIC / ADR',
-          icon: <BookOpen className="w-3.5 h-3.5 text-[#0A7B76]" />,
-          style: 'bg-[#E0F7F6] text-[#0A7B76] border-[#B4E8E4]',
+          icon: <BookOpen className="w-3.5 h-3.5 text-stone-700" />,
+          style: 'bg-stone-100 text-stone-900 border-stone-300 font-semibold',
         };
       case 'episodic':
         return {
@@ -296,7 +296,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
           <h1 className="text-xl font-bold font-mono text-stone-900 flex items-center space-x-2.5">
-            <Brain className="w-5 h-5 text-[#0A7B76] animate-pulse" />
+            <Brain className="w-5 h-5 text-stone-700 animate-pulse" />
             <span>Memory Explorer</span>
             <span className="text-xs font-mono font-normal text-stone-400 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
               {filteredMemories.length} Nodes Indexed
@@ -311,7 +311,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsAddingMemory(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-[#0ABAB5] hover:bg-[#099E99] text-white text-xs sm:text-sm font-mono font-bold transition-all border border-[#0A9E99]"
+            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-mono font-bold transition-all border border-stone-900"
           >
             <Plus className="w-4 h-4 text-white" />
             <span>Add Memory Node</span>
@@ -322,7 +322,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
       {/* Memory Telemetry Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white/70 border border-stone-200/80 rounded-3xl p-5 flex items-center space-x-4 backdrop-blur-2xl">
-          <div className="p-3 rounded-2xl bg-stone-100 border border-stone-200 text-[#0A7B76]">
+          <div className="p-3 rounded-2xl bg-stone-100 border border-stone-200 text-stone-700">
             <Database className="w-5 h-5" />
           </div>
           <div>
@@ -344,7 +344,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
         </div>
 
         <div className="bg-white/70 border border-stone-200/80 rounded-3xl p-5 flex items-center space-x-4 backdrop-blur-2xl">
-          <div className="p-3 rounded-2xl bg-stone-100 border border-stone-200 text-teal-600">
+          <div className="p-3 rounded-2xl bg-stone-100 border border-stone-200 text-stone-700">
             <Cpu className="w-5 h-5" />
           </div>
           <div>
@@ -378,7 +378,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               onClick={() => setSelectedType(tab.type)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-mono font-medium transition-all ${
                 selectedType === tab.type
-                  ? 'bg-[#E0F7F6] text-stone-900 border border-[#B4E8E4] font-semibold'
+                  ? 'bg-stone-900 text-white font-semibold'
                   : 'bg-white/60 text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-white/90'
               }`}
             >
@@ -395,13 +395,13 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
             onClick={() => setFilterWorkspace((prev) => !prev)}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-mono border transition-all flex items-center space-x-2 flex-shrink-0 ${
               filterWorkspace
-                ? 'bg-white border-[#B4E8E4] text-stone-900 font-semibold'
+                ? 'bg-stone-100 border-stone-300 text-stone-900 font-semibold'
                 : 'bg-white/60 border-stone-200/80 text-stone-500 hover:text-stone-900'
             }`}
             title="Toggle workspace scope filter"
           >
             <span>Scope:</span>
-            <span className="font-semibold text-[#0A7B76]">
+            <span className="font-semibold text-stone-900">
               {filterWorkspace ? activeWorkspace?.name : 'Global'}
             </span>
           </button>
@@ -412,7 +412,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search memory entries..."
-              className="w-full bg-white/70 border border-stone-200/80 rounded-2xl pl-10 pr-4 py-2 text-xs sm:text-sm font-mono text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#0ABAB5] focus:bg-white"
+              className="w-full bg-white/70 border border-stone-200/80 rounded-2xl pl-10 pr-4 py-2 text-xs sm:text-sm font-mono text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:bg-white"
             />
           </div>
         </div>
@@ -433,7 +433,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               <div
                 key={mem.id}
                 onClick={() => setSelectedMemory(mem)}
-                className="bg-white/70 border border-stone-200/80 hover:border-[#0ABAB5] rounded-3xl p-7 flex flex-col justify-between space-y-5 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
+                className="bg-white/70 border border-stone-200/80 hover:border-stone-400 rounded-3xl p-7 flex flex-col justify-between space-y-5 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
               >
                 <div className="space-y-3.5">
                   {/* Top: Type Badge, Importance, and Timestamp */}
@@ -534,7 +534,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
             <div className="border-b border-stone-200 p-6 flex items-center justify-between bg-stone-50">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-xl bg-stone-100 border border-stone-200">
-                  <Brain className="w-4 h-4 text-[#0A7B76]" />
+                  <Brain className="w-4 h-4 text-stone-700" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
@@ -621,7 +621,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
           <div className="bg-white/95 border border-stone-200/80 rounded-3xl w-full max-w-xl overflow-hidden text-stone-800 font-sans">
             <div className="border-b border-stone-200 p-5 flex items-center justify-between bg-stone-50">
               <div className="flex items-center space-x-2.5">
-                <Brain className="w-4 h-4 text-[#0A7B76]" />
+                <Brain className="w-4 h-4 text-stone-700" />
                 <h2 className="text-sm font-semibold text-stone-900">
                   Add Memory Node
                 </h2>
@@ -640,7 +640,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as MemoryType)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
                 >
                   <option value="semantic">Semantic (ADR / Concept)</option>
                   <option value="rule">Rule & Invariant Guard</option>
@@ -657,7 +657,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. ADR 0004: Eventarc Concurrency Guard"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
@@ -669,7 +669,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Describe the decision, heuristic, or learned constraint..."
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
@@ -679,7 +679,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                   value={newTags}
                   onChange={(e) => setNewTags(e.target.value)}
                   placeholder="e.g. adr, eventarc, concurrency, fail-closed"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-[#0ABAB5]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
@@ -693,7 +693,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0ABAB5] hover:bg-[#099E99] text-white text-xs font-mono font-bold transition-all border border-[#0A9E99]"
+                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-mono font-bold transition-all border border-stone-900"
                 >
                   Save to Memory
                 </button>
