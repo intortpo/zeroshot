@@ -1,3 +1,20 @@
+export type PetriItemKind = 'bug' | 'issue' | 'feat' | 'mile';
+export type PetriStage = 'backlog' | 'in_flight' | 'verifying' | 'gated' | 'merged';
+
+export interface PetriItem {
+  id: string;
+  kind: PetriItemKind;
+  title: string;
+  description?: string;
+  stage: PetriStage;
+  runId?: string;
+  diff?: string;
+  testLogs?: string;
+  commitHash?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export type NodeRole = 'rtx_host' | 'thin_client';
 
 export interface NodeSpec {
