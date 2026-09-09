@@ -9,11 +9,16 @@ use crate::{
     RunStatusResult,
 };
 
-use super::{ClaudeProvider, CodexProvider, NodeRuntimeBinding, RunSize, ResolvedSource};
+use super::{AgyProvider, ClaudeProvider, CodexProvider, NodeRuntimeBinding, RunSize, ResolvedSource};
 
 #[derive(Clone, Debug, Deserialize, Eq, JsonSchema, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, tag = "harness", rename_all = "snake_case")]
 pub enum RuntimePlan {
+    Agy {
+        provider: AgyProvider,
+        size: RunSize,
+        nodes: BTreeMap<NodeName, NodeRuntimeBinding>,
+    },
     Codex {
         provider: CodexProvider,
         size: RunSize,
@@ -30,14 +35,14 @@ impl RuntimePlan {
     #[must_use]
     pub const fn size(&self) -> RunSize {
         match self {
-            Self::Codex { size, .. } | Self::Claude { size, .. } => *size,
+            Self::Agy { size, .. } | Self::Codex { size, .. } | Self::Claude { size, .. } => *size,
         }
     }
 
     #[must_use]
     pub const fn nodes(&self) -> &BTreeMap<NodeName, NodeRuntimeBinding> {
         match self {
-            Self::Codex { nodes, .. } | Self::Claude { nodes, .. } => nodes,
+            Self::Agy { nodes, .. } | Self::Codex { nodes, .. } | Self::Claude { nodes, .. } => nodes,
         }
     }
 

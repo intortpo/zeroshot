@@ -24,3 +24,5 @@ tmp/
 .eslintcache
 *.cast
 /site/
+openengine-mesh/dist/
+openengine-mesh/src-tauri/gen/

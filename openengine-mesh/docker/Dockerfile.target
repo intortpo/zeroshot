@@ -1,0 +1,26 @@
+# OpenEngine Mesh Target Runner
+# Hosts local autonomous agent execution, verifier pipelines, and SQLite ledger.
+FROM rust:1.97.0-bookworm AS builder
+
+WORKDIR /src
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+COPY zero ./zero
+COPY openengine-mesh/src-tauri ./openengine-mesh/src-tauri
+
+RUN cargo build --release -p zero -p openengine-mesh-backend
+
+FROM ghcr.io/the-open-engine/zeroshot-target:latest AS runtime
+
+LABEL org.opencontainers.image.title="OpenEngine Mesh Target Runner"
+LABEL org.opencontainers.image.description="RTX compute server target runner for OpenEngine distributed mesh."
+
+COPY --from=builder /src/target/release/zero /usr/local/bin/zero
+COPY --from=builder /src/target/release/openengine-mesh /usr/local/bin/openengine-mesh
+
+# Default mesh RPC port & target runner storage
+EXPOSE 8080 3000
+VOLUME ["/var/lib/zeroshot"]
+
+ENTRYPOINT ["zero"]
+CMD ["target", "serve", "--listen", "0.0.0.0:8080", "--public-origin", "http://127.0.0.1:8080", "--storage", "/var/lib/zeroshot/native-v2"]

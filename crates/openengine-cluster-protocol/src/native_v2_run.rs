@@ -383,6 +383,15 @@ pub enum ClaudeProvider {
     Bedrock,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, JsonSchema, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgyProvider {
+    #[serde(rename = "gemini")]
+    Gemini,
+    #[serde(rename = "vertex")]
+    Vertex,
+}
+
 #[derive(
     Clone, Copy, Debug, Deserialize, Eq, Hash, JsonSchema, Ord, PartialEq, PartialOrd, Serialize,
 )]
