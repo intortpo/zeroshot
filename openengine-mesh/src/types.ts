@@ -43,3 +43,48 @@ export interface GateApprovalRequest {
     feedback?: string;
   }[];
 }
+
+export type TaskLifecycleStatus = 'todo' | 'in_progress' | 'verifying' | 'gated' | 'completed' | 'blocked';
+
+export interface ProjectTask {
+  id: string;
+  runId?: string;
+  title: string;
+  component: string;
+  assignedAgent: string;
+  status: TaskLifecycleStatus;
+  commitHash?: string;
+  linesAdded: number;
+  linesRemoved: number;
+  durationSeconds?: number;
+  updatedAt: number;
+}
+
+export interface ProjectMilestone {
+  id: string;
+  title: string;
+  phase: string;
+  description: string;
+  status: 'planned' | 'in_progress' | 'completed';
+  progress: number;
+  taskIds: string[];
+}
+
+export interface ProjectOverview {
+  id: string;
+  name: string;
+  repo: string;
+  branch: string;
+  description: string;
+  milestones: ProjectMilestone[];
+  tasks: ProjectTask[];
+  metrics: {
+    totalTasks: number;
+    completedTasks: number;
+    activeRuns: number;
+    gatedApprovals: number;
+    repairTurnCount: number;
+    totalTokens: number;
+    testPassRate: number;
+  };
+}

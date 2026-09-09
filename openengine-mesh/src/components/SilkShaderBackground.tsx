@@ -102,14 +102,14 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
         float silk = sin(p.y * 3.0 + f * 4.0 + t) * 0.5 + 0.5;
         silk = pow(silk, 3.2);
 
-        // Base ultra-dark background
-        vec3 darkBg = vec3(0.045, 0.055, 0.08);
+        // Base ultra-dark monochrome background
+        vec3 darkBg = vec3(0.02, 0.02, 0.025);
 
-        // Dynamic reactive color interpolation
-        vec3 silkColor = mix(u_color_primary, u_color_secondary, f * 1.2);
+        // Soft ink wash: velvety charcoal and smoky graphite tones
+        vec3 silkColor = mix(u_color_primary, u_color_secondary, f);
         
-        // Very low opacity overlay (0.12 to 0.18 max) for exquisite subtlety
-        float alpha = (silk * 0.12 + f * 0.08) * (0.75 + u_activity * 0.35);
+        // Exquisite whisper-soft opacity for understated elegance
+        float alpha = (silk * 0.09 + f * 0.06) * (0.8 + u_activity * 0.25);
 
         vec3 finalColor = mix(darkBg, silkColor, alpha);
 
@@ -118,7 +118,7 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
         vignette = clamp(pow(16.0 * vignette, 0.3), 0.0, 1.0);
         finalColor *= vignette;
 
-        gl_FragColor = vec4(finalColor, 0.95);
+        gl_FragColor = vec4(finalColor, 0.98);
       }
     `;
 
@@ -183,32 +183,32 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
       gl.uniform1f(uTime, elapsed);
       gl.uniform2f(uResolution, width, height);
 
-      // Status-reactive color shifts
-      let primary = [0.18, 0.25, 0.45]; // Sapphire/Slate default
-      let secondary = [0.12, 0.35, 0.6];
-      let activity = 0.2;
+      // Subtle black & grey soft ink palette
+      let primary = [0.10, 0.10, 0.11]; // Soft charcoal ink
+      let secondary = [0.16, 0.16, 0.18]; // Muted graphite wash
+      let activity = 0.12;
 
       switch (workflowStatus) {
         case 'running':
-          primary = [0.15, 0.45, 0.85]; // Luminous Azure/Indigo ripple
-          secondary = [0.35, 0.2, 0.75]; // Purple gradient
-          activity = 0.8;
+          primary = [0.14, 0.15, 0.18]; // Subtle silvery mist pulse
+          secondary = [0.20, 0.22, 0.25];
+          activity = 0.35;
           break;
         case 'gated':
-          primary = [0.85, 0.55, 0.12]; // Warm Amber silk resonance
-          secondary = [0.65, 0.25, 0.1];
-          activity = 0.65;
+          primary = [0.18, 0.15, 0.12]; // Muted warm parchment / tea ink
+          secondary = [0.14, 0.12, 0.10];
+          activity = 0.25;
           break;
         case 'passed':
         case 'delivered':
-          primary = [0.08, 0.65, 0.42]; // Serene Emerald / Cyan
-          secondary = [0.1, 0.4, 0.7];
-          activity = 0.3;
+          primary = [0.12, 0.15, 0.14]; // Quiet obsidian slate
+          secondary = [0.17, 0.20, 0.19];
+          activity = 0.15;
           break;
         case 'failed':
-          primary = [0.75, 0.15, 0.25]; // Deep dusky crimson
-          secondary = [0.4, 0.1, 0.2];
-          activity = 0.5;
+          primary = [0.17, 0.11, 0.12]; // Subtle muted charcoal ash
+          secondary = [0.13, 0.09, 0.10];
+          activity = 0.22;
           break;
       }
 
