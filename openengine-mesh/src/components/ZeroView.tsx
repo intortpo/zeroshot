@@ -7,6 +7,7 @@ import { Workspace, UserProfile, GameWorkspace, MultiplayerLobby, GameQuestion }
 import { GameWorkspaceSelector } from './zero/GameWorkspaceSelector';
 import { ConversationalGameDesigner } from './zero/ConversationalGameDesigner';
 import { AvianPhysicsCanvas } from './zero/AvianPhysicsCanvas';
+import { StumbleBlobsCanvas } from './zero/StumbleBlobsCanvas';
 import { BevyCodeInspector } from './zero/BevyCodeInspector';
 import { PublishedGamesCatalog } from './zero/PublishedGamesCatalog';
 import { MultiplayerLobbyModal } from './zero/MultiplayerLobbyModal';
@@ -34,6 +35,193 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
 
   // Initial Game Workspaces with distinct Avian physics settings and Bevy systems
   const [gameWorkspaces, setGameWorkspaces] = useState<GameWorkspace[]>([
+    {
+      id: 'stumble-blobs-3d',
+      title: 'Stumble Blobs 3D',
+      tagline: 'Stumble Guys party knockout clone with squishy lumpy 3D blobs, rotating sweepers, and bouncy Avian3D hazards',
+      dimension: '3d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2',
+      status: 'published',
+      playCount: 428,
+      likes: 119,
+      thumbnailColor: '#0ABAB5',
+      physicsConfig: {
+        gravity: 22.0,
+        restitution: 0.65,
+        friction: 0.20,
+        linearDamping: 0.05,
+        substeps: 12,
+      },
+      gameLoop: {
+        modeName: 'Knockout Obstacle Dash',
+        cameraPerspective: '3d_arena',
+        primaryInput: 'WASD Locomotion + Space Jump & E Dive',
+        objective: 'Navigate rotating sweepers, swinging hammers, and bouncy trampolines to qualify in top 8',
+        scoringRule: 'First 8 blobs crossing finish line qualify for next round',
+        failCondition: 'Falling into the void or timer expires',
+      },
+      bevyCode: `//! Bevy 0.15 + Avian3d 0.2 Stumble Blobs
+use bevy::prelude::*;
+use avian3d::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .insert_resource(Gravity(Vec3::NEG_Y * 22.0))
+        .add_systems(Startup, (setup_obstacle_course, spawn_player_blob))
+        .add_systems(Update, (blob_movement_system, blob_dive_system, rotate_sweepers, finish_line_sensor))
+        .run();
+}
+
+#[derive(Component)]
+struct LumpyBlob {
+    is_grounded: bool,
+    dive_impulse: f32,
+}
+
+#[derive(Component)]
+struct SweeperArm;
+
+fn setup_obstacle_course(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 14.0, 26.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
+
+    // Platform Track Sections (Static Avian Colliders)
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(12.0, 1.2, 10.0))),
+        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.9, 0.9))),
+        Transform::from_xyz(0.0, 0.0, 15.0),
+        RigidBody::Static,
+        Collider::cuboid(12.0, 1.2, 10.0),
+    ));
+
+    // Sweeper Arm Obstacle (Kinematic with Angular Velocity)
+    commands.spawn((
+        SweeperArm,
+        Mesh3d(meshes.add(Cylinder::new(0.45, 8.5))),
+        MeshMaterial3d(materials.add(Color::srgb(1.0, 0.37, 0.12))),
+        Transform::from_xyz(0.0, 1.5, 0.0),
+        RigidBody::Kinematic,
+        Collider::cylinder(0.45, 8.5),
+        AngularVelocity(Vec3::Y * 2.6),
+    ));
+}
+
+fn spawn_player_blob(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // Spawn Lumpy 3D Blob with Capsule Collider & Restitution
+    commands.spawn((
+        LumpyBlob {
+            is_grounded: true,
+            dive_impulse: 16.0,
+        },
+        Mesh3d(meshes.add(Sphere::new(1.1))),
+        MeshMaterial3d(materials.add(Color::srgb(0.04, 0.73, 0.71))),
+        Transform::from_xyz(0.0, 2.0, 16.0),
+        RigidBody::Dynamic,
+        Collider::capsule(0.8, 0.5),
+        Restitution::new(0.65),
+        Friction::new(0.2),
+        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+    ));
+}
+
+fn blob_movement_system(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut LinearVelocity, &Transform), With<LumpyBlob>>,
+) {
+    for (mut velocity, transform) in &mut query {
+        let mut dir = Vec3::ZERO;
+        if keyboard.pressed(KeyCode::KeyW) { dir.z -= 1.0; }
+        if keyboard.pressed(KeyCode::KeyS) { dir.z += 1.0; }
+        if keyboard.pressed(KeyCode::KeyA) { dir.x -= 1.0; }
+        if keyboard.pressed(KeyCode::KeyD) { dir.x += 1.0; }
+
+        if dir != Vec3::ZERO {
+            let move_force = dir.normalize() * 14.0;
+            velocity.x = move_force.x;
+            velocity.z = move_force.z;
+        }
+    }
+}
+
+fn blob_dive_system(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut LinearVelocity, &Transform, &mut LumpyBlob)>,
+) {
+    for (mut velocity, transform, mut blob) in &mut query {
+        if keyboard.just_pressed(KeyCode::KeyE) {
+            let forward = transform.forward();
+            velocity.0 += forward * blob.dive_impulse + Vec3::Y * 4.0;
+        }
+    }
+}
+
+fn rotate_sweepers(mut query: Query<&mut AngularVelocity, With<SweeperArm>>) {
+    for mut ang in &mut query {
+        ang.0 = Vec3::Y * 2.6;
+    }
+}
+
+fn finish_line_sensor(
+    mut collision_events: EventReader<CollisionStarted>,
+) {
+    for CollisionStarted(_e1, _e2) in collision_events.read() {
+        // Qualify blob observer logic
+    }
+}`,
+      chatHistory: [
+        {
+          id: 'm-stumble-1',
+          sender: 'designer',
+          text: 'Welcome to Stumble Blobs 3D! I am your Bevy MCP Game Architect. Let us design a Stumble Guys party knockout clone with squishy lumpy 3D blobs and Avian3D physics hazards.',
+          timestamp: Date.now() - 3600000,
+        },
+        {
+          id: 'm-stumble-2',
+          sender: 'designer',
+          text: 'Configured a 3D obstacle dash: starting pad, rotating sweeper turntable, high-restitution bouncy trampolines, and a finish arch. Blobs feature wobbly vertex lumpiness, WASD locomotion, spacebar jump, and an iconic belly dive impulse (E / Shift)!',
+          timestamp: Date.now() - 3000000,
+          bevyUpdate: 'Setup avian3d RigidBody::Dynamic capsule collider, rotating sweepers, and belly dive impulse system',
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-blob-lumpiness',
+        category: 'physics',
+        title: 'Step 1: Blob Lumpiness & Jelly Deform',
+        description: 'How squishy and wobbly should the 3D blobs be when stumbling and diving?',
+        options: [
+          {
+            id: 'opt-classic-stumble',
+            label: 'Classic Stumble Jelly (Harmonic wobble + 0.65 Restitution)',
+            description: 'Balanced squishy wobble, responsive dive impulse, and quick recovery.',
+            physicsSnippet: 'Restitution::new(0.65) & vertex harmonic deform amplitude 0.12',
+          },
+          {
+            id: 'opt-ultra-gummy',
+            label: 'Ultra Gummy Pudding (High wobble + 0.85 Restitution)',
+            description: 'Ultra bouncy, chaotic collisions where blobs ping across the arena.',
+            physicsSnippet: 'Restitution::new(0.85) & high amplitude harmonic squish',
+          },
+          {
+            id: 'opt-chunky-bean',
+            label: 'Chunky Bean (Firm capsule + Subtle impact squash)',
+            description: 'Firm and controlled competitive party runner feel.',
+            physicsSnippet: 'Restitution::new(0.40) & rigid capsule collider',
+          },
+        ],
+      },
+    },
     {
       id: 'avian-bounce-arena',
       title: 'Avian Bounce Arena',
@@ -370,7 +558,7 @@ fn setup_pinball_table(mut commands: Commands) {
     },
   ]);
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('avian-bounce-arena');
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('stumble-blobs-3d');
 
   const activeGame =
     gameWorkspaces.find((w) => w.id === activeWorkspaceId) || gameWorkspaces[0];
@@ -394,7 +582,65 @@ fn setup_pinball_table(mut commands: Commands) {
     let bevySnippetUpdate = '';
     let nextQuestion: GameQuestion | undefined = undefined;
 
-    if (activeGame.pendingQuestion.category === 'mode') {
+    if (activeGame.id === 'stumble-blobs-3d') {
+      if (activeGame.pendingQuestion.id === 'q-blob-lumpiness') {
+        designerResponse = `Applied blob lumpiness: ${chosenText}. Synthesized squishy vertex harmonic deform and Avian3D capsule restitution.`;
+        bevySnippetUpdate = 'Updated avian3d Collider::capsule & vertex harmonic wobble';
+        nextQuestion = {
+          id: 'q-stumble-hazards',
+          category: 'rules',
+          title: 'Step 2: Rotating Obstacles & Sweeper Speed',
+          description: 'How punishing should the rotating sweepers and hammers be in the knockout race?',
+          options: [
+            {
+              id: 'opt-sweeper-party',
+              label: 'Party Fun (1.8 rad/s sweeper rotation + Mild bounce)',
+              description: 'Accessible party race with forgiving recoveries.',
+              physicsSnippet: 'AngularVelocity(Vec3::Y * 1.8)',
+            },
+            {
+              id: 'opt-sweeper-chaos',
+              label: 'Knockout Chaos (2.8 rad/s sweeper rotation + High impulse)',
+              description: 'Classic Stumble Guys experience with chaotic mid-air pileups.',
+              physicsSnippet: 'AngularVelocity(Vec3::Y * 2.8) & high impulse response',
+            },
+            {
+              id: 'opt-sweeper-hardcore',
+              label: 'Sudden Death (3.8 rad/s super-fast sweeper)',
+              description: 'Demanding precision timing to dodge the sweepers.',
+              physicsSnippet: 'AngularVelocity(Vec3::Y * 3.8)',
+            },
+          ],
+        };
+      } else if (activeGame.pendingQuestion.id === 'q-stumble-hazards') {
+        designerResponse = `Sweeper obstacle speed calibrated to ${chosenText}! Adding qualification gate system and lobby capacity.`;
+        bevySnippetUpdate = 'Configured kinematic sweeper rotation & finish gate collision observer';
+        nextQuestion = {
+          id: 'q-stumble-elimination',
+          category: 'mode',
+          title: 'Step 3: Elimination Threshold & Lobby Size',
+          description: 'Select qualification rules for the multiplayer lobby:',
+          options: [
+            {
+              id: 'opt-top8-qualify',
+              label: 'First 8 Blobs Qualify (32-Player Tournament Bracket)',
+              description: 'Multi-round knockout party battle.',
+              physicsSnippet: 'finish_line_sensor counts qualified entities <= 8',
+            },
+            {
+              id: 'opt-top4-qualify',
+              label: 'First 4 Blobs Qualify (Quick 16-Player Sprint)',
+              description: 'Fast-paced elimination for LAN party play.',
+              physicsSnippet: 'finish_line_sensor counts qualified entities <= 4',
+            },
+          ],
+        };
+      } else {
+        designerResponse = `Stumble Blobs 3D loop finalized! 3D obstacle course, squishy lumpy blobs, rotating sweepers, and finish line sensors are ready. Launch a lobby with a QR code or test the 3D physics arena!`;
+        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian3d Stumble Guys clone compiled';
+        nextQuestion = undefined;
+      }
+    } else if (activeGame.pendingQuestion.category === 'mode') {
       designerResponse = `Excellent choice! Implemented ${chosenText}. Added an Avian observer system to watch for entity perimeter breaches and trigger score state dispatch.`;
       bevySnippetUpdate = 'Add boundary check system & score broadcast observer';
       nextQuestion = {
@@ -788,10 +1034,17 @@ fn main() {
 
               <div className="flex-1 overflow-hidden">
                 {studioRightPane === 'preview' ? (
-                  <AvianPhysicsCanvas
-                    gameTitle={activeGame.title}
-                    physicsConfig={activeGame.physicsConfig}
-                  />
+                  activeGame.dimension === '3d' ? (
+                    <StumbleBlobsCanvas
+                      gameTitle={activeGame.title}
+                      physicsConfig={activeGame.physicsConfig}
+                    />
+                  ) : (
+                    <AvianPhysicsCanvas
+                      gameTitle={activeGame.title}
+                      physicsConfig={activeGame.physicsConfig}
+                    />
+                  )
                 ) : (
                   <BevyCodeInspector
                     gameTitle={activeGame.title}
