@@ -224,3 +224,85 @@ export interface EnterpriseStats {
 }
 
 export type PetriViewMode = 'board' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+
+// Bevy & Avian Physics Game Studio Types
+export interface GameQuestionOption {
+  id: string;
+  label: string;
+  description: string;
+  physicsSnippet?: string;
+}
+
+export interface GameQuestion {
+  id: string;
+  category: 'mode' | 'physics' | 'controls' | 'rules' | 'entities';
+  title: string;
+  description: string;
+  options: GameQuestionOption[];
+  selectedOptionId?: string;
+}
+
+export interface GameChatMessage {
+  id: string;
+  sender: 'designer' | 'user';
+  text: string;
+  timestamp: number;
+  question?: GameQuestion;
+  bevyUpdate?: string;
+}
+
+export interface GamePhysicsConfig {
+  gravity: number; // e.g. 9.81 or custom
+  restitution: number; // bounciness [0.0 - 1.0]
+  friction: number; // friction [0.0 - 1.0]
+  linearDamping: number; // air drag
+  substeps: number; // physics substepping e.g. 8
+}
+
+export interface GameLoopSpec {
+  modeName: string;
+  cameraPerspective: '2d_topdown' | '2d_sidescroll' | '3d_arena' | 'isometric';
+  primaryInput: string;
+  objective: string;
+  scoringRule: string;
+  failCondition: string;
+}
+
+export interface GameWorkspace {
+  id: string;
+  title: string;
+  tagline: string;
+  dimension: '2d' | '3d';
+  bevyVersion: string;
+  avianVersion: string;
+  status: 'drafting' | 'compiling' | 'ready' | 'published';
+  physicsConfig: GamePhysicsConfig;
+  gameLoop: GameLoopSpec;
+  bevyCode: string;
+  chatHistory: GameChatMessage[];
+  pendingQuestion?: GameQuestion;
+  publishedAt?: number;
+  playCount: number;
+  likes: number;
+  thumbnailColor: string;
+}
+
+export interface MultiplayerLobbyPeer {
+  id: string;
+  name: string;
+  role: 'host' | 'player';
+  pingMs: number;
+  isReady: boolean;
+}
+
+export interface MultiplayerLobby {
+  gameId: string;
+  gameTitle: string;
+  roomCode: string;
+  hostName: string;
+  joinUrl: string;
+  status: 'waiting' | 'in_match' | 'closed';
+  tickRateHz: number;
+  clientPrediction: boolean;
+  peers: MultiplayerLobbyPeer[];
+}

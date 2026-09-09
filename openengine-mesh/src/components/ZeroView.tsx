@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
-  ShieldCheck,
-  CheckCircle2,
-  RefreshCw,
-  ArrowUpRight,
-  Cpu,
-  Lock,
-  Play,
-  Activity,
+  Gamepad2,
+  QrCode,
 } from 'lucide-react';
-import { Workspace, UserProfile } from '../types';
+import { Workspace, UserProfile, GameWorkspace, MultiplayerLobby, GameQuestion } from '../types';
+import { GameWorkspaceSelector } from './zero/GameWorkspaceSelector';
+import { ConversationalGameDesigner } from './zero/ConversationalGameDesigner';
+import { AvianPhysicsCanvas } from './zero/AvianPhysicsCanvas';
+import { BevyCodeInspector } from './zero/BevyCodeInspector';
+import { PublishedGamesCatalog } from './zero/PublishedGamesCatalog';
+import { MultiplayerLobbyModal } from './zero/MultiplayerLobbyModal';
 
 interface ZeroViewProps {
   activeWorkspace?: Workspace;
@@ -17,115 +17,661 @@ interface ZeroViewProps {
   onDispatchIntent?: (prompt: string, kind: 'bug' | 'feat' | 'issue' | 'mile') => void;
 }
 
-interface InvariantRule {
-  id: string;
-  name: string;
-  code: string;
-  status: 'passed' | 'verifying' | 'enforced';
-  description: string;
-  targetPath: string;
-  lastChecked: string;
-}
-
 export const ZeroView: React.FC<ZeroViewProps> = ({
   activeWorkspace,
   activeUser,
   onDispatchIntent,
 }) => {
-  const [activeHarness, setActiveHarness] = useState<'zeroshot-native-v2' | 'cluster-client'>('zeroshot-native-v2');
-  const [selectedProvider, setSelectedProvider] = useState<'anthropic' | 'openai' | 'vertex'>('anthropic');
-  const [selectedModel, setSelectedModel] = useState<string>('claude-3-5-sonnet');
-  const [isAuditing, setIsAuditing] = useState(false);
-  const [auditNotice, setAuditNotice] = useState<string | null>(null);
+  // Sub-navigation: 'studio' | 'published'
+  const [activeSubTab, setActiveSubTab] = useState<'studio' | 'published'>('studio');
 
-  const [invariants] = useState<InvariantRule[]>([
+  // Studio layout toggle: 'preview' (Physics canvas) | 'code' (Bevy Rust inspector)
+  const [studioRightPane, setStudioRightPane] = useState<'preview' | 'code'>('preview');
+
+  // Active Lobby Modal state
+  const [activeLobby, setActiveLobby] = useState<MultiplayerLobby | null>(null);
+  const [isLobbyOpen, setIsLobbyOpen] = useState(false);
+
+  // Initial Game Workspaces with distinct Avian physics settings and Bevy systems
+  const [gameWorkspaces, setGameWorkspaces] = useState<GameWorkspace[]>([
     {
-      id: 'inv-01',
-      name: 'Zero Speculative Edits',
-      code: 'INV-FEEDBACK-FIRST',
-      status: 'enforced',
-      description: 'Never write speculative bug fixes. Isolate a repeatable reproduction loop before editing code.',
-      targetPath: 'CONTEXT.md & tests/',
-      lastChecked: '42s ago',
+      id: 'avian-bounce-arena',
+      title: 'Avian Bounce Arena',
+      tagline: 'High-energy 2D multiplayer ball brawler with elastic Avian restitution bumpers',
+      dimension: '2d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2',
+      status: 'published',
+      playCount: 142,
+      likes: 38,
+      thumbnailColor: '#0ABAB5',
+      physicsConfig: {
+        gravity: 9.81,
+        restitution: 0.88,
+        friction: 0.15,
+        linearDamping: 0.05,
+        substeps: 8,
+      },
+      gameLoop: {
+        modeName: 'Last Orb Standing',
+        cameraPerspective: '2d_topdown',
+        primaryInput: 'Mouse Impulse Aim',
+        objective: 'Knock opponent orbs out of the arena into the void boundaries',
+        scoringRule: '+1 Point per ring-out',
+        failCondition: 'Player orb exits perimeter bounds',
+      },
+      bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Bounce Arena
+use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((
+            DefaultPlugins,
+            PhysicsPlugins::default(),
+        ))
+        .insert_resource(Gravity(Vec2::NEG_Y * 98.1))
+        .add_systems(Startup, setup_arena)
+        .add_systems(Update, (player_impulse_system, arena_boundary_check))
+        .run();
+}
+
+#[derive(Component)]
+struct PlayerOrb;
+
+fn setup_arena(mut commands: Commands) {
+    commands.spawn(Camera2d);
+
+    // Spawn player dynamic orb with Avian Collider & Restitution
+    commands.spawn((
+        PlayerOrb,
+        Sprite::from_color(Color::srgb(0.04, 0.73, 0.71), Vec2::splat(36.0)),
+        Transform::from_xyz(0.0, 50.0, 0.0),
+        RigidBody::Dynamic,
+        Collider::circle(18.0),
+        Restitution::new(0.88),
+        Friction::new(0.15),
+    ));
+
+    // Spawn static arena bumpers
+    for x in [-120.0, 0.0, 120.0] {
+        commands.spawn((
+            Sprite::from_color(Color::srgb(0.9, 0.9, 0.9), Vec2::splat(40.0)),
+            Transform::from_xyz(x, -60.0, 0.0),
+            RigidBody::Static,
+            Collider::circle(20.0),
+            Restitution::new(0.95),
+        ));
+    }
+}
+
+fn player_impulse_system(
+    buttons: Res<ButtonInput<MouseButton>>,
+    windows: Query<&Window>,
+    mut query: Query<(&Transform, &mut LinearVelocity), With<PlayerOrb>>,
+) {
+    if buttons.just_pressed(MouseButton::Left) {
+        if let Ok((transform, mut velocity)) = query.get_single_mut() {
+            if let Some(cursor) = windows.single().cursor_position() {
+                let dir = (cursor - transform.translation.xy()).normalize_or_zero();
+                velocity.0 += dir * 250.0;
+            }
+        }
+    }
+}
+
+fn arena_boundary_check(
+    mut commands: Commands,
+    query: Query<(Entity, &Transform), With<PlayerOrb>>,
+) {
+    for (entity, transform) in &query {
+        if transform.translation.length() > 500.0 {
+            commands.entity(entity).despawn();
+        }
+    }
+}`,
+      chatHistory: [
+        {
+          id: 'm-1',
+          sender: 'designer',
+          text: 'Welcome to the Bevy & Avian Studio! I am your Bevy MCP Game Architect. Let us design Avian Bounce Arena.',
+          timestamp: Date.now() - 3600000,
+        },
+        {
+          id: 'm-2',
+          sender: 'designer',
+          text: 'We configured a 2D top-down physics ring with high-restitution Avian bumpers (0.88 bounciness) and mouse click impulses.',
+          timestamp: Date.now() - 3000000,
+          bevyUpdate: 'Setup arena with avian2d RigidBody::Dynamic and Restitution::new(0.88)',
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-mode-mechanic',
+        category: 'mode',
+        title: 'Step 1: Choose Arena Win Condition',
+        description: 'How should players score points or win the match in Avian Bounce Arena?',
+        options: [
+          {
+            id: 'opt-ringout',
+            label: 'Sumo Ring-Out (Knockout)',
+            description: 'Knock opponents past the perimeter border into the void to score.',
+            physicsSnippet: 'Transform.translation.length() > radius trigger despawn & score event',
+          },
+          {
+            id: 'opt-target-bumper',
+            label: 'High-Score Bumper Pinball',
+            description: 'Hit glowing bumpers to accumulate points before the timer runs out.',
+            physicsSnippet: 'CollisionStarted observer with ScoreTracker component addition',
+          },
+          {
+            id: 'opt-elimination',
+            label: 'Energy Depletion on Impact',
+            description: 'Collisions deplete health proportional to Avian LinearVelocity magnitude.',
+            physicsSnippet: 'LinearVelocity.length() factored into health damage system',
+          },
+        ],
+      },
     },
     {
-      id: 'inv-02',
-      name: 'Zero CAS Drift',
-      code: 'INV-CAS-TRUNK',
-      status: 'enforced',
-      description: 'Trunk ref main is the authoritative branch. Delivery advances only through compare-and-swap.',
-      targetPath: '.github/workflows/ & git refs',
-      lastChecked: '1m ago',
+      id: 'orbit-strike-zero',
+      title: 'Orbit Strike Zero',
+      tagline: 'Gravitational orbital dogfight with point-mass attractors and Avian sensor collisions',
+      dimension: '2d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2',
+      status: 'published',
+      playCount: 96,
+      likes: 24,
+      thumbnailColor: '#FF5F1F',
+      physicsConfig: {
+        gravity: 4.5,
+        restitution: 0.65,
+        friction: 0.05,
+        linearDamping: 0.02,
+        substeps: 12,
+      },
+      gameLoop: {
+        modeName: 'Orbital Dogfight',
+        cameraPerspective: '2d_topdown',
+        primaryInput: 'Keyboard Thrust & Gyro',
+        objective: 'Orbit central singularity while launching projectile torpedos at enemy satellites',
+        scoringRule: '+100 per satellite disabled',
+        failCondition: 'Crashing into the singularity gravity well',
+      },
+      bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Orbit Strike Zero
+use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .insert_resource(Gravity(Vec2::ZERO)) // Zero global gravity; custom point attractor
+        .add_systems(Startup, setup_orbit_world)
+        .add_systems(Update, (apply_central_gravity, ship_thrust_system))
+        .run();
+}
+
+#[derive(Component)]
+struct OrbitShip;
+
+fn setup_orbit_world(mut commands: Commands) {
+    commands.spawn(Camera2d);
+
+    // Central Attractor (Singularity)
+    commands.spawn((
+        Sprite::from_color(Color::srgb(1.0, 0.37, 0.12), Vec2::splat(48.0)),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        RigidBody::Static,
+        Collider::circle(24.0),
+    ));
+
+    // Player Ship in stable orbit
+    commands.spawn((
+        OrbitShip,
+        Sprite::from_color(Color::srgb(0.04, 0.73, 0.71), Vec2::new(24.0, 16.0)),
+        Transform::from_xyz(0.0, 180.0, 0.0),
+        RigidBody::Dynamic,
+        Collider::capsule(12.0, 8.0),
+        LinearVelocity(Vec2::new(120.0, 0.0)),
+        AngularDamping(0.8),
+    ));
+}
+
+fn apply_central_gravity(mut query: Query<(&Transform, &mut LinearVelocity), With<OrbitShip>>) {
+    let center = Vec2::ZERO;
+    let g_constant = 250000.0;
+
+    for (transform, mut velocity) in &mut query {
+        let delta = center - transform.translation.xy();
+        let dist = delta.length().max(30.0);
+        let force = delta.normalize() * (g_constant / (dist * dist));
+        velocity.0 += force * 0.016;
+    }
+}
+
+fn ship_thrust_system(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&Transform, &mut LinearVelocity), With<OrbitShip>>,
+) {
+    for (transform, mut velocity) in &mut query {
+        if keyboard.pressed(KeyCode::KeyW) || keyboard.pressed(KeyCode::ArrowUp) {
+            let forward = transform.up().xy();
+            velocity.0 += forward * 5.0;
+        }
+    }
+}`,
+      chatHistory: [
+        {
+          id: 'm-orbit-1',
+          sender: 'designer',
+          text: 'Orbit Strike Zero is configured with point-mass gravitational simulation in Avian2D.',
+          timestamp: Date.now() - 1200000,
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-orbit-weapons',
+        category: 'controls',
+        title: 'Step 2: Orbital Weapons & Sensors',
+        description: 'How should torpedoes interact with the central gravity well and ships?',
+        options: [
+          {
+            id: 'opt-kinetic-slugs',
+            label: 'Kinetic Unpowered Slugs',
+            description: 'Projectiles are subject to gravity and can slingshot around the center.',
+            physicsSnippet: 'Spawn projectile with RigidBody::Dynamic and affected by attractor',
+          },
+          {
+            id: 'opt-seeking-missile',
+            label: 'Guided Micro-Thrusters',
+            description: 'Rockets exert linear thrust towards nearest enemy sensor signature.',
+            physicsSnippet: 'Sensor collider scanning for ships within 200px radius',
+          },
+        ],
+      },
     },
     {
-      id: 'inv-03',
-      name: 'Zero Protocol Mutation',
-      code: 'INV-PROTOCOL-KIT',
-      status: 'enforced',
-      description: 'Protocol Rust types are the source of truth. Schema artifacts regenerated strictly via Rust testkit.',
-      targetPath: 'protocol/openengine-cluster/v1/',
-      lastChecked: '2m ago',
-    },
-    {
-      id: 'inv-04',
-      name: 'Zero Allocation Leaks',
-      code: 'INV-BOUNDED-IO',
-      status: 'enforced',
-      description: 'Provider JSONL readers share 64 MiB guard, bounded concurrent stdin/stdout, backpressure queues.',
-      targetPath: 'zeroshot/src/execution/',
-      lastChecked: '3m ago',
-    },
-    {
-      id: 'inv-05',
-      name: 'Zero Shallow Wrappers',
-      code: 'INV-DEEP-MODULES',
-      status: 'enforced',
-      description: 'Maximize implementation depth behind minimal, well-typed interfaces. Zero trivial passthroughs.',
-      targetPath: 'crates/ & zeroshot/src/',
-      lastChecked: '5m ago',
-    },
-    {
-      id: 'inv-06',
-      name: 'Zero Broken Continuations',
-      code: 'INV-FAIL-CLOSED',
-      status: 'enforced',
-      description: 'Structured-output recovery is fail-closed. Reused sessions, MCP, and network tools disabled on turn retry.',
-      targetPath: 'zeroshot/src/native_v2_candidate/',
-      lastChecked: '6m ago',
+      id: 'petri-pinball',
+      title: 'Petri Pinball',
+      tagline: 'Classic arcade flipper mechanics with Avian physics revolute joints and neon bumpers',
+      dimension: '2d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2',
+      status: 'drafting',
+      playCount: 0,
+      likes: 12,
+      thumbnailColor: '#8b5cf6',
+      physicsConfig: {
+        gravity: 14.0,
+        restitution: 0.92,
+        friction: 0.08,
+        linearDamping: 0.01,
+        substeps: 10,
+      },
+      gameLoop: {
+        modeName: 'High Score Arcade',
+        cameraPerspective: '2d_topdown',
+        primaryInput: 'A/D or Left/Right Keys for Flippers',
+        objective: 'Keep ball in play and trigger bumper combo multipliers',
+        scoringRule: '100 points per bumper hit * combo multiplier',
+        failCondition: 'Ball drops through the flipper gap',
+      },
+      bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Petri Pinball
+use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .insert_resource(Gravity(Vec2::NEG_Y * 140.0))
+        .add_systems(Startup, setup_pinball_table)
+        .run();
+}
+
+fn setup_pinball_table(mut commands: Commands) {
+    commands.spawn(Camera2d);
+
+    // Ball
+    commands.spawn((
+        Sprite::from_color(Color::WHITE, Vec2::splat(20.0)),
+        Transform::from_xyz(0.0, 150.0, 0.0),
+        RigidBody::Dynamic,
+        Collider::circle(10.0),
+        Restitution::new(0.92),
+    ));
+}`,
+      chatHistory: [
+        {
+          id: 'm-pin-1',
+          sender: 'designer',
+          text: 'Petri Pinball project initialized with steep vertical gravity and high restitution.',
+          timestamp: Date.now() - 600000,
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-flipper-mechanics',
+        category: 'controls',
+        title: 'Step 1: Flipper Angular Velocity & Torque',
+        description: 'Choose how flipper physics are driven in Avian:',
+        options: [
+          {
+            id: 'opt-joint-revolute',
+            label: 'Avian Revolute Joint with Limits',
+            description: 'Physical joint with min/max angle and motor torque springs.',
+            physicsSnippet: 'commands.spawn(RevoluteJoint::new(table, flipper).with_angle_limits(-0.4, 0.4))',
+          },
+          {
+            id: 'opt-kinematic-angular',
+            label: 'Kinematic Angular Velocity',
+            description: 'Directly set angular velocity on keypress for crisp arcade response.',
+            physicsSnippet: 'RigidBody::Kinematic with AngularVelocity(25.0)',
+          },
+        ],
+      },
     },
   ]);
 
-  const [telemetryEvents, setTelemetryEvents] = useState<string[]>([
-    'Trunk CAS verified: refs/heads/main matches authoritative remote commit aff94c46',
-    'OpenRPC gateway heartbeat confirmed on ws://127.0.0.1:8788/v1 (latency: 1.2ms)',
-    'Target engine container ghcr.io/the-open-engine/zeroshot-target discovery healthy',
-    'Rust canonical crate zeroshot-native-v2 bounds verified (64 MiB stream guard active)',
-  ]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('avian-bounce-arena');
 
-  const handleRunAudit = () => {
-    setIsAuditing(true);
-    setAuditNotice(null);
-    setTimeout(() => {
-      setIsAuditing(false);
-      setAuditNotice('Invariant audit complete: 6 of 6 architectural invariants verified with 0 drift.');
-      setTelemetryEvents((prev) => [
-        `Invariant verification sweep passed: 0 drift detected across ${activeWorkspace?.name || 'zero-petri'}`,
-        ...prev.slice(0, 7),
-      ]);
-      setTimeout(() => setAuditNotice(null), 4000);
-    }, 1200);
+  const activeGame =
+    gameWorkspaces.find((w) => w.id === activeWorkspaceId) || gameWorkspaces[0];
+
+  // Handle answering interactive design question
+  const handleAnswerQuestion = (optionId: string, customText?: string) => {
+    if (!activeGame.pendingQuestion) return;
+
+    const answeredOption = activeGame.pendingQuestion.options.find((o) => o.id === optionId);
+    const chosenText = answeredOption?.label || customText || 'Custom mechanic selected';
+
+    const userMessage = {
+      id: `u-${Date.now()}`,
+      sender: 'user' as const,
+      text: customText ? `${chosenText}: ${customText}` : chosenText,
+      timestamp: Date.now(),
+    };
+
+    // Synthesize follow-up from Bevy MCP Agent
+    let designerResponse = '';
+    let bevySnippetUpdate = '';
+    let nextQuestion: GameQuestion | undefined = undefined;
+
+    if (activeGame.pendingQuestion.category === 'mode') {
+      designerResponse = `Excellent choice! Implemented ${chosenText}. Added an Avian observer system to watch for entity perimeter breaches and trigger score state dispatch.`;
+      bevySnippetUpdate = 'Add boundary check system & score broadcast observer';
+      nextQuestion = {
+        id: 'q-physics-restitution',
+        category: 'physics',
+        title: 'Step 2: Ball Restitution & Elasticity',
+        description: 'How bouncy should the physics materials feel during collisions?',
+        options: [
+          {
+            id: 'opt-super-elastic',
+            label: 'Super-Bouncy (0.95 Restitution)',
+            description: 'Near-perpetual kinetic momentum. Chaotic fun.',
+            physicsSnippet: 'Restitution::new(0.95)',
+          },
+          {
+            id: 'opt-moderate',
+            label: 'Controlled Sports Ball (0.75 Restitution)',
+            description: 'Realistic squash and bounce. Tactical precision.',
+            physicsSnippet: 'Restitution::new(0.75)',
+          },
+          {
+            id: 'opt-low-damping',
+            label: 'Heavy Metal Core (0.40 Restitution + Heavy Mass)',
+            description: 'Low bounce, high impact impulse displacement.',
+            physicsSnippet: 'Restitution::new(0.40) & Mass(5.0)',
+          },
+        ],
+      };
+    } else if (activeGame.pendingQuestion.category === 'physics') {
+      designerResponse = `Applied physics material configuration: ${chosenText}. Updated the Restitution component across all dynamic colliders.`;
+      bevySnippetUpdate = 'Updated Restitution & Friction components in Bevy ECS world';
+      nextQuestion = {
+        id: 'q-rules-powerups',
+        category: 'rules',
+        title: 'Step 3: Powerup & Hazard Spawn Loop',
+        description: 'Would you like random powerups (Speed boost, Mass multiplier) spawned by timer?',
+        options: [
+          {
+            id: 'opt-powerups-yes',
+            label: 'Timed Spawn of Mass & Speed Pickups',
+            description: 'Spawn pickups every 8s using Bevy Timer and Avian Sensor colliders.',
+            physicsSnippet: 'Collider::circle(12.0) with Sensor component',
+          },
+          {
+            id: 'opt-pure-skill',
+            label: 'Pure Skill (No Random Pickups)',
+            description: 'Clean competitive physics without external variables.',
+            physicsSnippet: 'No secondary pickup entities spawned',
+          },
+        ],
+      };
+    } else {
+      designerResponse = `Game loop specification finalized for ${activeGame.title}! The Bevy ECS architecture is compiled and ready for preview or publishing.`;
+      bevySnippetUpdate = 'Complete Bevy 0.15 + Avian2D game loop ready';
+      nextQuestion = undefined;
+    }
+
+    const designerMessage = {
+      id: `d-${Date.now() + 1}`,
+      sender: 'designer' as const,
+      text: designerResponse,
+      timestamp: Date.now() + 1,
+      bevyUpdate: bevySnippetUpdate,
+      question: nextQuestion,
+    };
+
+    setGameWorkspaces((prev) =>
+      prev.map((g) => {
+        if (g.id === activeGame.id) {
+          return {
+            ...g,
+            physicsConfig: {
+              ...g.physicsConfig,
+              restitution:
+                optionId === 'opt-super-elastic'
+                  ? 0.95
+                  : optionId === 'opt-moderate'
+                  ? 0.75
+                  : g.physicsConfig.restitution,
+            },
+            chatHistory: [...g.chatHistory, userMessage, designerMessage],
+            pendingQuestion: nextQuestion,
+          };
+        }
+        return g;
+      })
+    );
   };
 
-  const handleQuickVerificationIntent = (label: string) => {
-    onDispatchIntent?.(`Run zero-drift invariant verification: ${label}`, 'feat');
+  const handleSendMessage = (text: string) => {
+    const userMsg = {
+      id: `u-${Date.now()}`,
+      sender: 'user' as const,
+      text,
+      timestamp: Date.now(),
+    };
+
+    const designerMsg = {
+      id: `d-${Date.now() + 1}`,
+      sender: 'designer' as const,
+      text: `Ingested mechanic specification: "${text}". Synthesizing corresponding Bevy ECS systems and Avian physics colliders...`,
+      timestamp: Date.now() + 1,
+      bevyUpdate: `Synthesized system for: ${text.slice(0, 30)}...`,
+    };
+
+    setGameWorkspaces((prev) =>
+      prev.map((g) =>
+        g.id === activeGame.id
+          ? { ...g, chatHistory: [...g.chatHistory, userMsg, designerMsg] }
+          : g
+      )
+    );
+  };
+
+  const handleResetInterview = () => {
+    setGameWorkspaces((prev) =>
+      prev.map((g) => {
+        if (g.id === activeGame.id) {
+          return {
+            ...g,
+            chatHistory: [
+              {
+                id: `m-init-${Date.now()}`,
+                sender: 'designer',
+                text: `Restarted design interview for ${g.title}. What core mechanics would you like to build?`,
+                timestamp: Date.now(),
+              },
+            ],
+            pendingQuestion: {
+              id: 'q-restart-mode',
+              category: 'mode',
+              title: 'Step 1: Game Mode & Objective',
+              description: 'Select the primary gameplay loop:',
+              options: [
+                {
+                  id: 'opt-arena',
+                  label: 'Sumo Bounce Arena',
+                  description: 'Knock opponents off the perimeter with impulsive collisions.',
+                },
+                {
+                  id: 'opt-race',
+                  label: 'Physics Time Trial',
+                  description: 'Navigate obstacle courses with restitution momentum.',
+                },
+              ],
+            },
+          };
+        }
+        return g;
+      })
+    );
+  };
+
+  const handleCreateWorkspace = (partial: Partial<GameWorkspace>) => {
+    const newWs: GameWorkspace = {
+      id: partial.id || `game-${Date.now()}`,
+      title: partial.title || 'Untitled Game',
+      tagline: partial.tagline || 'Custom Bevy & Avian physics game',
+      dimension: partial.dimension || '2d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2',
+      status: 'drafting',
+      playCount: 0,
+      likes: 0,
+      thumbnailColor: '#0ABAB5',
+      physicsConfig: {
+        gravity: 9.81,
+        restitution: 0.85,
+        friction: 0.1,
+        linearDamping: 0.05,
+        substeps: 8,
+      },
+      gameLoop: {
+        modeName: 'Custom Mode',
+        cameraPerspective: partial.dimension === '3d' ? '3d_arena' : '2d_topdown',
+        primaryInput: 'Keyboard & Mouse',
+        objective: 'Defeat all targets or survive',
+        scoringRule: 'Standard points',
+        failCondition: 'Health reaches 0',
+      },
+      bevyCode: `//! Bevy 0.15 + ${partial.dimension === '3d' ? 'avian3d' : 'avian2d'} Game Scaffold
+use bevy::prelude::*;
+use ${partial.dimension === '3d' ? 'avian3d' : 'avian2d'}::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .run();
+}`,
+      chatHistory: [
+        {
+          id: `m-init-${Date.now()}`,
+          sender: 'designer',
+          text: `Welcome! Created new workspace: ${partial.title}. Let us configure the core Avian physics and ECS loop.`,
+          timestamp: Date.now(),
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-new-mode',
+        category: 'mode',
+        title: 'Step 1: Choose Core Movement & Control',
+        description: 'How does the player control their character in the physics world?',
+        options: [
+          {
+            id: 'opt-mouse-impulse',
+            label: 'Mouse Impulse Vector',
+            description: 'Aim and launch impulses like a slingshot.',
+          },
+          {
+            id: 'opt-wasd-velocity',
+            label: 'Direct WASD / Kinematic Movement',
+            description: 'Classic top-down or platformer controls.',
+          },
+        ],
+      },
+    };
+
+    setGameWorkspaces((prev) => [newWs, ...prev]);
+    setActiveWorkspaceId(newWs.id);
+  };
+
+  const handlePublishCurrent = (gameId: string) => {
+    setGameWorkspaces((prev) =>
+      prev.map((g) => (g.id === gameId ? { ...g, status: 'published', playCount: 1 } : g))
+    );
+    setActiveSubTab('published');
+  };
+
+  const handleLaunchLobby = (game: GameWorkspace) => {
+    const roomCode = `#ZERO-${Math.floor(1000 + Math.random() * 9000)}`;
+    const joinUrl = `http://localhost:5173/lobby/${roomCode.replace('#ZERO-', '')}`;
+
+    const newLobby: MultiplayerLobby = {
+      gameId: game.id,
+      gameTitle: game.title,
+      roomCode,
+      hostName: activeUser?.name.split(' ')[0] || 'Hideo',
+      joinUrl,
+      status: 'waiting',
+      tickRateHz: 60,
+      clientPrediction: true,
+      peers: [
+        {
+          id: 'p-host',
+          name: `${activeUser?.name.split(' ')[0] || 'Hideo'} (Host)`,
+          role: 'host',
+          pingMs: 2,
+          isReady: true,
+        },
+        {
+          id: 'p-peer-1',
+          name: 'rtx-mesh-node (po)',
+          role: 'player',
+          pingMs: 14,
+          isReady: true,
+        },
+      ],
+    };
+
+    setActiveLobby(newLobby);
+    setIsLobbyOpen(true);
+  };
+
+  const handleStartMatch = (lobby: MultiplayerLobby) => {
+    setIsLobbyOpen(false);
+    setActiveSubTab('studio');
+    setStudioRightPane('preview');
+    // Dispatch notice or action
+    onDispatchIntent?.(`Launch multiplayer game match: ${lobby.gameTitle} (${lobby.roomCode})`, 'feat');
   };
 
   return (
     <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none font-sans text-xs sm:text-sm">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Zero Header Banner with Subtle Depth */}
-        <div className="subtle-depth rounded-2xl p-6 sm:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-200/80">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Zero Studio Master Header with Subtle Depth */}
+        <div className="subtle-depth rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-5 border-b border-stone-200/80">
             <div className="space-y-1.5">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-xl bg-stone-900 flex items-center justify-center text-white font-medium text-sm shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]">
@@ -135,7 +681,7 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
                   <h1 className="text-xl sm:text-2xl font-semibold text-stone-950 tracking-tight flex items-center space-x-2.5">
                     <span>Zero</span>
                     <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-700">
-                      v8 Engine
+                      Bevy & Avian Game Studio
                     </span>
                     {activeUser && (
                       <span className="text-xs font-normal text-stone-400">
@@ -146,323 +692,144 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-stone-500 font-normal leading-relaxed pt-1">
-                Zero-overhead speculative execution, deterministic invariants, and authoritative CAS delivery across {activeWorkspace?.name || 'zero-petri'}.
+                Data-driven Bevy ECS game engine studio with Avian physics, conversational game loop development, and QR-enabled multiplayer lobbies across {activeWorkspace?.name || 'zero-petri'}.
               </p>
             </div>
 
-            {/* Top Action Buttons */}
-            <div className="flex items-center space-x-3">
+            {/* Sub-Tab Navigation Switcher */}
+            <div className="flex items-center space-x-1 p-1 rounded-xl bg-stone-100/70 border border-stone-200/80 self-start lg:self-auto">
               <button
-                onClick={handleRunAudit}
-                disabled={isAuditing}
-                className="subtle-depth-interactive flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-stone-900 text-white hover:bg-stone-800 text-xs sm:text-sm font-medium transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+                type="button"
+                onClick={() => setActiveSubTab('studio')}
+                className={`subtle-depth-interactive flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                  activeSubTab === 'studio'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isAuditing ? 'animate-spin' : ''}`} />
-                <span>{isAuditing ? 'Verifying Invariants...' : 'Run Invariant Audit'}</span>
+                <Gamepad2 className="w-3.5 h-3.5" />
+                <span>Studio & Physics</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('published')}
+                className={`subtle-depth-interactive flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                  activeSubTab === 'published'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Published Games & Lobbies</span>
               </button>
             </div>
           </div>
 
-          {/* Audit Notice Pill */}
-          {auditNotice && (
-            <div className="mt-4 p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/90 text-emerald-800 text-xs font-medium flex items-center space-x-2 animate-in fade-in duration-200">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>{auditNotice}</span>
-            </div>
+          {/* Sub-Tab 1: Game Workspace Strip */}
+          {activeSubTab === 'studio' && (
+            <GameWorkspaceSelector
+              workspaces={gameWorkspaces}
+              activeWorkspaceId={activeWorkspaceId}
+              onSelectWorkspace={setActiveWorkspaceId}
+              onCreateWorkspace={handleCreateWorkspace}
+              onPublishCurrent={handlePublishCurrent}
+            />
           )}
-
-          {/* 4 Zero Pillars Summary Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
-            <div className="subtle-depth-card rounded-xl p-4">
-              <div className="text-xs font-normal text-stone-500">Speculative Mutations</div>
-              <div className="text-xl font-semibold text-stone-900 mt-1 flex items-baseline space-x-1.5">
-                <span>0</span>
-                <span className="text-xs font-normal text-emerald-600">Strict</span>
-              </div>
-              <div className="text-[11px] text-stone-400 mt-0.5">Feedback loop first</div>
-            </div>
-
-            <div className="subtle-depth-card rounded-xl p-4">
-              <div className="text-xs font-normal text-stone-500">CAS Branch Drift</div>
-              <div className="text-xl font-semibold text-stone-900 mt-1 flex items-baseline space-x-1.5">
-                <span>0</span>
-                <span className="text-xs font-normal text-emerald-600">Synced</span>
-              </div>
-              <div className="text-[11px] text-stone-400 mt-0.5">Trunk ref main authority</div>
-            </div>
-
-            <div className="subtle-depth-card rounded-xl p-4">
-              <div className="text-xs font-normal text-stone-500">Stream Overflow</div>
-              <div className="text-xl font-semibold text-stone-900 mt-1 flex items-baseline space-x-1.5">
-                <span>0</span>
-                <span className="text-xs font-normal text-emerald-600">Guarded</span>
-              </div>
-              <div className="text-[11px] text-stone-400 mt-0.5">64 MiB ceiling active</div>
-            </div>
-
-            <div className="subtle-depth-card rounded-xl p-4">
-              <div className="text-xs font-normal text-stone-500">Hand-edited Protocols</div>
-              <div className="text-xl font-semibold text-stone-900 mt-1 flex items-baseline space-x-1.5">
-                <span>0</span>
-                <span className="text-xs font-normal text-emerald-600">100% Rust</span>
-              </div>
-              <div className="text-[11px] text-stone-400 mt-0.5">Testkit regeneration only</div>
-            </div>
-          </div>
         </div>
 
-        {/* Runtime Engine & Model Dispatch Configuration */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Engine Selector */}
-          <div className="lg:col-span-7 subtle-depth rounded-2xl p-6 sm:p-7 space-y-5">
-            <div className="flex items-center justify-between border-b border-stone-200/70 pb-4">
-              <div className="flex items-center space-x-2.5">
-                <Cpu className="w-4 h-4 text-stone-800" />
-                <h2 className="text-sm font-semibold text-stone-900">Runtime Harness & Dispatch</h2>
-              </div>
-              <span className="text-xs text-stone-500 font-normal">
-                Selector: <span className="text-stone-800 font-medium">Explicit caller-authored</span>
-              </span>
+        {/* View Content based on Sub-Tab */}
+        {activeSubTab === 'studio' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left Column: Conversational Game Designer & Interactive Questions */}
+            <div className="lg:col-span-6 h-[640px] flex flex-col">
+              <ConversationalGameDesigner
+                chatHistory={activeGame.chatHistory}
+                pendingQuestion={activeGame.pendingQuestion}
+                onAnswerQuestion={handleAnswerQuestion}
+                onSendMessage={handleSendMessage}
+                onResetInterview={handleResetInterview}
+              />
             </div>
 
-            <div className="space-y-4">
-              {/* Harness Pick */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-stone-700">Execution Harness</label>
-                <div className="grid grid-cols-2 gap-3">
+            {/* Right Column: Interactive Avian Physics Canvas OR Bevy Code Inspector */}
+            <div className="lg:col-span-6 h-[640px] flex flex-col space-y-3">
+              {/* Right Pane View Mode Switcher */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center space-x-1.5 p-1 rounded-xl bg-stone-100/70 border border-stone-200/80">
                   <button
                     type="button"
-                    onClick={() => setActiveHarness('zeroshot-native-v2')}
-                    className={`p-3 rounded-xl border text-left transition-all subtle-depth-interactive ${
-                      activeHarness === 'zeroshot-native-v2'
-                        ? 'border-stone-900 bg-stone-900 text-white shadow-sm'
-                        : 'border-stone-200/90 bg-white/80 text-stone-700 hover:border-stone-400'
+                    onClick={() => setStudioRightPane('preview')}
+                    className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      studioRightPane === 'preview'
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
-                    <div className="font-semibold text-xs flex items-center justify-between">
-                      <span>zeroshot-native-v2</span>
-                      <span className={`w-1.5 h-1.5 rounded-full ${activeHarness === 'zeroshot-native-v2' ? 'bg-[#0ABAB5]' : 'bg-stone-300'}`} />
-                    </div>
-                    <div className={`text-[11px] mt-1 ${activeHarness === 'zeroshot-native-v2' ? 'text-stone-300' : 'text-stone-400'}`}>
-                      Canonical Rust CLI & contained runner
-                    </div>
+                    Live Physics Canvas
                   </button>
-
                   <button
                     type="button"
-                    onClick={() => setActiveHarness('cluster-client')}
-                    className={`p-3 rounded-xl border text-left transition-all subtle-depth-interactive ${
-                      activeHarness === 'cluster-client'
-                        ? 'border-stone-900 bg-stone-900 text-white shadow-sm'
-                        : 'border-stone-200/90 bg-white/80 text-stone-700 hover:border-stone-400'
+                    onClick={() => setStudioRightPane('code')}
+                    className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      studioRightPane === 'code'
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
-                    <div className="font-semibold text-xs flex items-center justify-between">
-                      <span>cluster-client</span>
-                      <span className={`w-1.5 h-1.5 rounded-full ${activeHarness === 'cluster-client' ? 'bg-[#0ABAB5]' : 'bg-stone-300'}`} />
-                    </div>
-                    <div className={`text-[11px] mt-1 ${activeHarness === 'cluster-client' ? 'text-stone-300' : 'text-stone-400'}`}>
-                      OpenRPC distributed cluster gateway
-                    </div>
+                    Bevy ECS Code
                   </button>
                 </div>
+
+                <span className="text-[11px] text-stone-500 font-sans">
+                  {studioRightPane === 'preview' ? '60Hz Avian Simulation' : 'Idiomatic Rust Systems'}
+                </span>
               </div>
 
-              {/* Provider & Model Matrix */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-700">Provider</label>
-                  <select
-                    value={selectedProvider}
-                    onChange={(e) => {
-                      const p = e.target.value as 'anthropic' | 'openai' | 'vertex';
-                      setSelectedProvider(p);
-                      if (p === 'anthropic') setSelectedModel('claude-3-5-sonnet');
-                      else if (p === 'openai') setSelectedModel('o3-mini');
-                      else setSelectedModel('gemini-2.5-pro');
-                    }}
-                    className="w-full bg-white/90 border border-stone-200/90 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900 font-sans"
-                  >
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openai">OpenAI (Codex / o3)</option>
-                    <option value="vertex">Google Vertex AI (Gemini)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-700">Model Identifier</label>
-                  <input
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full bg-white/90 border border-stone-200/90 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900 font-sans"
-                    placeholder="e.g. claude-3-5-sonnet"
+              <div className="flex-1 overflow-hidden">
+                {studioRightPane === 'preview' ? (
+                  <AvianPhysicsCanvas
+                    gameTitle={activeGame.title}
+                    physicsConfig={activeGame.physicsConfig}
                   />
-                </div>
-              </div>
-
-              {/* Contained Execution Guard Specs */}
-              <div className="subtle-depth-well rounded-xl p-3.5 space-y-2 text-xs">
-                <div className="font-medium text-stone-800 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 text-stone-600" />
-                    <span>Contained Provider Session Invariants</span>
-                  </span>
-                  <span className="text-[11px] text-emerald-700 bg-emerald-100/70 border border-emerald-200/80 px-2 py-0.5 rounded-full font-medium">
-                    Fail-Closed
-                  </span>
-                </div>
-                <p className="text-stone-500 text-[11px] leading-relaxed">
-                  Session bounds post-exit I/O draining to 10-minute ceiling while observing cancellation. Recovery turns disable reused sessions, MCP, write/network tools, and user-defined agents.
-                </p>
+                ) : (
+                  <BevyCodeInspector
+                    gameTitle={activeGame.title}
+                    dimension={activeGame.dimension}
+                    bevyCode={activeGame.bevyCode}
+                    bevyVersion={activeGame.bevyVersion}
+                    avianVersion={activeGame.avianVersion}
+                  />
+                )}
               </div>
             </div>
           </div>
+        )}
 
-          {/* Quick Verification Actions */}
-          <div className="lg:col-span-5 subtle-depth rounded-2xl p-6 sm:p-7 space-y-5">
-            <div className="flex items-center space-x-2.5 border-b border-stone-200/70 pb-4">
-              <Play className="w-4 h-4 text-stone-800" />
-              <h2 className="text-sm font-semibold text-stone-900">Zero-Drift Dispatchers</h2>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => handleQuickVerificationIntent('Workspace Clippy & Target Checks')}
-                className="w-full subtle-depth-card subtle-depth-interactive p-3.5 rounded-xl text-left flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-medium text-stone-900 group-hover:text-stone-950">
-                    cargo clippy & cargo test
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Verify 4-parameter clippy ceiling and narrowest workspace lane
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-stone-800 transition-colors" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickVerificationIntent('Protocol Schema Conformance Check')}
-                className="w-full subtle-depth-card subtle-depth-interactive p-3.5 rounded-xl text-left flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-medium text-stone-900 group-hover:text-stone-950">
-                    npm run protocol:check
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Confirm generated OpenRPC schema matches Rust testkit source of truth
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-stone-800 transition-colors" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickVerificationIntent('Distribution Check & npm Sync')}
-                className="w-full subtle-depth-card subtle-depth-interactive p-3.5 rounded-xl text-left flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-medium text-stone-900 group-hover:text-stone-950">
-                    npm run distribution:check
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Verify immutable GitHub release targets and container declarations
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-stone-800 transition-colors" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickVerificationIntent('Python SDK Ruff & mypy Lint')}
-                className="w-full subtle-depth-card subtle-depth-interactive p-3.5 rounded-xl text-left flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-medium text-stone-900 group-hover:text-stone-950">
-                    sdks/python ruff & mypy
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Run strict type checking and pydoclint on zeroshot Python SDK
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-stone-800 transition-colors" />
-              </button>
-            </div>
+        {/* Sub-Tab 2: Published Games Catalog & Multiplayer Lobbies */}
+        {activeSubTab === 'published' && (
+          <div className="subtle-depth rounded-2xl p-6 sm:p-8">
+            <PublishedGamesCatalog
+              games={gameWorkspaces}
+              onLaunchLobby={handleLaunchLobby}
+              onSelectStudioGame={(gameId) => {
+                setActiveWorkspaceId(gameId);
+                setActiveSubTab('studio');
+              }}
+            />
           </div>
-        </div>
+        )}
 
-        {/* Live Architectural Invariants List */}
-        <div className="subtle-depth rounded-2xl p-6 sm:p-7 space-y-4">
-          <div className="flex items-center justify-between border-b border-stone-200/70 pb-4">
-            <div className="flex items-center space-x-2.5">
-              <ShieldCheck className="w-4 h-4 text-stone-800" />
-              <h2 className="text-sm font-semibold text-stone-900">Architectural Invariant Enforcement</h2>
-            </div>
-            <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/70 font-medium">
-              6 Invariants Active
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {invariants.map((inv) => (
-              <div
-                key={inv.id}
-                className="subtle-depth-card rounded-xl p-4 space-y-2 border border-stone-200/80 hover:border-stone-300 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-medium text-stone-900 text-xs sm:text-sm">{inv.name}</span>
-                  </div>
-                  <span className="text-[10px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
-                    {inv.code}
-                  </span>
-                </div>
-
-                <p className="text-xs text-stone-600 font-normal leading-relaxed">
-                  {inv.description}
-                </p>
-
-                <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[11px] text-stone-400">
-                  <span>Scope: {inv.targetPath}</span>
-                  <span>Checked {inv.lastChecked}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Live Invariant Telemetry Feed */}
-        <div className="subtle-depth rounded-2xl p-6 space-y-3">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-200/70">
-            <div className="flex items-center space-x-2">
-              <Activity className="w-4 h-4 text-stone-700" />
-              <h3 className="text-xs font-semibold text-stone-900 uppercase tracking-wider">
-                CAS & Invariant Telemetry Stream
-              </h3>
-            </div>
-            <span className="text-[11px] text-stone-400">Trunk Authority: main</span>
-          </div>
-
-          <div className="space-y-2">
-            {telemetryEvents.map((evt, idx) => (
-              <div
-                key={idx}
-                className="subtle-depth-well rounded-xl px-4 py-2.5 text-xs text-stone-700 flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
-                  <span>{evt}</span>
-                </div>
-                <span className="text-[10px] text-stone-400">Just now</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Multiplayer Lobby Modal with Scannable QR Code */}
+        <MultiplayerLobbyModal
+          lobby={activeLobby}
+          isOpen={isLobbyOpen}
+          onClose={() => setIsLobbyOpen(false)}
+          onStartMatch={handleStartMatch}
+        />
       </div>
     </div>
   );
 };
+
 export default ZeroView;
