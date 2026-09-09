@@ -25,8 +25,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
     'Petri native runtime initialized on Linux x86_64 (host: po)',
     'Loaded authentic git ledger from /home/hideo/Documents/GitHub/zero-petri (branch: main)',
-    'Active user: Hideo (intortpo) <82773932+intortpo@users.noreply.github.com>',
-    'Hardware profile: Native Local Client · System CPU execution',
+    'Active operator: Hideo (intortpo) <82773932+intortpo@users.noreply.github.com>',
   ]);
 
   const selectedItem = items[selectedIndex] || items[0];
@@ -106,13 +105,13 @@ export const TuiView: React.FC<TuiViewProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full h-full p-4 sm:p-6 font-mono text-xs select-none flex flex-col justify-between overflow-hidden">
+    <div className="flex-1 w-full h-full p-5 sm:p-8 font-mono text-sm select-none flex flex-col justify-between overflow-hidden">
       {/* Top Header Bar */}
-      <div className="border border-stone-200/90 rounded-2xl p-3.5 bg-white/95 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center space-x-3 text-xs">
-          <span className="font-bold text-stone-900 flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
-            <span>petri cli</span>
+      <div className="border border-stone-200/80 rounded-2xl p-4 bg-white/70 backdrop-blur-2xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-3 text-sm">
+          <span className="font-bold text-stone-900 flex items-center space-x-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
+            <span className="text-base tracking-tight">petri cli</span>
           </span>
           <span className="text-stone-300">|</span>
           <span className="text-stone-600">
@@ -128,33 +127,33 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] text-stone-500">
+        <div className="flex items-center space-x-3 text-xs text-stone-500">
           <span>host: po (x86_64)</span>
           <span className="text-stone-300">·</span>
           <span>runtime: tauri v2</span>
-          <span className="px-2 py-0.5 rounded-md bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4] font-medium text-[10px]">
+          <span className="px-2.5 py-1 rounded-lg bg-[#E0F7F6] text-[#0A7B76] border border-[#B4E8E4] font-semibold text-xs">
             active
           </span>
         </div>
       </div>
 
       {/* Main Split View */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 my-3 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 my-4 overflow-hidden">
         {/* Left Column: Authentic Git & Task Ledger (7 cols) */}
-        <div className="lg:col-span-7 border border-stone-200/90 rounded-2xl p-4 bg-white/95 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
-          <div className="border-b border-stone-200 pb-2.5 mb-2.5 flex items-center justify-between text-xs text-stone-700 font-semibold">
+        <div className="lg:col-span-7 border border-stone-200/80 rounded-2xl p-5 bg-white/70 backdrop-blur-2xl flex flex-col overflow-hidden">
+          <div className="border-b border-stone-200/80 pb-3 mb-3 flex items-center justify-between text-sm text-stone-800 font-semibold">
             <span>Repository Tasks & Git Commits ({items.length})</span>
-            <span className="text-[11px] text-stone-400 font-normal">
+            <span className="text-xs text-stone-500 font-normal">
               [↑/↓] select · [f] fanout · [a] advance
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-            <div className="grid grid-cols-12 text-[10px] text-stone-400 pb-1.5 border-b border-stone-100 font-semibold uppercase tracking-wider">
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            <div className="grid grid-cols-12 text-xs text-stone-400 pb-2 border-b border-stone-100 font-semibold uppercase tracking-wider">
               <span className="col-span-2">REF / ID</span>
               <span className="col-span-2">STAGE</span>
-              <span className="col-span-1">KIND</span>
-              <span className="col-span-7">DESCRIPTION</span>
+              <span className="col-span-2">KIND</span>
+              <span className="col-span-6">DESCRIPTION</span>
             </div>
 
             {items.map((item, idx) => {
@@ -167,18 +166,18 @@ export const TuiView: React.FC<TuiViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => setSelectedIndex(idx)}
-                  className={`grid grid-cols-12 py-2 px-2.5 rounded-xl cursor-pointer transition-all text-xs items-center ${
+                  className={`grid grid-cols-12 py-3 px-3 rounded-xl cursor-pointer transition-all text-xs sm:text-sm items-center ${
                     isSelected
-                      ? 'bg-[#E0F7F6] text-stone-900 border border-[#B4E8E4] font-medium shadow-sm'
-                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900 border border-transparent'
+                      ? 'bg-[#E0F7F6]/80 text-stone-900 border border-[#B4E8E4] font-medium'
+                      : 'text-stone-700 hover:bg-white/60 hover:text-stone-900 border border-transparent'
                   }`}
                 >
-                  <span className="col-span-2 text-[11px] font-mono text-stone-500">
+                  <span className="col-span-2 font-mono text-stone-500">
                     {refLabel}
                   </span>
                   <span className="col-span-2">
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${
+                      className={`px-2 py-0.5 rounded-md text-xs font-semibold uppercase ${
                         item.stage === 'merged'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : item.stage === 'gated'
@@ -191,10 +190,10 @@ export const TuiView: React.FC<TuiViewProps> = ({
                       {item.stage.replace('_', ' ')}
                     </span>
                   </span>
-                  <span className="col-span-1 text-[10px] uppercase text-stone-400">
+                  <span className="col-span-2 text-xs uppercase text-stone-500 font-medium">
                     {item.kind}
                   </span>
-                  <span className="col-span-7 truncate text-[11px] text-stone-800">
+                  <span className="col-span-6 truncate text-stone-900 font-medium">
                     {item.title}
                   </span>
                 </div>
@@ -204,14 +203,13 @@ export const TuiView: React.FC<TuiViewProps> = ({
 
           {/* Selected Task Inspection Bar */}
           {selectedItem && (
-            <div className="mt-3 pt-2.5 border-t border-stone-200 text-[11px] flex flex-wrap items-center justify-between gap-2 text-stone-600">
-              <div className="truncate max-w-md font-medium text-stone-900">
+            <div className="mt-3.5 pt-3 border-t border-stone-200/80 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-2 text-stone-600">
+              <div className="truncate max-w-lg font-semibold text-stone-900">
                 Selected: {selectedItem.title}
               </div>
-              <div className="flex items-center space-x-3 text-[10px] text-stone-500">
+              <div className="flex items-center space-x-3 text-xs text-stone-500">
                 <span>stage: {selectedItem.stage}</span>
-                {selectedItem.commitHash && <span>commit: {selectedItem.commitHash}</span>}
-                <span className="text-[#0A7B76] font-semibold">
+                <span className="text-[#0A7B76] font-bold">
                   [F] Fanout · [R] Recurse · [A] Advance
                 </span>
               </div>
@@ -219,27 +217,27 @@ export const TuiView: React.FC<TuiViewProps> = ({
           )}
         </div>
 
-        {/* Right Column: Execution Trace & Authentic System Info (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col space-y-3 overflow-hidden">
+        {/* Right Column: Execution Trace & System Info (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col space-y-4 overflow-hidden">
           {/* Upper: Chain of Thought & Worker Activity */}
-          <div className="flex-1 border border-stone-200/90 rounded-2xl p-4 bg-white/95 backdrop-blur-xl flex flex-col overflow-hidden shadow-sm">
-            <div className="border-b border-stone-200 pb-2 mb-2.5 flex items-center justify-between text-xs text-stone-700 font-semibold">
+          <div className="flex-1 border border-stone-200/80 rounded-2xl p-5 bg-white/70 backdrop-blur-2xl flex flex-col overflow-hidden">
+            <div className="border-b border-stone-200/80 pb-2.5 mb-3 flex items-center justify-between text-sm text-stone-800 font-semibold">
               <span>Autonomous Execution Trace</span>
-              <span className="text-[10px] text-[#0A7B76] font-medium bg-[#E0F7F6] px-2 py-0.5 rounded-full border border-[#B4E8E4]">
+              <span className="text-xs text-[#0A7B76] font-semibold bg-[#E0F7F6] px-2.5 py-0.5 rounded-full border border-[#B4E8E4]">
                 turn {selectedItem?.recursionDepth ?? 1}
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 text-[11px] text-stone-600 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2.5 text-xs sm:text-sm text-stone-700 pr-1">
               {selectedItem?.chainOfThought && selectedItem.chainOfThought.length > 0 ? (
                 selectedItem.chainOfThought.map((thought, tIdx) => (
-                  <div key={tIdx} className="flex items-start space-x-2 p-2 rounded-lg bg-stone-50/80 border border-stone-100">
+                  <div key={tIdx} className="flex items-start space-x-2.5 p-3 rounded-xl bg-white/70 border border-stone-200/70">
                     <span className="text-[#0ABAB5] font-bold select-none">❯</span>
-                    <span className="leading-relaxed text-stone-700">{thought}</span>
+                    <span className="leading-relaxed text-stone-800">{thought}</span>
                   </div>
                 ))
               ) : (
-                <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 text-stone-400 text-center italic">
+                <div className="p-4 rounded-xl bg-white/50 border border-stone-200/70 text-stone-400 text-center italic">
                   {selectedItem?.stage === 'merged'
                     ? `Merged into main with commit ${selectedItem.commitHash || 'HEAD'}.`
                     : 'Awaiting autonomous agent dispatch.'}
@@ -247,17 +245,17 @@ export const TuiView: React.FC<TuiViewProps> = ({
               )}
 
               {selectedItem?.agents && selectedItem.agents.length > 0 && (
-                <div className="pt-2 border-t border-stone-200 space-y-1.5">
-                  <div className="text-[10px] text-stone-500 font-semibold uppercase">
-                    Fanned-Out Agents ({selectedItem.agents.length}):
+                <div className="pt-3 border-t border-stone-200/80 space-y-2">
+                  <div className="text-xs text-stone-600 font-bold uppercase">
+                    Fanned-Out Workers ({selectedItem.agents.length}):
                   </div>
                   {selectedItem.agents.map((ag) => (
-                    <div key={ag.id} className="p-2 rounded-xl bg-stone-50 border border-stone-200 text-[10px]">
-                      <div className="flex justify-between font-semibold text-stone-800">
+                    <div key={ag.id} className="p-3 rounded-xl bg-white/80 border border-stone-200 text-xs">
+                      <div className="flex justify-between font-bold text-stone-900">
                         <span>{ag.role}</span>
                         <span className="text-[#0A7B76]">{ag.status}</span>
                       </div>
-                      {ag.thought && <div className="italic text-stone-500 mt-1">"{ag.thought}"</div>}
+                      {ag.thought && <div className="italic text-stone-600 mt-1">"{ag.thought}"</div>}
                     </div>
                   ))}
                 </div>
@@ -266,34 +264,34 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </div>
 
           {/* Lower: Genuine Runtime & Environment Telemetry */}
-          <div className="h-44 border border-stone-200/90 rounded-2xl p-4 bg-white/95 backdrop-blur-xl flex flex-col justify-between text-xs shadow-sm">
-            <div className="border-b border-stone-200 pb-1.5 text-xs text-stone-700 font-semibold flex justify-between">
+          <div className="h-48 border border-stone-200/80 rounded-2xl p-5 bg-white/70 backdrop-blur-2xl flex flex-col justify-between text-xs sm:text-sm">
+            <div className="border-b border-stone-200/80 pb-2 text-sm text-stone-800 font-semibold flex justify-between">
               <span>Host & Workspace Environment</span>
-              <span className="text-[10px] text-stone-400">verified</span>
+              <span className="text-xs text-stone-400 font-normal">verified</span>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-stone-600">
+            <div className="space-y-2 text-xs sm:text-sm text-stone-700">
               <div className="flex justify-between">
-                <span className="text-stone-400">Host / Machine:</span>
-                <span className="text-stone-800 font-medium">po (Linux 7.1.9-arch1-2 x86_64)</span>
+                <span className="text-stone-500">Host / Machine:</span>
+                <span className="text-stone-900 font-semibold">po (Linux 7.1.9-arch1-2 x86_64)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-400">Workspace Path:</span>
-                <span className="text-stone-800 truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
+                <span className="text-stone-500">Workspace Path:</span>
+                <span className="text-stone-900 font-medium truncate max-w-[220px]" title="/home/hideo/Documents/GitHub/zero-petri">
                   .../Documents/GitHub/zero-petri
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-400">Hardware Profile:</span>
+                <span className="text-stone-500">Hardware Profile:</span>
                 <span className="text-stone-800">Native CPU Host</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-400">Tracked Tasks:</span>
-                <span className="text-stone-800">{items.length} total ({items.filter(i => i.stage === 'merged').length} merged)</span>
+                <span className="text-stone-500">Tracked Tasks:</span>
+                <span className="text-stone-900 font-semibold">{items.length} total ({items.filter(i => i.stage === 'merged').length} merged)</span>
               </div>
             </div>
 
-            <div className="text-[10px] text-stone-400 border-t border-stone-100 pt-1.5 flex justify-between">
+            <div className="text-xs text-stone-400 border-t border-stone-200/60 pt-2 flex justify-between">
               <span>IPC: Tauri v2 Core</span>
               <span>WireGuard: Standalone Node</span>
             </div>
@@ -302,9 +300,9 @@ export const TuiView: React.FC<TuiViewProps> = ({
       </div>
 
       {/* Interactive Command Line Bar & Console Logs */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {consoleLogs.length > 0 && (
-          <div className="px-3.5 py-2 rounded-xl bg-white/90 border border-stone-200 max-h-20 overflow-y-auto space-y-1 text-[11px] text-stone-600 shadow-sm">
+          <div className="px-4 py-2.5 rounded-xl bg-white/70 backdrop-blur-xl border border-stone-200/80 max-h-24 overflow-y-auto space-y-1 text-xs sm:text-sm text-stone-700">
             {consoleLogs.slice(0, 3).map((log, lIdx) => (
               <div key={lIdx} className="truncate font-mono">
                 <span className="text-[#0ABAB5] font-bold">›</span> {log}
@@ -313,8 +311,8 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </div>
         )}
 
-        <div className="border border-stone-200/90 rounded-2xl p-2.5 bg-white/95 backdrop-blur-xl flex items-center space-x-3 shadow-sm">
-          <span className="text-[#0A7B76] font-bold text-xs flex items-center space-x-1 pl-1">
+        <div className="border border-stone-200/80 rounded-2xl p-3 bg-white/75 backdrop-blur-2xl flex items-center space-x-3.5">
+          <span className="text-[#0A7B76] font-bold text-sm flex items-center space-x-1 pl-1">
             <span>hideo@po:~/zero-petri$</span>
           </span>
 
@@ -323,36 +321,36 @@ export const TuiView: React.FC<TuiViewProps> = ({
               value={commandInput}
               onChange={(e) => setCommandInput(e.target.value)}
               placeholder="type command (fanout, recurse, advance, board, skills, memory, stats, help)..."
-              className="w-full bg-transparent text-stone-900 placeholder-stone-400 text-xs font-mono focus:outline-none"
+              className="w-full bg-transparent text-stone-900 placeholder-stone-400 text-sm font-mono focus:outline-none"
             />
           </form>
 
-          <div className="flex items-center space-x-1.5 text-[11px]">
+          <div className="flex items-center space-x-2 text-xs">
             <button
               type="button"
               onClick={() => onSelectView?.('board')}
-              className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-200 text-stone-700 transition-colors font-semibold"
             >
               [1] Board
             </button>
             <button
               type="button"
               onClick={() => onSelectView?.('skills')}
-              className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-200 text-stone-700 transition-colors font-semibold"
             >
               [2] Skills
             </button>
             <button
               type="button"
               onClick={() => onSelectView?.('memory')}
-              className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-200 text-stone-700 transition-colors font-semibold"
             >
               [3] Memory
             </button>
             <button
               type="button"
               onClick={() => onSelectView?.('stats')}
-              className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-200 text-stone-700 transition-colors font-semibold"
             >
               [4] Stats
             </button>

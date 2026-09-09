@@ -98,22 +98,25 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
 
         float f = fbm(p + 4.0 * r);
 
-        // Soft undulating folds (barely noticeable caustics)
-        float silk = sin(p.y * 3.0 + f * 4.0 + t) * 0.5 + 0.5;
-        silk = pow(silk, 3.2);
+        // Soft undulating silk ribbons with smooth depth
+        float silk1 = sin(p.y * 2.5 + f * 3.5 + t * 1.1) * 0.5 + 0.5;
+        silk1 = pow(silk1, 2.2);
+        float silk2 = cos(p.x * 2.0 - f * 2.8 + t * 0.8) * 0.5 + 0.5;
+        silk2 = pow(silk2, 2.0);
+        float silk = mix(silk1, silk2, 0.5);
 
-        // Base soft porcelain alabaster background for light mode
-        vec3 lightBg = vec3(0.975, 0.982, 0.980);
+        // Base soft porcelain alabaster background
+        vec3 lightBg = vec3(0.960, 0.972, 0.970);
 
-        // Soft Tiffany pastel silk blend
-        vec3 silkColor = mix(u_color_primary, u_color_secondary, f);
+        // Soft Tiffany pastel silk ribbons
+        vec3 silkColor = mix(u_color_primary, u_color_secondary, f * 0.75 + silk * 0.25);
         
-        // Exquisite whisper-soft opacity for understated light luxury
-        float alpha = (silk * 0.12 + f * 0.08) * (0.85 + u_activity * 0.25);
+        // Visible, graceful flowing silk opacity under frosted glass
+        float alpha = clamp(silk * 0.38 + f * 0.22, 0.0, 0.60);
 
         vec3 finalColor = mix(lightBg, silkColor, alpha);
 
-        gl_FragColor = vec4(finalColor, 0.95);
+        gl_FragColor = vec4(finalColor, 1.0);
       }
     `;
 
@@ -226,7 +229,7 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80 transition-opacity duration-1000"
+      className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-100 transition-opacity duration-1000"
     />
   );
 };

@@ -374,12 +374,12 @@ export function App() {
   ).length;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#FAFBFB] text-stone-900 font-sans relative">
+    <div className="flex flex-col h-screen w-screen overflow-hidden text-stone-900 font-sans relative">
       {/* Background: Flowing Tiffany pastel light fluid silk shader */}
       <SilkShaderBackground workflowStatus="running" />
 
-      {/* Soft Frost Overlay */}
-      <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 pointer-events-none z-10" />
+      {/* Soft Frost Ambient Overlay */}
+      <div className="absolute inset-0 backdrop-blur-[1px] bg-white/15 pointer-events-none z-10" />
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
