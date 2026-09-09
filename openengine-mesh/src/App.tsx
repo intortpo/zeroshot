@@ -5,6 +5,7 @@ import { PetriKanban } from './components/PetriKanban';
 import { SkillsCatalog } from './components/SkillsCatalog';
 import { MemoryExplorer } from './components/MemoryExplorer';
 import { EnterpriseStats } from './components/EnterpriseStats';
+import { TuiView } from './components/TuiView';
 import { UserProfileModal } from './components/UserProfileModal';
 import { SilkShaderBackground } from './components/SilkShaderBackground';
 import { ApprovalModal } from './components/ApprovalModal';
@@ -24,8 +25,8 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats'
-  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats'>('board');
+  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats' | 'tui'
+  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats' | 'tui'>('board');
 
   // Enterprise Users & Identity State
   const [users, setUsers] = useState<UserProfile[]>([
@@ -151,7 +152,7 @@ export function App() {
       runId: 'run-8f921bc4-001',
       createdAt: Date.now() - 900000,
       updatedAt: Date.now() - 120000,
-      diff: `diff --git a/crates/speculative/src/runner.rs b/crates/speculative/src/runner.rs\nnew file mode 100644\nindex 0000000..9c4a112\n--- /dev/null\n+++ b/crates/speculative/src/runner.rs\n@@ -0,0 +1,24 @@\n+pub struct SpeculativeRunner {\n+    pub target_image: String,\n+    pub vram_ceiling_mb: u64,\n+}\n+\n+impl SpeculativeRunner {\n+    pub fn execute_precomputation(&self) -> Result<(), String> {\n+        println!(\"Spun up speculative test environment on RTX 4090\");\n+        Ok(())\n+    }\n+}`,
+      diff: `diff --git a/crates/speculative/src/runner.rs b/crates/speculative/src/runner.rs\nnew file mode 100644\nindex 0000000..9c4a112\n--- /dev/null\n+++ b/crates/speculative/src/runner.rs\n@@ -0,0 +1,24 @@\n+pub struct SpeculativeRunner {\n+    pub target_image: String,\n+    pub vram_ceiling_mb: u64,\n+}\n+\n+impl SpeculativeRunner {\n+    pub fn execute_precomputation(&self) -> Result<(), String> {\n+        println!("Spun up speculative test environment on RTX 4090");\n+        Ok(())\n+    }\n+}`,
       testLogs: `running 3 tests\ntest runner::tests::test_vram_allocation ... ok\ntest runner::tests::test_anticipatory_dependency_build ... ok\ntest runner::tests::test_type_integrity_proof ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
     },
     {
@@ -263,7 +264,7 @@ export function App() {
       workspaceId: activeWorkspaceId,
       kind,
       title,
-      stage: 'in_flight', // Transitions to in_flight on RTX
+      stage: 'in_flight',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       recursionDepth: 1,
@@ -472,16 +473,16 @@ export function App() {
   ).length;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070707] font-sans relative">
-      {/* Background: Highly performant dark fluid silk shader */}
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#FAFBFB] text-stone-900 font-sans relative">
+      {/* Background: Flowing Tiffany pastel light fluid silk shader */}
       <SilkShaderBackground workflowStatus="running" />
 
       {/* Soft Frost Overlay */}
-      <div className="absolute inset-0 backdrop-blur-[2px] bg-black/35 pointer-events-none z-10" />
+      <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 pointer-events-none z-10" />
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
-        {/* Top Header: Frameless Draggable Petri Bar with Nav, User Switcher, & Workspace */}
+        {/* Top Header: Frameless Light Enterprise Petri Bar with Nav, User Switcher, & Workspace */}
         <NodeMeshStatus
           localNode={localNode}
           peers={peers}
@@ -538,6 +539,21 @@ export function App() {
         {currentView === 'stats' && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <EnterpriseStats activeWorkspace={activeWorkspace} activeUser={activeUser} />
+          </div>
+        )}
+
+        {/* View 5: High-Density Terminal User Interface (TUI) */}
+        {currentView === 'tui' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <TuiView
+              items={visibleItems}
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              onFanOutAgents={handleFanOutAgents}
+              onAdvanceStage={handleAdvanceStage}
+              onRecurseAgent={handleRecurseAgent}
+              onSelectView={setCurrentView}
+            />
           </div>
         )}
       </div>

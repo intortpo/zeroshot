@@ -102,23 +102,18 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
         float silk = sin(p.y * 3.0 + f * 4.0 + t) * 0.5 + 0.5;
         silk = pow(silk, 3.2);
 
-        // Base ultra-dark monochrome background
-        vec3 darkBg = vec3(0.02, 0.02, 0.025);
+        // Base soft porcelain alabaster background for light mode
+        vec3 lightBg = vec3(0.975, 0.982, 0.980);
 
-        // Soft ink wash: velvety charcoal and smoky graphite tones
+        // Soft Tiffany pastel silk blend
         vec3 silkColor = mix(u_color_primary, u_color_secondary, f);
         
-        // Exquisite whisper-soft opacity for understated elegance
-        float alpha = (silk * 0.09 + f * 0.06) * (0.8 + u_activity * 0.25);
+        // Exquisite whisper-soft opacity for understated light luxury
+        float alpha = (silk * 0.12 + f * 0.08) * (0.85 + u_activity * 0.25);
 
-        vec3 finalColor = mix(darkBg, silkColor, alpha);
+        vec3 finalColor = mix(lightBg, silkColor, alpha);
 
-        // Gentle vignette falloff
-        float vignette = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y);
-        vignette = clamp(pow(16.0 * vignette, 0.3), 0.0, 1.0);
-        finalColor *= vignette;
-
-        gl_FragColor = vec4(finalColor, 0.98);
+        gl_FragColor = vec4(finalColor, 0.95);
       }
     `;
 
@@ -183,32 +178,32 @@ export const SilkShaderBackground: React.FC<SilkShaderProps> = ({
       gl.uniform1f(uTime, elapsed);
       gl.uniform2f(uResolution, width, height);
 
-      // Subtle black & grey soft ink palette
-      let primary = [0.10, 0.10, 0.11]; // Soft charcoal ink
-      let secondary = [0.16, 0.16, 0.18]; // Muted graphite wash
-      let activity = 0.12;
+      // Soft Tiffany pastel palette: robin's egg blue (#81D8D0) & pastel seafoam mint
+      let primary = [0.51, 0.85, 0.82]; // Tiffany pastel (#81D8D0)
+      let secondary = [0.73, 0.93, 0.91]; // Pastel seafoam (#BAECE8)
+      let activity = 0.15;
 
       switch (workflowStatus) {
         case 'running':
-          primary = [0.14, 0.15, 0.18]; // Subtle silvery mist pulse
-          secondary = [0.20, 0.22, 0.25];
+          primary = [0.44, 0.82, 0.79]; // Active vibrant Tiffany pastel
+          secondary = [0.65, 0.91, 0.88];
           activity = 0.35;
           break;
         case 'gated':
-          primary = [0.18, 0.15, 0.12]; // Muted warm parchment / tea ink
-          secondary = [0.14, 0.12, 0.10];
-          activity = 0.25;
+          primary = [0.93, 0.86, 0.74]; // Soft pastel champagne cream
+          secondary = [0.55, 0.84, 0.81];
+          activity = 0.22;
           break;
         case 'passed':
         case 'delivered':
-          primary = [0.12, 0.15, 0.14]; // Quiet obsidian slate
-          secondary = [0.17, 0.20, 0.19];
-          activity = 0.15;
+          primary = [0.42, 0.82, 0.78]; // Pure jewel Tiffany
+          secondary = [0.78, 0.95, 0.93];
+          activity = 0.18;
           break;
         case 'failed':
-          primary = [0.17, 0.11, 0.12]; // Subtle muted charcoal ash
-          secondary = [0.13, 0.09, 0.10];
-          activity = 0.22;
+          primary = [0.94, 0.78, 0.80]; // Soft pastel blush rose
+          secondary = [0.75, 0.88, 0.86];
+          activity = 0.25;
           break;
       }
 

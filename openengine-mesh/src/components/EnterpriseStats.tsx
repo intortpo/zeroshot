@@ -71,18 +71,18 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
   return (
     <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none space-y-8 font-sans">
       {/* Top Header & Overview */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
           <div className="flex items-center space-x-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <h1 className="text-xl font-bold font-mono text-zinc-100">
+            <h1 className="text-xl font-bold font-mono text-stone-900">
               Enterprise Telemetry & Cognitive Stats
             </h1>
-            <span className="text-xs font-mono font-medium text-zinc-400 bg-zinc-900 border border-white/[0.06] px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-mono font-medium text-stone-500 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
               Enterprise v8.4
             </span>
           </div>
-          <p className="text-xs text-zinc-400 font-mono mt-1">
+          <p className="text-xs text-stone-500 font-mono mt-1">
             Real-time SLA velocity, autonomous self-learning metrics, GPU compute duty cycle, and token economics.
           </p>
         </div>
@@ -92,7 +92,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
           <button
             onClick={handleTriggerReflection}
             disabled={isReflecting}
-            className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-zinc-100 hover:bg-white text-zinc-900 text-xs font-mono font-bold transition-all shadow-md hover:scale-[1.02] active:scale-95 disabled:opacity-40"
+            className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-[#0ABAB5] hover:bg-[#099E99] text-white shadow-md text-xs font-mono font-bold transition-all shadow-md hover:scale-[1.02] active:scale-95 disabled:opacity-40"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isReflecting ? 'animate-spin' : ''}`} />
             <span>{isReflecting ? 'Reflecting on Runs...' : 'Trigger Self-Learning Loop'}</span>
@@ -103,17 +103,17 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       {/* 4 Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Autonomous Delivery Rate */}
-        <div className="bg-[#0b0b0b]/90 border border-white/[0.06] rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
               Autonomous Delivery
             </span>
-            <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
+            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
+            <div className="text-2xl font-bold font-mono text-stone-900">
               {stats.autonomousDeliveryRate}%
             </div>
             <div className="text-[11px] font-mono text-emerald-400/90 mt-1 flex items-center space-x-1">
@@ -123,60 +123,60 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         </div>
 
         {/* Mean Time to Merge (MTTM) */}
-        <div className="bg-[#0b0b0b]/90 border border-white/[0.06] rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
               Mean Time to Merge (MTTM)
             </span>
-            <div className="p-2 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-400">
+            <div className="p-2 rounded-xl bg-[#E0F7F6] border border-[#B4E8E4] text-[#0A7B76]">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
+            <div className="text-2xl font-bold font-mono text-stone-900">
               {stats.mttmMinutes} min
             </div>
-            <div className="text-[11px] font-mono text-indigo-400/90 mt-1">
+            <div className="text-[11px] font-mono text-[#0A7B76] mt-1">
               Avg gate signoff: {stats.gateApprovalTimeMinutes} min
             </div>
           </div>
         </div>
 
         {/* Hardware & RTX Compute */}
-        <div className="bg-[#0b0b0b]/90 border border-white/[0.06] rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
               RTX 4090 Duty Cycle
             </span>
-            <div className="p-2 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2 rounded-xl bg-[#E0F7F6] border border-[#B4E8E4] text-[#0A7B76]">
               <Cpu className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
+            <div className="text-2xl font-bold font-mono text-stone-900">
               {stats.gpuVramUsedGb} / {stats.gpuVramTotalGb} GB
             </div>
-            <div className="text-[11px] font-mono text-cyan-400/90 mt-1">
+            <div className="text-[11px] font-mono text-[#0A7B76] mt-1">
               {stats.gpuDutyCyclePercent}% load · {stats.gpuTempCelsius}°C thermal
             </div>
           </div>
         </div>
 
         {/* Self-Learning Engine */}
-        <div className="bg-[#0b0b0b]/90 border border-white/[0.06] rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-5 backdrop-blur-2xl flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
               Self-Learning Heuristics
             </span>
-            <div className="p-2 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-400">
+            <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700">
               <Brain className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
+            <div className="text-2xl font-bold font-mono text-stone-900">
               {stats.selfLearningRulesLearned} Rules Active
             </div>
-            <div className="text-[11px] font-mono text-amber-400/90 mt-1">
+            <div className="text-[11px] font-mono text-amber-700 mt-1">
               {stats.selfLearningConfidence}% confidence score
             </div>
           </div>
@@ -184,23 +184,23 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       </div>
 
       {/* Main Section 1: Self-Learning Continuous Reflection Loop */}
-      <div className="bg-[#0c0c0c]/80 border border-white/[0.06] rounded-3xl p-6 backdrop-blur-2xl space-y-5">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+      <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-6 backdrop-blur-2xl space-y-5">
+        <div className="flex items-center justify-between border-b border-stone-200 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-2xl bg-zinc-900 border border-white/[0.08] text-amber-400">
+            <div className="p-2 rounded-2xl bg-stone-100 border border-stone-200 text-amber-600">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-zinc-100">
+              <h2 className="text-sm font-semibold text-stone-900">
                 Continuous Self-Learning & Heuristic Distillation Feed
               </h2>
-              <p className="text-xs text-zinc-400 font-mono mt-0.5">
+              <p className="text-xs text-stone-500 font-mono mt-0.5">
                 Automatically synthesizes failure modes and user feedback into permanent repo invariants
               </p>
             </div>
           </div>
 
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-950/70 border border-emerald-500/40 text-emerald-300">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold">
             AUTONOMOUS LOOP ENGAGED
           </span>
         </div>
@@ -209,9 +209,9 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
           {learningLog.map((item, idx) => (
             <div
               key={idx}
-              className="bg-[#080808] border border-white/[0.04] hover:border-white/[0.08] rounded-2xl p-4 flex items-start space-x-3 transition-colors text-zinc-300 leading-relaxed"
+              className="bg-stone-50 border border-stone-200 hover:border-stone-200 rounded-2xl p-4 flex items-start space-x-3 transition-colors text-stone-700 leading-relaxed"
             >
-              <span className="text-amber-400/80 select-none font-bold">❯</span>
+              <span className="text-amber-600/80 select-none font-bold">❯</span>
               <span className="flex-1">{item}</span>
             </div>
           ))}
@@ -221,123 +221,123 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       {/* Section 2: Token Economics & Invariant Quality Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Token Economics & Cache Efficiency */}
-        <div className="bg-[#0c0c0c]/80 border border-white/[0.06] rounded-3xl p-6 backdrop-blur-2xl space-y-4">
-          <div className="flex items-center space-x-2.5 border-b border-white/[0.06] pb-3.5">
-            <Zap className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-semibold text-zinc-100">Token Economics & Cache Efficiency</h3>
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-6 backdrop-blur-2xl space-y-4">
+          <div className="flex items-center space-x-2.5 border-b border-stone-200 pb-3.5">
+            <Zap className="w-4 h-4 text-[#0ABAB5]" />
+            <h3 className="text-sm font-semibold text-stone-900">Token Economics & Cache Efficiency</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-1 text-xs font-mono">
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Prompt Cache Hit Rate</div>
-              <div className="text-xl font-bold text-zinc-100">{stats.cacheHitRatio}%</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Prompt Cache Hit Rate</div>
+              <div className="text-xl font-bold text-stone-900">{stats.cacheHitRatio}%</div>
               <div className="text-[10px] text-emerald-400">Est. 12x latency reduction</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Monthly Tokens Processed</div>
-              <div className="text-xl font-bold text-zinc-100">
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Monthly Tokens Processed</div>
+              <div className="text-xl font-bold text-stone-900">
                 {(stats.totalTokensMonth / 1000000).toFixed(2)}M
               </div>
-              <div className="text-[10px] text-zinc-400">1.4M in / 424K out</div>
+              <div className="text-[10px] text-stone-500">1.4M in / 424K out</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Cost Savings vs Human Dev</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Cost Savings vs Human Dev</div>
               <div className="text-xl font-bold text-emerald-400">
                 ${stats.costSavingsEstimatedUsd.toLocaleString()} / mo
               </div>
-              <div className="text-[10px] text-zinc-400">Based on 142 merged PRs</div>
+              <div className="text-[10px] text-stone-500">Based on 142 merged PRs</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Cost per Merged PR</div>
-              <div className="text-xl font-bold text-zinc-100">$0.14 avg</div>
-              <div className="text-[10px] text-zinc-400">Local RTX GPU compute free</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Cost per Merged PR</div>
+              <div className="text-xl font-bold text-stone-900">$0.14 avg</div>
+              <div className="text-[10px] text-stone-500">Local RTX GPU compute free</div>
             </div>
           </div>
         </div>
 
         {/* Enterprise Invariant & Security Assurance */}
-        <div className="bg-[#0c0c0c]/80 border border-white/[0.06] rounded-3xl p-6 backdrop-blur-2xl space-y-4">
-          <div className="flex items-center space-x-2.5 border-b border-white/[0.06] pb-3.5">
+        <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-6 backdrop-blur-2xl space-y-4">
+          <div className="flex items-center space-x-2.5 border-b border-stone-200 pb-3.5">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-semibold text-zinc-100">Enterprise Invariants & Safety</h3>
+            <h3 className="text-sm font-semibold text-stone-900">Enterprise Invariants & Safety</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-1 text-xs font-mono">
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Formal Invariant Pass Rate</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Formal Invariant Pass Rate</div>
               <div className="text-xl font-bold text-emerald-400">{stats.invariantPassRate}%</div>
-              <div className="text-[10px] text-zinc-400">0 test regressions accepted</div>
+              <div className="text-[10px] text-stone-500">0 test regressions accepted</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Clippy 4-Param Ceilings</div>
-              <div className="text-xl font-bold text-zinc-100">18 Preempted</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Clippy 4-Param Ceilings</div>
+              <div className="text-xl font-bold text-stone-900">18 Preempted</div>
               <div className="text-[10px] text-emerald-400">Enforced by AST gate</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Credential Leak Incidents</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Credential Leak Incidents</div>
               <div className="text-xl font-bold text-emerald-400">0</div>
-              <div className="text-[10px] text-zinc-400">In-memory ephemeral wipe</div>
+              <div className="text-[10px] text-stone-500">In-memory ephemeral wipe</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-1">
-              <div className="text-[11px] text-zinc-400">Unsafe Memory / Queue Leaks</div>
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-[11px] text-stone-500">Unsafe Memory / Queue Leaks</div>
               <div className="text-xl font-bold text-emerald-400">0</div>
-              <div className="text-[10px] text-zinc-400">Bounded queues fail-closed</div>
+              <div className="text-[10px] text-stone-500">Bounded queues fail-closed</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Section 3: Mesh Peer Topology */}
-      <div className="bg-[#0c0c0c]/80 border border-white/[0.06] rounded-3xl p-6 backdrop-blur-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
+      <div className="bg-white/95 border border-stone-200/90 shadow-sm rounded-3xl p-6 backdrop-blur-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-stone-200 pb-3.5">
           <div className="flex items-center space-x-2.5">
-            <Wifi className="w-4 h-4 text-zinc-300" />
-            <h3 className="text-sm font-semibold text-zinc-100">Active P2P WireGuard Mesh Topology</h3>
+            <Wifi className="w-4 h-4 text-stone-700" />
+            <h3 className="text-sm font-semibold text-stone-900">Active P2P WireGuard Mesh Topology</h3>
           </div>
-          <span className="text-xs font-mono text-zinc-400">
-            Workspace: <span className="text-zinc-200">{activeWorkspace?.name}</span> · User: <span className="text-zinc-200">{activeUser?.name}</span>
+          <span className="text-xs font-mono text-stone-500">
+            Workspace: <span className="text-stone-800">{activeWorkspace?.name}</span> · User: <span className="text-stone-800">{activeUser?.name}</span>
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 text-xs font-mono">
-          <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-2">
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-zinc-200">rtx-server-01</span>
+              <span className="font-semibold text-stone-800">rtx-server-01</span>
               <span className="px-1.5 py-0.2 rounded bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-[10px]">
                 PRIMARY COGNITIVE HOST
               </span>
             </div>
-            <div className="text-zinc-400 text-[11px]">
+            <div className="text-stone-500 text-[11px]">
               24GB RTX 4090 · NVML Hardware Accelerated · Ping 0ms (Local)
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-2">
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-zinc-200">omarchy-laptop</span>
-              <span className="px-1.5 py-0.2 rounded bg-zinc-800 border border-white/10 text-zinc-300 text-[10px]">
+              <span className="font-semibold text-stone-800">omarchy-laptop</span>
+              <span className="px-1.5 py-0.2 rounded bg-stone-100 border border-white/10 text-stone-700 text-[10px]">
                 THIN SENSOR / DISPATCH
               </span>
             </div>
-            <div className="text-zinc-400 text-[11px]">
+            <div className="text-stone-500 text-[11px]">
               Wayland Hyprland Desktop · Mesh Ledger · Ping 11ms
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#080808] border border-white/[0.04] space-y-2">
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-zinc-200">android-fold-04</span>
+              <span className="font-semibold text-stone-800">android-fold-04</span>
               <span className="px-1.5 py-0.2 rounded bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[10px]">
                 ROAMING GATE REVIEWER
               </span>
             </div>
-            <div className="text-zinc-400 text-[11px]">
+            <div className="text-stone-500 text-[11px]">
               Tailscale Encrypted Tunnel · 1-Tap Signoff · Ping 26ms
             </div>
           </div>
