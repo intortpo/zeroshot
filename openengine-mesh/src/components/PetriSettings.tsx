@@ -62,7 +62,10 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           githubTrunkRef: parsed.githubTrunkRef || 'main',
           providerAnthropicKey: parsed.providerAnthropicKey || '',
           providerOpenaiKey: parsed.providerOpenaiKey || '',
-          providerVertexProject: parsed.providerVertexProject || 'the-open-engine-zeroshot',
+          providerVertexProject:
+            parsed.providerVertexProject && !parsed.providerVertexProject.includes('engine')
+              ? parsed.providerVertexProject
+              : 'zero-petri',
           googleDwdKeyPath: parsed.googleDwdKeyPath || '/home/hideo/.config/gcloud/dwd-sa-key.json',
           connectionMode: parsed.connectionMode || 'primary',
         };
@@ -86,7 +89,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
       githubTrunkRef: 'main',
       providerAnthropicKey: '',
       providerOpenaiKey: '',
-      providerVertexProject: 'the-open-engine-zeroshot',
+      providerVertexProject: 'zero-petri',
       googleDwdKeyPath: '/home/hideo/.config/gcloud/dwd-sa-key.json',
       connectionMode: 'primary',
     };
@@ -425,7 +428,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   type="text"
                   value={settings.providerVertexProject}
                   onChange={(e) => setSettings({ ...settings, providerVertexProject: e.target.value })}
-                  placeholder="the-open-engine-zeroshot"
+                  placeholder="zero-petri"
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
