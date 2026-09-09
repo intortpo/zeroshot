@@ -285,6 +285,21 @@ export interface GameWorkspace {
   playCount: number;
   likes: number;
   thumbnailColor: string;
+  lightyearConfig?: LightyearConfig;
+}
+
+export type LightyearTransport = 'webtransport' | 'websocket' | 'udp_netcode';
+export type PredictionMode = 'full_rollback' | 'snapshot_interpolation' | 'lockstep';
+
+export interface LightyearConfig {
+  transport: LightyearTransport;
+  predictionMode: PredictionMode;
+  serverTickRate: number;
+  clientTickRate: number;
+  packetLossSimPercent: number;
+  latencySimMs: number;
+  enableAvianRollback: boolean;
+  interestManagement: boolean;
 }
 
 export interface MultiplayerLobbyPeer {
@@ -293,6 +308,7 @@ export interface MultiplayerLobbyPeer {
   role: 'host' | 'player';
   pingMs: number;
   isReady: boolean;
+  predictedRollbacks?: number;
 }
 
 export interface MultiplayerLobby {
@@ -304,5 +320,6 @@ export interface MultiplayerLobby {
   status: 'waiting' | 'in_match' | 'closed';
   tickRateHz: number;
   clientPrediction: boolean;
+  lightyearConfig?: LightyearConfig;
   peers: MultiplayerLobbyPeer[];
 }

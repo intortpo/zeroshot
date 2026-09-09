@@ -114,13 +114,17 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               </div>
             </div>
 
-            <div className="text-[11px] text-stone-500 flex items-center space-x-3 pt-1">
-              <span className="flex items-center space-x-1">
-                <Wifi className="w-3.5 h-3.5 text-stone-400" />
-                <span>LAN & WebRTC Sync</span>
+            <div className="text-[11px] text-stone-500 flex flex-wrap items-center gap-2 pt-1">
+              <span className="flex items-center space-x-1 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200 text-stone-700">
+                <Wifi className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                <span className="capitalize">{lobby.lightyearConfig?.transport || 'WebTransport'}</span>
               </span>
               <span>·</span>
               <span>Tick: {lobby.tickRateHz}Hz</span>
+              <span>·</span>
+              <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                Rollback Enabled
+              </span>
             </div>
           </div>
         </div>

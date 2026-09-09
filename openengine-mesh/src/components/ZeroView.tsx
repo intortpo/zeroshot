@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import {
   Gamepad2,
   QrCode,
+  Radio,
 } from 'lucide-react';
-import { Workspace, UserProfile, GameWorkspace, MultiplayerLobby, GameQuestion } from '../types';
+import { Workspace, UserProfile, GameWorkspace, MultiplayerLobby, GameQuestion, LightyearConfig } from '../types';
 import { GameWorkspaceSelector } from './zero/GameWorkspaceSelector';
 import { ConversationalGameDesigner } from './zero/ConversationalGameDesigner';
 import { AvianPhysicsCanvas } from './zero/AvianPhysicsCanvas';
 import { StumbleBlobsCanvas } from './zero/StumbleBlobsCanvas';
 import { JumpyFishCanvas } from './zero/JumpyFishCanvas';
 import { BevyCodeInspector } from './zero/BevyCodeInspector';
+import { LightyearNetPanel } from './zero/LightyearNetPanel';
 import { PublishedGamesCatalog } from './zero/PublishedGamesCatalog';
 import { MultiplayerLobbyModal } from './zero/MultiplayerLobbyModal';
 
@@ -27,8 +29,9 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
   // Sub-navigation: 'studio' | 'published'
   const [activeSubTab, setActiveSubTab] = useState<'studio' | 'published'>('studio');
 
-  // Studio layout toggle: 'preview' (Physics canvas) | 'code' (Bevy Rust inspector)
-  const [studioRightPane, setStudioRightPane] = useState<'preview' | 'code'>('preview');
+  // Studio layout toggle: 'preview' (Physics canvas) | 'code' (Bevy Rust inspector) | 'netcode' (Lightyear rollback panel)
+  const [studioRightPane, setStudioRightPane] = useState<'preview' | 'code' | 'netcode'>('preview');
+  const [showGhostEntity, setShowGhostEntity] = useState<boolean>(true);
 
   // Active Lobby Modal state
   const [activeLobby, setActiveLobby] = useState<MultiplayerLobby | null>(null);
@@ -61,6 +64,16 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
         objective: 'Navigate rotating sweepers, swinging hammers, and bouncy trampolines to qualify in top 8',
         scoringRule: 'First 8 blobs crossing finish line qualify for next round',
         failCondition: 'Falling into the void or timer expires',
+      },
+      lightyearConfig: {
+        transport: 'webtransport',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 24,
+        enableAvianRollback: true,
+        interestManagement: true,
       },
       bevyCode: `//! Bevy 0.15 + Avian3d 0.2 Stumble Blobs
 use bevy::prelude::*;
@@ -248,6 +261,16 @@ fn finish_line_sensor(
         objective: 'Unleash your Dude signature ability (Jetpack, Blink, Dragon Breath, Forcefield, Freeze) and outmaneuver opponents in tactical platform combat',
         scoringRule: 'First Dude to 5 knockouts wins the match',
         failCondition: 'Depleting 3 stock lives or falling off stage',
+      },
+      lightyearConfig: {
+        transport: 'webtransport',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 18,
+        enableAvianRollback: true,
+        interestManagement: true,
       },
       bevyCode: `//! Bevy 0.15 + Rapier2D / Avian2d Tactical Dudes Arena with Unique Abilities
 use bevy::prelude::*;
@@ -553,6 +576,16 @@ fn deathmatch_scoring_system() {}`,
         scoringRule: '+1 Point per ring-out',
         failCondition: 'Player orb exits perimeter bounds',
       },
+      lightyearConfig: {
+        transport: 'webtransport',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 12,
+        enableAvianRollback: true,
+        interestManagement: false,
+      },
       bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Bounce Arena
 use bevy::prelude::*;
 use avian2d::prelude::*;
@@ -691,6 +724,16 @@ fn arena_boundary_check(
         scoringRule: '+100 per satellite disabled',
         failCondition: 'Crashing into the singularity gravity well',
       },
+      lightyearConfig: {
+        transport: 'udp_netcode',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 32,
+        enableAvianRollback: true,
+        interestManagement: true,
+      },
       bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Orbit Strike Zero
 use bevy::prelude::*;
 use avian2d::prelude::*;
@@ -807,6 +850,16 @@ fn ship_thrust_system(
         objective: 'Keep ball in play and trigger bumper combo multipliers',
         scoringRule: '100 points per bumper hit * combo multiplier',
         failCondition: 'Ball drops through the flipper gap',
+      },
+      lightyearConfig: {
+        transport: 'websocket',
+        predictionMode: 'snapshot_interpolation',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 15,
+        enableAvianRollback: false,
+        interestManagement: false,
       },
       bevyCode: `//! Bevy 0.15 + Avian2d 0.2 Petri Pinball
 use bevy::prelude::*;
@@ -940,9 +993,32 @@ fn setup_pinball_table(mut commands: Commands) {
             },
           ],
         };
+      } else if (activeGame.pendingQuestion.id === 'q-stumble-elimination') {
+        designerResponse = `Elimination threshold configured to ${chosenText}! Now let us configure Lightyear 0.29 server authority and client prediction.`;
+        bevySnippetUpdate = 'Configured match qualification counter & round advancement trigger';
+        nextQuestion = {
+          id: 'q-stumble-netcode',
+          category: 'rules',
+          title: 'Step 4: Lightyear Server Authority & Prediction Mode',
+          description: 'Configure Lightyear server-authoritative multiplayer replication and Avian3D physics rollback:',
+          options: [
+            {
+              id: 'opt-net-rollback',
+              label: 'Client Prediction with Avian3D Rollback (WebTransport)',
+              description: 'Zero input latency for local blob movement; resimulates Avian3D frames on misprediction.',
+              physicsSnippet: 'lightyear::prelude::client::PredictionConfig::default() + avian3d rollback',
+            },
+            {
+              id: 'opt-net-snapshot',
+              label: 'Snapshot Interpolation (Smoothed Server Truth)',
+              description: 'Interpolates remote entities smoothly at 60Hz tick without physics rollback.',
+              physicsSnippet: 'lightyear::prelude::client::InterpolationConfig::default()',
+            },
+          ],
+        };
       } else {
-        designerResponse = `Stumble Blobs 3D loop finalized! 3D obstacle course, squishy lumpy blobs, rotating sweepers, and finish line sensors are ready. Launch a lobby with a QR code or test the 3D physics arena!`;
-        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian3d Stumble Guys clone compiled';
+        designerResponse = `Stumble Blobs 3D loop and Lightyear 0.29 netcode finalized! 3D obstacle course, squishy lumpy blobs, rotating sweepers, and server-authoritative prediction are active. Switch to the 'Lightyear Netcode' tab to simulate latency and packet drop, or launch a lobby!`;
+        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian3d + Lightyear 0.29 netcode compiled';
         nextQuestion = undefined;
       }
     } else if (activeGame.id === 'jumpy') {
@@ -982,25 +1058,48 @@ fn setup_pinball_table(mut commands: Commands) {
           id: 'q-jumpy-match-mode',
           category: 'mode',
           title: 'Step 3: Win Condition & Stock Lives',
-          description: 'Select the primary match rule for Fish Folk: Jumpy multiplayer:',
+          description: 'Select the primary match rule for Dudes tactical arena:',
           options: [
             {
               id: 'opt-stocks-3',
-              label: '3 Stock Lives (Last Fish Swimming Wins)',
-              description: 'Competitive tournament standard for Fish Folk & Duck Game.',
+              label: '3 Stock Lives (Last Dude Standing Wins)',
+              description: 'Competitive tournament standard for tactical platform brawlers.',
               physicsSnippet: 'MatchRule::StockLives(3)',
             },
             {
               id: 'opt-ko-race',
               label: 'First to 5 Knockouts (Timed Deathmatch)',
-              description: 'Continuous respawns until one fish reaches 5 KOs.',
+              description: 'Continuous respawns until one Dude reaches 5 KOs.',
               physicsSnippet: 'MatchRule::FirstToKOs(5)',
             },
           ],
         };
+      } else if (activeGame.pendingQuestion.id === 'q-jumpy-match-mode') {
+        designerResponse = `Match format set: ${chosenText}! Let us finalize Lightyear 0.29 replication and hit registration for character abilities.`;
+        bevySnippetUpdate = 'Configured match stock scoring and spawn point systems';
+        nextQuestion = {
+          id: 'q-jumpy-netcode',
+          category: 'rules',
+          title: 'Step 4: Lightyear Netcode & Ability Hitreg',
+          description: 'Select rollback and hit registration policy for fast-paced Dude projectile battles:',
+          options: [
+            {
+              id: 'opt-jumpy-rewind',
+              label: 'Server Rewind Hitreg & Full Prediction (Lightyear WebTransport)',
+              description: 'Accurate high-speed projectile collision with server-side lag compensation.',
+              physicsSnippet: 'PredictionPlugin + ServerLagCompensation with Avian2d query rewind',
+            },
+            {
+              id: 'opt-jumpy-deterministic',
+              label: 'Deterministic Lockstep Tick (Low Bandwidth)',
+              description: 'All clients execute identical fixed Avian ticks in lockstep.',
+              physicsSnippet: 'LockstepFixedUpdate + 60Hz tick step synchronization',
+            },
+          ],
+        };
       } else {
-        designerResponse = `Fish Folk: Jumpy game loop finalized! Tactical 2D platform physics, weapon pickups, and linear recoil systems are ready in Bevy 0.15. Test the Avian2D simulation or play the official WASM web player!`;
-        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian2d Tactical Fish Brawler systems compiled';
+        designerResponse = `Jumpy Dudes tactical arena loop and Lightyear netcode finalized! 12 playable Dudes with unique abilities, weapon recoil physics, and server-authoritative prediction are ready. Check the 'Lightyear Netcode' tab to test rollback telemetry!`;
+        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian2d + Lightyear 0.29 Tactical Brawler compiled';
         nextQuestion = undefined;
       }
     } else if (activeGame.pendingQuestion.category === 'mode') {
@@ -1073,6 +1172,21 @@ fn setup_pinball_table(mut commands: Commands) {
     setGameWorkspaces((prev) =>
       prev.map((g) => {
         if (g.id === activeGame.id) {
+          const currentLightyear = g.lightyearConfig;
+          const updatedLightyear = currentLightyear
+            ? {
+                ...currentLightyear,
+                predictionMode:
+                  optionId === 'opt-net-rollback' || optionId === 'opt-jumpy-rewind'
+                    ? ('full_rollback' as const)
+                    : optionId === 'opt-net-snapshot'
+                    ? ('snapshot_interpolation' as const)
+                    : optionId === 'opt-jumpy-deterministic'
+                    ? ('lockstep' as const)
+                    : currentLightyear.predictionMode,
+              }
+            : undefined;
+
           return {
             ...g,
             physicsConfig: {
@@ -1084,6 +1198,7 @@ fn setup_pinball_table(mut commands: Commands) {
                   ? 0.75
                   : g.physicsConfig.restitution,
             },
+            lightyearConfig: updatedLightyear || g.lightyearConfig,
             chatHistory: [...g.chatHistory, userMessage, designerMessage],
             pendingQuestion: nextQuestion,
           };
@@ -1176,6 +1291,16 @@ fn setup_pinball_table(mut commands: Commands) {
         linearDamping: 0.05,
         substeps: 8,
       },
+      lightyearConfig: {
+        transport: 'webtransport',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 20,
+        enableAvianRollback: true,
+        interestManagement: true,
+      },
       gameLoop: {
         modeName: 'Custom Mode',
         cameraPerspective: partial.dimension === '3d' ? '3d_arena' : '2d_topdown',
@@ -1225,6 +1350,33 @@ fn main() {
     setActiveWorkspaceId(newWs.id);
   };
 
+  const handleUpdateLightyearConfig = (updated: Partial<LightyearConfig>) => {
+    setGameWorkspaces((prev) =>
+      prev.map((g) => {
+        if (g.id === activeGame.id) {
+          const currentConfig = g.lightyearConfig || {
+            transport: 'webtransport',
+            predictionMode: 'full_rollback',
+            serverTickRate: 60,
+            clientTickRate: 60,
+            packetLossSimPercent: 0,
+            latencySimMs: 24,
+            enableAvianRollback: true,
+            interestManagement: true,
+          };
+          return {
+            ...g,
+            lightyearConfig: {
+              ...currentConfig,
+              ...updated,
+            },
+          };
+        }
+        return g;
+      })
+    );
+  };
+
   const handlePublishCurrent = (gameId: string) => {
     setGameWorkspaces((prev) =>
       prev.map((g) => (g.id === gameId ? { ...g, status: 'published', playCount: 1 } : g))
@@ -1245,6 +1397,16 @@ fn main() {
       status: 'waiting',
       tickRateHz: 60,
       clientPrediction: true,
+      lightyearConfig: game.lightyearConfig || {
+        transport: 'webtransport',
+        predictionMode: 'full_rollback',
+        serverTickRate: 60,
+        clientTickRate: 60,
+        packetLossSimPercent: 0,
+        latencySimMs: 24,
+        enableAvianRollback: true,
+        interestManagement: true,
+      },
       peers: [
         {
           id: 'p-host',
@@ -1388,10 +1550,26 @@ fn main() {
                   >
                     Bevy ECS Code
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioRightPane('netcode')}
+                    className={`subtle-depth-interactive flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      studioRightPane === 'netcode'
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <Radio className="w-3.5 h-3.5 text-[#FF5F1F]" />
+                    <span>Lightyear Netcode</span>
+                  </button>
                 </div>
 
                 <span className="text-[11px] text-stone-500 font-sans">
-                  {studioRightPane === 'preview' ? '60Hz Avian Simulation' : 'Idiomatic Rust Systems'}
+                  {studioRightPane === 'preview'
+                    ? '60Hz Avian Simulation'
+                    : studioRightPane === 'code'
+                    ? 'Idiomatic Rust Systems'
+                    : 'Lightyear 0.29 Netcode & Rollback'}
                 </span>
               </div>
 
@@ -1418,13 +1596,31 @@ fn main() {
                       physicsConfig={activeGame.physicsConfig}
                     />
                   )
-                ) : (
+                ) : studioRightPane === 'code' ? (
                   <BevyCodeInspector
                     gameTitle={activeGame.title}
                     dimension={activeGame.dimension}
                     bevyCode={activeGame.bevyCode}
                     bevyVersion={activeGame.bevyVersion}
                     avianVersion={activeGame.avianVersion}
+                  />
+                ) : (
+                  <LightyearNetPanel
+                    config={
+                      activeGame.lightyearConfig || {
+                        transport: 'webtransport',
+                        predictionMode: 'full_rollback',
+                        serverTickRate: 60,
+                        clientTickRate: 60,
+                        packetLossSimPercent: 0,
+                        latencySimMs: 24,
+                        enableAvianRollback: true,
+                        interestManagement: true,
+                      }
+                    }
+                    onUpdateConfig={handleUpdateLightyearConfig}
+                    showGhostEntity={showGhostEntity}
+                    onToggleGhostEntity={setShowGhostEntity}
                   />
                 )}
               </div>
