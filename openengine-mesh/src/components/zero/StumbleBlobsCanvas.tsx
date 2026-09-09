@@ -594,21 +594,21 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
             blob.mesh.rotation.y = targetRot;
           }
 
-          // Jump
+          // Jump (Significantly higher vertical leap to clear hazards)
           if (jumpTriggerRef.current && blob.isGrounded) {
-            blob.vy = 9.0;
+            blob.vy = 14.0;
             blob.isGrounded = false;
             jumpTriggerRef.current = false;
           }
 
-          // Dive Impulse (Belly Slide)
+          // Dive Impulse (Belly Slide with forward thrust)
           if (diveTriggerRef.current) {
             blob.isDiving = true;
-            blob.vy = 4.2;
+            blob.vy = 5.8;
             const forwardZ = Math.cos(blob.mesh.rotation.y);
             const forwardX = Math.sin(blob.mesh.rotation.y);
-            blob.vz += forwardZ * 15.0;
-            blob.vx += forwardX * 15.0;
+            blob.vz += forwardZ * 18.0;
+            blob.vx += forwardX * 18.0;
             diveTriggerRef.current = false;
           }
         } else {
@@ -618,7 +618,7 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
 
           // AI jumps over obstacles
           if (Math.random() < 0.03 && blob.isGrounded) {
-            blob.vy = 8.0;
+            blob.vy = 12.0;
             blob.isGrounded = false;
           }
         }

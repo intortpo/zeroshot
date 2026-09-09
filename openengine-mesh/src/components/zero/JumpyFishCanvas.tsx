@@ -1088,15 +1088,16 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
             dudeActor.vx *= 0.82;
           }
 
-          // Jumping
+          // Jumping (Substantially higher leap & responsive aerial mobility)
           const maxJumps = dudeActor.dude.id === 'swashbuckler' ? 3 : 2;
           if (triggerJumpRef.current) {
             if (dudeActor.isGrounded || dudeActor.jumpCount < maxJumps) {
-              const jumpForce = dudeActor.dude.id === 'werewolf' ? -520 : -490;
+              const baseJump = dudeActor.dude.id === 'werewolf' ? -720 : dudeActor.dude.id === 'astronaut' ? -700 : -660;
+              const jumpForce = dudeActor.isGrounded ? baseJump : baseJump * 0.92;
               dudeActor.vy = jumpForce;
               dudeActor.isGrounded = false;
               dudeActor.jumpCount += 1;
-              spawnParticles(dudeActor.x, dudeActor.y + 16, dudeActor.dude.color, 8, 80);
+              spawnParticles(dudeActor.x, dudeActor.y + 16, dudeActor.dude.color, 12, 110);
             }
             triggerJumpRef.current = false;
           }
@@ -1218,7 +1219,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
             dudeActor.isGrounded &&
             (Math.random() < 0.02 || (nearestTarget.y < dudeActor.y - 40 && Math.random() < 0.06))
           ) {
-            dudeActor.vy = -470;
+            dudeActor.vy = -640;
             dudeActor.isGrounded = false;
           }
 
