@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import {
   GitCommit,
   Cpu,
-  ShieldCheck,
   Brain,
-  Sparkles,
   CheckCircle2,
   RotateCw,
   Plus,
@@ -104,90 +102,86 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-12 select-none space-y-10 font-sans">
+    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none space-y-8 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6">
         <div>
-          <div className="flex items-center space-x-2.5 text-xs font-mono text-stone-500 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-stone-900" />
-            <span className="font-semibold tracking-wider">GENUINE RUNTIME TELEMETRY</span>
+          <div className="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
+            <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
+            <span className="font-semibold tracking-wider uppercase">Runtime Telemetry</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
-            Workspace & Invariant Telemetry
+          <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+            Telemetry & Invariants
           </h1>
-          <p className="text-sm text-stone-500 mt-2 max-w-2xl leading-relaxed">
-            Authentic metrics computed from local git history and native system hardware in {activeWorkspace?.name || 'zero-petri'}.
-          </p>
         </div>
 
         <div className="flex items-center space-x-3">
           <button
             onClick={handleReflect}
             disabled={isReflecting}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-white/80 hover:bg-white border border-stone-200/80 text-stone-800 text-xs sm:text-sm font-semibold transition-all"
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-mono font-semibold transition-all"
           >
-            <RotateCw className={`w-4 h-4 text-stone-700 ${isReflecting ? 'animate-spin' : ''}`} />
-            <span>{isReflecting ? 'Analyzing Invariants...' : 'Run Self-Learning Reflection'}</span>
+            <RotateCw className={`w-3.5 h-3.5 text-stone-700 ${isReflecting ? 'animate-spin' : ''}`} />
+            <span>{isReflecting ? 'Analyzing...' : 'Self-Learning Reflection'}</span>
           </button>
         </div>
       </div>
 
       {/* Real Repository Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Merged Commits */}
-        <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-3">
+        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
             <span>MERGED COMMITS</span>
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-4xl sm:text-5xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
             {mergedCount}
           </div>
-          <div className="text-xs sm:text-sm text-stone-600 flex items-center space-x-1.5">
-            <span>Verified & released to</span>
-            <span className="font-bold text-stone-900 font-mono">main</span>
+          <div className="text-xs text-stone-500 font-mono">
+            main
           </div>
         </div>
 
         {/* In-Flight Work */}
-        <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-3">
+        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
-            <span>ACTIVE IN-FLIGHT</span>
-            <Sparkles className="w-5 h-5 text-stone-700" />
+            <span>IN-FLIGHT</span>
+            <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-pulse" />
           </div>
-          <div className="text-4xl sm:text-5xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
             {inFlightCount}
           </div>
-          <div className="text-xs sm:text-sm text-stone-600">
-            Autonomous agent iterations active
+          <div className="text-xs text-stone-500 font-mono">
+            active
           </div>
         </div>
 
         {/* Gated Review */}
-        <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-3">
+        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
-            <span>GATED DELIVERIES</span>
-            <ShieldCheck className="w-5 h-5 text-amber-600" />
+            <span>GATED</span>
+            <span className="w-2 h-2 rounded-full bg-[#FF5F1F]" />
           </div>
-          <div className="text-4xl sm:text-5xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
             {gatedCount}
           </div>
-          <div className="text-xs sm:text-sm text-stone-600">
-            Awaiting human approval signature
+          <div className="text-xs text-stone-500 font-mono">
+            signoff required
           </div>
         </div>
 
         {/* Total Tasks Tracked */}
-        <div className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-3">
+        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
           <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
-            <span>TOTAL LEDGER TASKS</span>
-            <GitCommit className="w-5 h-5 text-stone-600" />
+            <span>TOTAL TASKS</span>
+            <GitCommit className="w-4 h-4 text-stone-500" />
           </div>
-          <div className="text-4xl sm:text-5xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
             {totalTasks}
           </div>
-          <div className="text-xs sm:text-sm text-stone-600">
-            {backlogCount} queued in backlog · {totalTasks} across workspace
+          <div className="text-xs text-stone-500 font-mono">
+            {backlogCount} backlog
           </div>
         </div>
       </div>

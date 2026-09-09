@@ -454,19 +454,16 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
 
   return (
     <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none space-y-8">
-      {/* Header & Description */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
           <h1 className="text-xl font-bold font-mono text-stone-900 flex items-center space-x-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-stone-900 animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
             <span>Skills Registry</span>
-            <span className="text-xs font-mono font-normal text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
-              {skills.length} Capabilities
+            <span className="text-xs font-mono font-normal text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
+              {skills.length}
             </span>
           </h1>
-          <p className="text-xs text-stone-500 font-mono mt-1">
-            Production-grade autonomous capabilities spanning Firebase, GitHub, Google Cloud, and Antigravity (AGY).
-          </p>
         </div>
 
         {/* Search Input */}
@@ -548,11 +545,6 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                     {skill.name}
                   </div>
                 </div>
-
-                {/* Description */}
-                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed line-clamp-3">
-                  {skill.description}
-                </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 pt-1">

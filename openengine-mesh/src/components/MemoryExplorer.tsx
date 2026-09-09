@@ -296,15 +296,12 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
           <h1 className="text-xl font-bold font-mono text-stone-900 flex items-center space-x-2.5">
-            <Brain className="w-5 h-5 text-stone-700 animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
             <span>Memory Explorer</span>
-            <span className="text-xs font-mono font-normal text-stone-400 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
-              {filteredMemories.length} Nodes Indexed
+            <span className="text-xs font-mono font-normal text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
+              {filteredMemories.length} Nodes
             </span>
           </h1>
-          <p className="text-xs text-stone-500 font-mono mt-1">
-            Episodic runs, architectural decision records (ADRs), invariant rules, and vector memory embeddings.
-          </p>
         </div>
 
         {/* Action Controls */}

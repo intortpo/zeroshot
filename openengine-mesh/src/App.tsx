@@ -11,6 +11,7 @@ import { SilkShaderBackground } from './components/SilkShaderBackground';
 import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
+import { PetriSettings } from './components/PetriSettings';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile } from './types';
 
@@ -25,8 +26,8 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats' | 'tui'
-  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats' | 'tui'>('board');
+  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'
+  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'>('board');
 
   // Enterprise Users & Identity State (Authentic User)
   const [users, setUsers] = useState<UserProfile[]>([
@@ -459,6 +460,16 @@ export function App() {
               onAdvanceStage={handleAdvanceStage}
               onRecurseAgent={handleRecurseAgent}
               onSelectView={setCurrentView}
+            />
+          </div>
+        )}
+
+        {/* View 6: 1979 Avionics Technical Settings Panel */}
+        {currentView === 'settings' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <PetriSettings
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
             />
           </div>
         )}

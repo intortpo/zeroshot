@@ -8,6 +8,7 @@ import {
   Brain,
   BarChart3,
   Terminal,
+  Sliders,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile } from '../types';
 
@@ -21,8 +22,8 @@ interface NodeMeshStatusProps {
   onOpenWorkspaceModal: () => void;
   activeUser?: UserProfile;
   onOpenUserModal: () => void;
-  currentView: 'board' | 'skills' | 'memory' | 'stats' | 'tui';
-  onSelectView: (view: 'board' | 'skills' | 'memory' | 'stats' | 'tui') => void;
+  currentView: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings';
+  onSelectView: (view: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings') => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -47,7 +48,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       <div className="flex items-center space-x-4">
         {/* Brand */}
         <div className="flex items-center space-x-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-stone-900" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
           <span className="text-lg font-mono font-bold tracking-tight text-stone-900">
             Petri
           </span>
@@ -148,6 +149,18 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           <Terminal className="w-4 h-4" />
           <span>TUI</span>
         </button>
+
+        <button
+          onClick={() => onSelectView('settings')}
+          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+            currentView === 'settings'
+              ? 'border-stone-900 text-stone-950 font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+          }`}
+        >
+          <Sliders className={`w-4 h-4 ${currentView === 'settings' ? 'text-stone-900' : 'text-stone-400'}`} />
+          <span>Settings</span>
+        </button>
       </nav>
 
       {/* Right Controls: Flat Indicators & Actions (No Rounded Boxes) */}
@@ -174,6 +187,9 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         {/* Active Jobs */}
         <div className="flex items-center space-x-1.5 text-stone-500">
+          {activeRunsCount > 0 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5F1F] animate-pulse" />
+          )}
           <span>Jobs:</span>
           <span className="text-stone-800 font-semibold">{activeRunsCount}</span>
         </div>
