@@ -93,7 +93,20 @@ impl MeshRouter {
 
 #[tauri::command]
 pub fn get_mesh_peers() -> Vec<NodeSpec> {
-    // In production, reads from Tailscale peer table or local discovery cache
+    if let Ok(output) = std::process::Command::new("tailscale")
+        .args(["status", "--json"])
+        .output()
+    {
+        if output.status.success() {
+            let json_str = String::from_utf8_lossy(&output.stdout);
+            let peers = parse_tailscale_status(&json_str);
+            if !peers.is_empty() {
+                return peers;
+            }
+        }
+    }
+
+    // Default simulation peers if Tailscale has no active peer nodes
     vec![
         NodeSpec {
             node_id: "omarchy-rtx-host".to_string(),
@@ -114,6 +127,55 @@ pub fn get_mesh_peers() -> Vec<NodeSpec> {
             active_jobs: 0,
         },
     ]
+}
+
+pub fn parse_tailscale_status(json_str: &str) -> Vec<NodeSpec> {
+    let Ok(val) = serde_json::from_str::<serde_json::Value>(json_str) else {
+        return Vec::new();
+    };
+
+    let mut result = Vec::new();
+
+    if let Some(peer_map) = val.get("Peer").and_then(|p| p.as_object()) {
+        for (_k, peer) in peer_map {
+            // Skip non-active exit nodes
+            if let Some(tags) = peer.get("Tags").and_then(|t| t.as_array()) {
+                if tags.iter().any(|tag| tag.as_str().unwrap_or("").contains("exit-node")) {
+                    continue;
+                }
+            }
+
+            let host_name = peer
+                .get("HostName")
+                .and_then(|h| h.as_str())
+                .unwrap_or("mesh-peer");
+            let os = peer
+                .get("OS")
+                .and_then(|o| o.as_str())
+                .unwrap_or("unknown");
+            let online = peer
+                .get("Online")
+                .and_then(|o| o.as_bool())
+                .unwrap_or(false);
+
+            if online {
+                let has_rtx = host_name.to_lowercase().contains("rtx") || host_name.to_lowercase().contains("gpu");
+                let role = if has_rtx { "rtx_host" } else { "thin_client" };
+
+                result.push(NodeSpec {
+                    node_id: format!("node-{}", host_name),
+                    role: role.to_string(),
+                    device_name: format!("{} ({})", host_name, os),
+                    has_rtx,
+                    vram_free_mb: if has_rtx { Some(24576) } else { None },
+                    memory_free_mb: None,
+                    active_jobs: 0,
+                });
+            }
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -152,5 +214,30 @@ mod tests {
         // Light task stays on local thin client
         let target_light = router.route_task(TaskLoad::Light, &local_thin);
         assert_eq!(target_light.node_id, "local-phone");
+    }
+
+    #[test]
+    fn test_parse_tailscale_status() {
+        let json = r#"{
+            "Peer": {
+                "node1": {
+                    "HostName": "omarchy-rtx",
+                    "OS": "linux",
+                    "Online": true,
+                    "Tags": []
+                },
+                "node2": {
+                    "HostName": "exit-mullvad",
+                    "OS": "linux",
+                    "Online": true,
+                    "Tags": ["tag:mullvad-exit-node"]
+                }
+            }
+        }"#;
+        let peers = parse_tailscale_status(json);
+        assert_eq!(peers.len(), 1);
+        assert_eq!(peers[0].node_id, "node-omarchy-rtx");
+        assert!(peers[0].has_rtx);
+        assert_eq!(peers[0].role, "rtx_host");
     }
 }

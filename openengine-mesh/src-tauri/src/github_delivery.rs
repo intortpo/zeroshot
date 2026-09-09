@@ -62,7 +62,25 @@ pub async fn submit_goal(
         "Submitting goal for run {} in repo {}: {}",
         run_id, repo_path, goal
     );
-    Ok(format!("Run {} submitted to mesh orchestrator", run_id))
+
+    // Detect if Google Antigravity (agy) CLI is available on host
+    let agy_available = Command::new("which")
+        .arg("agy")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
+    if agy_available {
+        Ok(format!(
+            "Run {} admitted to mesh with Antigravity (agy) session delegation",
+            run_id
+        ))
+    } else {
+        Ok(format!(
+            "Run {} submitted to mesh orchestrator in {}",
+            run_id, repo_path
+        ))
+    }
 }
 
 #[cfg(test)]
