@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Bot, CheckCircle2, XCircle, ShieldAlert, GitPullRequest, Loader2 } from 'lucide-react';
 import { GraphNodeState, NodeExecutionStatus } from '../types';
+import { SilkShaderBackground } from './SilkShaderBackground';
 
 interface VisualGraphProps {
   nodesState: Record<string, GraphNodeState>;
@@ -19,7 +20,7 @@ interface VisualGraphProps {
   onOpenApproval?: () => void;
 }
 
-// Custom Pipeline Node Component
+// Custom Pipeline Node Component with refined glassmorphism
 const PipelineNode: React.FC<{
   data: {
     title: string;
@@ -31,17 +32,17 @@ const PipelineNode: React.FC<{
   };
 }> = ({ data }) => {
   const statusColors = {
-    idle: 'border-mesh-border bg-gray-900/90 text-gray-400',
-    running: 'border-blue-500 bg-blue-950/70 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]',
-    passed: 'border-emerald-500 bg-emerald-950/70 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)]',
-    failed: 'border-rose-500 bg-rose-950/70 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.4)]',
-    gated: 'border-amber-500 bg-amber-950/70 text-amber-300 animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.6)]',
+    idle: 'border-white/10 bg-gray-900/60 text-gray-400 backdrop-blur-md hover:border-white/20',
+    running: 'border-blue-500/70 bg-blue-950/50 text-blue-200 backdrop-blur-md shadow-[0_0_25px_rgba(59,130,246,0.35)]',
+    passed: 'border-emerald-500/60 bg-emerald-950/40 text-emerald-200 backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.25)]',
+    failed: 'border-rose-500/60 bg-rose-950/40 text-rose-200 backdrop-blur-md shadow-[0_0_20px_rgba(244,63,94,0.3)]',
+    gated: 'border-amber-500/80 bg-amber-950/50 text-amber-200 backdrop-blur-md animate-pulse shadow-[0_0_30px_rgba(245,158,11,0.5)]',
   };
 
   return (
     <div
       onClick={data.onAction}
-      className={`px-4 py-3 rounded-lg border-2 min-w-[200px] cursor-pointer transition-all duration-300 select-none ${
+      className={`px-4 py-3.5 rounded-xl border min-w-[210px] cursor-pointer transition-all duration-500 select-none shadow-xl hover:scale-[1.02] ${
         statusColors[data.status]
       }`}
     >
@@ -208,8 +209,36 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
     [workerStatus, acceptanceStatus, codeStatus, gateStatus, deliveryStatus]
   );
 
+  const overallStatus = useMemo<'idle' | 'running' | 'passed' | 'failed' | 'gated' | 'delivered'>(() => {
+    if (deliveryStatus === 'passed') return 'delivered';
+    if (gateStatus === 'gated') return 'gated';
+    if (
+      workerStatus === 'running' ||
+      acceptanceStatus === 'running' ||
+      codeStatus === 'running' ||
+      deliveryStatus === 'running'
+    ) {
+      return 'running';
+    }
+    if (
+      workerStatus === 'failed' ||
+      acceptanceStatus === 'failed' ||
+      codeStatus === 'failed' ||
+      gateStatus === 'failed'
+    ) {
+      return 'failed';
+    }
+    if (acceptanceStatus === 'passed' && codeStatus === 'passed') {
+      return 'passed';
+    }
+    return 'idle';
+  }, [workerStatus, acceptanceStatus, codeStatus, gateStatus, deliveryStatus]);
+
   return (
-    <div className="w-full h-full bg-mesh-dark relative">
+    <div className="w-full h-full bg-mesh-dark relative overflow-hidden">
+      {/* Super smooth flowing silk shader barely even noticeable */}
+      <SilkShaderBackground workflowStatus={overallStatus} />
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -218,9 +247,10 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.4}
         maxZoom={1.5}
+        className="!bg-transparent"
       >
-        <Background color="#21262d" gap={16} size={1} />
-        <Controls className="!bg-mesh-card !border-mesh-border !fill-gray-300" />
+        <Background color="#30363d" gap={20} size={1} className="!opacity-25" />
+        <Controls className="!bg-mesh-card/80 !backdrop-blur-md !border-white/10 !fill-gray-300 shadow-xl" />
       </ReactFlow>
     </div>
   );
