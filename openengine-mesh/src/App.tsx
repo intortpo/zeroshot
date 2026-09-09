@@ -430,10 +430,6 @@ export function App() {
             <ZeroView
               activeWorkspace={activeWorkspace}
               activeUser={activeUser}
-              onDispatchIntent={(prompt, kind) => {
-                handleCreateIntent(prompt, kind);
-                setCurrentView('board');
-              }}
             />
           </div>
         )}

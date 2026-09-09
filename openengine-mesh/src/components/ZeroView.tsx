@@ -20,13 +20,11 @@ import { ActiveGameTheater } from './zero/ActiveGameTheater';
 interface ZeroViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
-  onDispatchIntent?: (prompt: string, kind: 'bug' | 'feat' | 'issue' | 'mile') => void;
 }
 
 export const ZeroView: React.FC<ZeroViewProps> = ({
   activeWorkspace,
   activeUser,
-  onDispatchIntent,
 }) => {
   // Sub-navigation: 'studio' | 'published'
   const [activeSubTab, setActiveSubTab] = useState<'studio' | 'published'>('studio');
@@ -1444,7 +1442,6 @@ fn main() {
   const handlePlayGame = (game: GameWorkspace, lobby?: MultiplayerLobby) => {
     setActiveWorkspaceId(game.id);
     setActivePlaySession({ gameId: game.id, lobby: lobby || null });
-    onDispatchIntent?.(`Launch interactive game session: ${game.title}${lobby ? ` (${lobby.roomCode})` : ''}`, 'feat');
   };
 
   const handleStartMatch = (lobby: MultiplayerLobby) => {
