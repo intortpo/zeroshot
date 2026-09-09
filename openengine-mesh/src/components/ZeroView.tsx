@@ -8,6 +8,7 @@ import { GameWorkspaceSelector } from './zero/GameWorkspaceSelector';
 import { ConversationalGameDesigner } from './zero/ConversationalGameDesigner';
 import { AvianPhysicsCanvas } from './zero/AvianPhysicsCanvas';
 import { StumbleBlobsCanvas } from './zero/StumbleBlobsCanvas';
+import { JumpyFishCanvas } from './zero/JumpyFishCanvas';
 import { BevyCodeInspector } from './zero/BevyCodeInspector';
 import { PublishedGamesCatalog } from './zero/PublishedGamesCatalog';
 import { MultiplayerLobbyModal } from './zero/MultiplayerLobbyModal';
@@ -218,6 +219,244 @@ fn finish_line_sensor(
             label: 'Chunky Bean (Firm capsule + Subtle impact squash)',
             description: 'Firm and controlled competitive party runner feel.',
             physicsSnippet: 'Restitution::new(0.40) & rigid capsule collider',
+          },
+        ],
+      },
+    },
+    {
+      id: 'jumpy',
+      title: 'Fish Folk: Jumpy',
+      tagline: 'Tactical 2D Bevy & Rapier2D fish brawler with weapon pickups, linear recoil impulses, and platform arena combat',
+      dimension: '2d',
+      bevyVersion: '0.15',
+      avianVersion: '0.2 / Rapier2d 0.19',
+      status: 'published',
+      playCount: 846,
+      likes: 274,
+      thumbnailColor: '#FF5F1F',
+      physicsConfig: {
+        gravity: 19.6,
+        restitution: 0.20,
+        friction: 0.85,
+        linearDamping: 0.15,
+        substeps: 8,
+      },
+      gameLoop: {
+        modeName: 'Tactical Fish Arena Deathmatch',
+        cameraPerspective: '2d_sidescroll',
+        primaryInput: 'A/D Move + Space Jump + J Fire (Recoil) + K Pick/Throw',
+        objective: 'Outmaneuver and eliminate opponent fish using weapon recoil and tactical platform positioning',
+        scoringRule: 'First fish to 5 knockouts wins the match',
+        failCondition: 'Depleting 3 stock lives or falling off stage',
+      },
+      bevyCode: `//! Bevy 0.15 + Rapier2D / Avian2d Tactical Fish Brawler (Fish Folk: Jumpy)
+use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
+        .insert_resource(Gravity(Vec2::NEG_Y * 19.6))
+        .add_systems(Startup, (setup_arena_platforms, spawn_fish_fighters, spawn_weapon_crates))
+        .add_systems(
+            Update,
+            (
+                fish_movement_system,
+                fish_weapon_fire_system,
+                recoil_physics_system,
+                projectile_ballistics_system,
+                deathmatch_scoring_system,
+            ),
+        )
+        .run();
+}
+
+#[derive(Component)]
+struct FishFighter {
+    health: f32,
+    stocks: u8,
+    facing_dir: f32,
+    is_grounded: bool,
+    equipped_weapon: Option<WeaponKind>,
+}
+
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+enum WeaponKind {
+    BubbleBlaster,
+    FishBazooka,
+    LaserPike,
+}
+
+#[derive(Component)]
+struct WeaponCrate {
+    kind: WeaponKind,
+    respawn_timer: Timer,
+}
+
+#[derive(Component)]
+struct Projectile {
+    damage: f32,
+    lifetime: Timer,
+    owner: Entity,
+}
+
+fn setup_arena_platforms(mut commands: Commands) {
+    commands.spawn((Camera2d::default(),));
+
+    // Ground Platform (Static Avian2D Collider)
+    commands.spawn((
+        Sprite::from_color(Color::srgb(0.2, 0.25, 0.33), Vec2::new(680.0, 32.0)),
+        Transform::from_xyz(0.0, -180.0, 0.0),
+        RigidBody::Static,
+        Collider::rectangle(680.0, 32.0),
+        Friction::new(0.85),
+    ));
+
+    // Floating Tactical Ledges (One-way pass-through)
+    for x in [-200.0, 200.0] {
+        commands.spawn((
+            Sprite::from_color(Color::srgb(0.95, 0.95, 0.95), Vec2::new(180.0, 14.0)),
+            Transform::from_xyz(x, -60.0, 0.0),
+            RigidBody::Static,
+            Collider::rectangle(180.0, 14.0),
+        ));
+    }
+}
+
+fn spawn_fish_fighters(mut commands: Commands) {
+    // Player Fish Fighter (Tiffany Turquoise)
+    commands.spawn((
+        FishFighter {
+            health: 100.0,
+            stocks: 3,
+            facing_dir: 1.0,
+            is_grounded: true,
+            equipped_weapon: Some(WeaponKind::BubbleBlaster),
+        },
+        Sprite::from_color(Color::srgb(0.04, 0.73, 0.71), Vec2::new(32.0, 24.0)),
+        Transform::from_xyz(-120.0, -100.0, 1.0),
+        RigidBody::Dynamic,
+        Collider::capsule(10.0, 6.0),
+        Friction::new(0.8),
+        Restitution::new(0.2),
+        LockedAxes::ROTATION_LOCKED,
+    ));
+}
+
+fn spawn_weapon_crates(mut commands: Commands) {
+    commands.spawn((
+        WeaponCrate {
+            kind: WeaponKind::FishBazooka,
+            respawn_timer: Timer::from_seconds(6.0, TimerMode::Once),
+        },
+        Sprite::from_color(Color::srgb(1.0, 0.37, 0.12), Vec2::new(20.0, 20.0)),
+        Transform::from_xyz(0.0, -40.0, 1.0),
+    ));
+}
+
+fn fish_movement_system(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut LinearVelocity, &mut FishFighter)>,
+) {
+    for (mut velocity, mut fish) in &mut query {
+        let mut move_x = 0.0;
+        if keyboard.pressed(KeyCode::KeyA) {
+            move_x -= 1.0;
+            fish.facing_dir = -1.0;
+        }
+        if keyboard.pressed(KeyCode::KeyD) {
+            move_x += 1.0;
+            fish.facing_dir = 1.0;
+        }
+
+        velocity.x = move_x * 260.0;
+
+        if keyboard.just_pressed(KeyCode::Space) && fish.is_grounded {
+            velocity.y = 490.0;
+            fish.is_grounded = false;
+        }
+    }
+}
+
+fn fish_weapon_fire_system(
+    mut commands: Commands,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(Entity, &mut FishFighter, &Transform)>,
+) {
+    for (entity, fish, transform) in &mut query {
+        if keyboard.just_pressed(KeyCode::KeyJ) {
+            if let Some(weapon) = fish.equipped_weapon {
+                let recoil_force = match weapon {
+                    WeaponKind::BubbleBlaster => 320.0,
+                    WeaponKind::FishBazooka => 680.0,
+                    WeaponKind::LaserPike => 180.0,
+                };
+
+                // Linear Recoil Kick Impulse (Avian2D Physics)
+                commands.entity(entity).insert(ExternalImpulse {
+                    impulse: Vec2::new(-fish.facing_dir * recoil_force, 40.0),
+                    ..default()
+                });
+
+                // Spawn Projectile
+                commands.spawn((
+                    Projectile {
+                        damage: 35.0,
+                        lifetime: Timer::from_seconds(2.0, TimerMode::Once),
+                        owner: entity,
+                    },
+                    Sprite::from_color(Color::srgb(1.0, 0.37, 0.12), Vec2::new(10.0, 6.0)),
+                    Transform::from_xyz(transform.translation.x + fish.facing_dir * 20.0, transform.translation.y, 1.0),
+                    RigidBody::Dynamic,
+                    Collider::circle(4.0),
+                    LinearVelocity(Vec2::new(fish.facing_dir * 600.0, 0.0)),
+                ));
+            }
+        }
+    }
+}
+
+fn recoil_physics_system() {}
+fn projectile_ballistics_system() {}
+fn deathmatch_scoring_system() {}`,
+      chatHistory: [
+        {
+          id: 'm-jumpy-1',
+          sender: 'designer',
+          text: "Welcome to Fish Folk: Jumpy! I am your Bevy MCP Game Architect. Let's design a tactical 2D fish platformer brawler inspired by Spicy Lobster & Duck Game, powered by Bevy 0.15 and Rapier2D / Avian2D physics.",
+          timestamp: Date.now() - 3600000,
+        },
+        {
+          id: 'm-jumpy-2',
+          sender: 'designer',
+          text: 'Synthesized Jumpy arena: multi-tier floating ledges, tactical weapon pickups (Bubble Blaster, Fish Bazooka, Laser Pike), and authentic linear recoil physics kicking fish backwards on every shot. You can toggle between our live Avian2D physics arena and the official WASM web player anytime!',
+          timestamp: Date.now() - 3000000,
+          bevyUpdate: 'Setup Bevy 0.15 + Avian2d FishFighter, WeaponCrate pickups, and linear recoil impulse system',
+        },
+      ],
+      pendingQuestion: {
+        id: 'q-jumpy-recoil',
+        category: 'physics',
+        title: 'Step 1: Weapon Recoil & Pushback Physics',
+        description: 'How strong should the weapon recoil impulse kick fish backward when firing?',
+        options: [
+          {
+            id: 'opt-recoil-tactical',
+            label: 'Tactical Jumpy Classic (Moderate linear kick + aerial drift)',
+            description: 'Balanced competitive kickback where weapons feel punchy without disorienting players.',
+            physicsSnippet: 'Recoil::new(320.0) with air damping 0.15',
+          },
+          {
+            id: 'opt-recoil-heavy',
+            label: 'Heavy Artillery (Massive bazooka kick, use recoil for rocket jumping)',
+            description: 'Chaotic high-impulse recoil where firing down launches the fish airborne!',
+            physicsSnippet: 'Recoil::new(680.0) with high aerial impulse',
+          },
+          {
+            id: 'opt-recoil-arcade',
+            label: 'Smooth Arcade (Low recoil pushback for fast run & gun)',
+            description: 'Fast platforming focus with gentle momentum shifts.',
+            physicsSnippet: 'Recoil::new(140.0) with rapid recovery',
           },
         ],
       },
@@ -640,6 +879,64 @@ fn setup_pinball_table(mut commands: Commands) {
         bevySnippetUpdate = 'Complete Bevy 0.15 + Avian3d Stumble Guys clone compiled';
         nextQuestion = undefined;
       }
+    } else if (activeGame.id === 'jumpy') {
+      if (activeGame.pendingQuestion.id === 'q-jumpy-recoil') {
+        designerResponse = `Calibrated weapon recoil physics: ${chosenText}. Added Rapier2d / Avian2d linear impulse kickback to all firearm systems.`;
+        bevySnippetUpdate = 'Updated ExternalImpulse recoil vector & air friction damping';
+        nextQuestion = {
+          id: 'q-jumpy-weapons',
+          category: 'rules',
+          title: 'Step 2: Weapon Spawn Pool & Respawn Timers',
+          description: 'Which weapons should spawn in the arena floating crate locations?',
+          options: [
+            {
+              id: 'opt-wep-classic',
+              label: 'Classic Arsenal (Bubble Blaster, Fish Bazooka, Laser Pike)',
+              description: 'Balanced mix of rapid fire, high explosive area recoil, and sniper beam.',
+              physicsSnippet: 'Weapons: BubbleBlaster(320 recoil), Bazooka(680 recoil), LaserPike(180 recoil)',
+            },
+            {
+              id: 'opt-wep-explosive',
+              label: 'Rocket Mayhem (Heavy Bazookas & Fish Grenades only)',
+              description: 'High explosion radius with extreme recoil rocket-jumping mechanics.',
+              physicsSnippet: 'Weapons: Bazooka(750 recoil, 120 splash radius)',
+            },
+            {
+              id: 'opt-wep-blaster',
+              label: 'Bubble Blitz (Rapid bounce bubbles & high friction)',
+              description: 'Fast tactical skirmishes with bouncy wall ricochet bullets.',
+              physicsSnippet: 'Weapons: BubbleBlaster with 4x ricochet bounce',
+            },
+          ],
+        };
+      } else if (activeGame.pendingQuestion.id === 'q-jumpy-weapons') {
+        designerResponse = `Configured weapon crate pool: ${chosenText}! Adding stock lives and respawn logic.`;
+        bevySnippetUpdate = 'Configured WeaponCrate respawn timers & projectile collision listeners';
+        nextQuestion = {
+          id: 'q-jumpy-match-mode',
+          category: 'mode',
+          title: 'Step 3: Win Condition & Stock Lives',
+          description: 'Select the primary match rule for Fish Folk: Jumpy multiplayer:',
+          options: [
+            {
+              id: 'opt-stocks-3',
+              label: '3 Stock Lives (Last Fish Swimming Wins)',
+              description: 'Competitive tournament standard for Fish Folk & Duck Game.',
+              physicsSnippet: 'MatchRule::StockLives(3)',
+            },
+            {
+              id: 'opt-ko-race',
+              label: 'First to 5 Knockouts (Timed Deathmatch)',
+              description: 'Continuous respawns until one fish reaches 5 KOs.',
+              physicsSnippet: 'MatchRule::FirstToKOs(5)',
+            },
+          ],
+        };
+      } else {
+        designerResponse = `Fish Folk: Jumpy game loop finalized! Tactical 2D platform physics, weapon pickups, and linear recoil systems are ready in Bevy 0.15. Test the Avian2D simulation or play the official WASM web player!`;
+        bevySnippetUpdate = 'Complete Bevy 0.15 + Avian2d Tactical Fish Brawler systems compiled';
+        nextQuestion = undefined;
+      }
     } else if (activeGame.pendingQuestion.category === 'mode') {
       designerResponse = `Excellent choice! Implemented ${chosenText}. Added an Avian observer system to watch for entity perimeter breaches and trigger score state dispatch.`;
       bevySnippetUpdate = 'Add boundary check system & score broadcast observer';
@@ -1034,7 +1331,17 @@ fn main() {
 
               <div className="flex-1 overflow-hidden">
                 {studioRightPane === 'preview' ? (
-                  activeGame.dimension === '3d' ? (
+                  activeGame.id === 'stumble-blobs-3d' ? (
+                    <StumbleBlobsCanvas
+                      gameTitle={activeGame.title}
+                      physicsConfig={activeGame.physicsConfig}
+                    />
+                  ) : activeGame.id === 'jumpy' ? (
+                    <JumpyFishCanvas
+                      gameTitle={activeGame.title}
+                      physicsConfig={activeGame.physicsConfig}
+                    />
+                  ) : activeGame.dimension === '3d' ? (
                     <StumbleBlobsCanvas
                       gameTitle={activeGame.title}
                       physicsConfig={activeGame.physicsConfig}
