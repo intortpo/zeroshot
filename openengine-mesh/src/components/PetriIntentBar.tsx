@@ -77,11 +77,11 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
   ];
 
   return (
-    <div className="w-full px-5 sm:px-8 pt-6 pb-3">
-      <div className="max-w-5xl mx-auto backdrop-blur-2xl bg-white/60 border border-stone-200/80 rounded-3xl p-4 sm:p-5 transition-colors hover:border-stone-400">
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-3.5">
+    <div className="w-full px-5 sm:px-8 pt-5 pb-2">
+      <div className="max-w-4xl mx-auto backdrop-blur-2xl bg-white/65 border border-stone-200/80 rounded-2xl p-3 sm:p-3.5 transition-colors hover:border-stone-400">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2.5">
           {/* Kind Selector Pills */}
-          <div className="flex items-center space-x-1.5 bg-stone-100/70 p-1.5 rounded-2xl border border-stone-200/80 self-stretch sm:self-auto justify-center">
+          <div className="flex items-center space-x-1 bg-stone-100/70 p-1 rounded-xl border border-stone-200/80 self-stretch sm:self-auto justify-center">
             {KIND_SELECTORS.map((item) => {
               const isSelected = selectedKind === item.kind;
               return (
@@ -89,10 +89,10 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
                   key={item.kind}
                   type="button"
                   onClick={() => setSelectedKind(item.kind)}
-                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-mono uppercase font-semibold transition-all border ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-sans uppercase transition-all border ${
                     isSelected
-                      ? `${item.style} font-bold`
-                      : 'border-transparent text-stone-500 hover:text-stone-900'
+                      ? `${item.style} font-medium`
+                      : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
                   }`}
                 >
                   {item.icon}
@@ -102,13 +102,13 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
             })}
           </div>
 
-          {/* Prompt Input with Generous Typography */}
+          {/* Prompt Input with Clean, Proportional Typography */}
           <div className="flex-1 relative w-full">
             <input
               value={intent}
               onChange={handleInputChange}
               placeholder="What do you want to happen or change in the codebase?"
-              className="w-full bg-white/70 border border-stone-200/80 rounded-2xl px-5 py-3 text-base sm:text-lg font-sans text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:bg-white transition-all font-medium"
+              className="w-full bg-white/70 border border-stone-200/80 rounded-xl px-4 py-2 text-xs sm:text-sm font-sans text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:bg-white transition-all font-normal"
             />
           </div>
 
@@ -116,10 +116,10 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
           <button
             type="submit"
             disabled={!intent.trim() || isSubmitting}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2.5 px-6 py-3 rounded-2xl bg-stone-900 hover:bg-black text-white text-sm sm:text-base font-mono font-bold transition-all border border-stone-900 disabled:opacity-30 disabled:hover:bg-stone-900"
+            className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-sans font-medium transition-all border border-stone-900 disabled:opacity-30 disabled:hover:bg-stone-900"
           >
             <span>{isSubmitting ? 'Logging...' : 'Launch'}</span>
-            <ArrowRight className="w-4 h-4 text-white" />
+            <ArrowRight className="w-3.5 h-3.5 text-white" />
           </button>
         </form>
       </div>

@@ -47,9 +47,9 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       {/* Left: Brand, Breadcrumbs, User & Workspace (Flat, No Rounded Boxes) */}
       <div className="flex items-center space-x-4">
         {/* Brand */}
-        <div className="flex items-center space-x-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
-          <span className="text-lg font-mono font-bold tracking-tight text-stone-900">
+        <div className="flex items-center space-x-2">
+          <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
+          <span className="text-base font-sans font-semibold tracking-tight text-stone-900">
             Petri
           </span>
         </div>
@@ -59,12 +59,12 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         {/* User Identity (Flat Link, No Box) */}
         <button
           onClick={onOpenUserModal}
-          className="flex items-center space-x-1.5 text-stone-700 hover:text-stone-950 transition-colors font-mono text-xs font-semibold py-1 group"
+          className="flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-sans text-xs font-normal py-1 group"
           title="Switch User & Identity"
         >
-          <span>{activeUser?.name.split(' ')[0] || 'User'}</span>
-          <span className="text-stone-400 font-normal">({activeUser?.role.replace('_', ' ') || 'owner'})</span>
-          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+          <span className="font-medium text-stone-800">{activeUser?.name.split(' ')[0] || 'User'}</span>
+          <span className="text-stone-400">({activeUser?.role.replace('_', ' ') || 'owner'})</span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
         </button>
 
         <span className="text-stone-300 font-light">/</span>
@@ -72,19 +72,18 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         {/* Workspace Switcher (Flat Link, No Box) */}
         <button
           onClick={onOpenWorkspaceModal}
-          className="hidden sm:flex items-center space-x-1.5 text-stone-700 hover:text-stone-950 transition-colors font-mono text-xs font-medium py-1 group"
+          className="hidden sm:flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-sans text-xs py-1 group"
           title="Switch active workspace"
         >
-          <span className="font-semibold text-stone-900">{activeWorkspace?.name || 'zero-petri'}</span>
-          <span className="text-stone-400">@main</span>
-          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+          <span className="font-medium text-stone-900">{activeWorkspace?.name || 'zero-petri'}</span>
+          <span className="text-stone-400 font-mono">@main</span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
         </button>
 
         {/* Host Spec (Subtle Text, No Box) */}
         <div className="hidden xl:flex items-center space-x-2 text-stone-400 text-xs font-mono pl-2">
           <span>·</span>
           <span>{localNode.deviceName}</span>
-          <span>(po)</span>
         </div>
       </div>
 
@@ -92,10 +91,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       <nav className="flex items-center space-x-6 sm:space-x-8">
         <button
           onClick={() => onSelectView('board')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'board'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <Kanban className={`w-4 h-4 ${currentView === 'board' ? 'text-stone-900' : 'text-stone-400'}`} />
@@ -104,10 +103,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('skills')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'skills'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <Sparkles className={`w-4 h-4 ${currentView === 'skills' ? 'text-stone-900' : 'text-stone-400'}`} />
@@ -116,10 +115,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('memory')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'memory'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <Brain className={`w-4 h-4 ${currentView === 'memory' ? 'text-stone-900' : 'text-stone-400'}`} />
@@ -128,10 +127,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('stats')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'stats'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <BarChart3 className={`w-4 h-4 ${currentView === 'stats' ? 'text-stone-900' : 'text-stone-400'}`} />
@@ -140,10 +139,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('tui')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'tui'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <Terminal className="w-4 h-4" />
@@ -152,10 +151,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
         <button
           onClick={() => onSelectView('settings')}
-          className={`flex items-center space-x-2 py-1 text-sm font-mono transition-all border-b-2 ${
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'settings'
-              ? 'border-stone-900 text-stone-950 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-900 font-medium'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
         >
           <Sliders className={`w-4 h-4 ${currentView === 'settings' ? 'text-stone-900' : 'text-stone-400'}`} />
@@ -164,7 +163,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       </nav>
 
       {/* Right Controls: Flat Indicators & Actions (No Rounded Boxes) */}
-      <div className="flex items-center space-x-5 text-xs font-mono">
+      <div className="flex items-center space-x-5 text-xs font-sans">
         {/* Google Workspace DWD Trigger */}
         <button
           onClick={onOpenDwdModal}

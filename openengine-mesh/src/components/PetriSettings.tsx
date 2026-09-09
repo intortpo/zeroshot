@@ -101,31 +101,31 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none font-mono text-xs sm:text-sm">
-      <form onSubmit={handleSave} className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none font-sans text-xs sm:text-sm">
+      <form onSubmit={handleSave} className="max-w-5xl mx-auto space-y-6">
         {/* 1979 Flight Deck Maintenance Panel Header */}
         <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-stone-200 pb-5">
             <div>
-              <div className="flex items-center space-x-2 text-[11px] text-stone-500 font-bold uppercase tracking-wider mb-1">
+              <div className="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
                 <span>AVIONICS INTERFACE UNIT (AIU)</span>
                 <span>·</span>
                 <span>DOC. 1979-AFCS-ENG</span>
                 <span>·</span>
-                <span className="text-stone-900 font-extrabold">{activeWorkspace?.name || 'zero-petri'}</span>
+                <span className="text-stone-800 font-medium">{activeWorkspace?.name || 'zero-petri'}</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 uppercase">
-                Petri Flight Deck & Technical Connections
+              <h1 className="text-xl font-semibold tracking-tight text-stone-900">
+                Flight Deck & Technical Connections
               </h1>
             </div>
 
             {/* Sparing 1979 Annunciator Bar */}
-            <div className="flex items-center flex-wrap gap-2 text-[10px] font-bold">
-              <div className="px-2.5 py-1 rounded bg-stone-100 border border-stone-300 text-stone-900 flex items-center space-x-1.5">
+            <div className="flex items-center flex-wrap gap-2 text-xs font-mono">
+              <div className="px-2.5 py-1 rounded bg-stone-100 border border-stone-300 text-stone-800 flex items-center space-x-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
                 <span>PFC: CH-A NORMAL</span>
               </div>
-              <div className="px-2.5 py-1 rounded bg-stone-100 border border-stone-300 text-stone-900">
+              <div className="px-2.5 py-1 rounded bg-stone-100 border border-stone-300 text-stone-800">
                 BUS: ARINC 429
               </div>
               <div
@@ -152,7 +152,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           )}
 
           {biteResult && (
-            <div className="mt-4 p-3 rounded-xl bg-stone-100 border border-stone-300 text-stone-900 font-mono text-xs flex items-center space-x-2">
+            <div className="mt-4 p-3 rounded-xl bg-stone-100 border border-stone-300 text-stone-800 font-mono text-xs flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{biteResult}</span>
             </div>
@@ -163,30 +163,30 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
         <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-stone-200 pb-3">
             <div className="flex items-center space-x-2.5">
-              <FileCode2 className="w-4 h-4 text-stone-900" />
-              <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wide">
+              <FileCode2 className="w-4 h-4 text-stone-700" />
+              <h2 className="text-sm font-semibold text-stone-900">
                 LRU-01: Operational Flight Program (OFP) System Prompt
               </h2>
             </div>
-            <span className="text-[10px] text-stone-500 uppercase">SYS-PROMPT // AFCS SPEC</span>
+            <span className="text-xs font-mono text-stone-400">SYS-PROMPT // AFCS SPEC</span>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-stone-700 uppercase">
+            <label className="text-xs font-medium text-stone-700 block">
               Master Autonomous Invariant Instructions
             </label>
             <textarea
-              rows={8}
+              rows={7}
               value={settings.systemPrompt}
               onChange={(e) => setSettings({ ...settings, systemPrompt: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 font-mono text-xs text-stone-900 leading-relaxed focus:outline-none focus:border-stone-900"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3.5 font-mono text-xs text-stone-800 leading-relaxed focus:outline-none focus:border-stone-900"
               spellCheck={false}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div>
-              <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+              <label className="text-xs font-medium text-stone-700 block mb-1">
                 Recursion Turn Ceiling
               </label>
               <div className="flex items-center space-x-2">
@@ -195,7 +195,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                     key={turn}
                     type="button"
                     onClick={() => setSettings({ ...settings, maxRecursionTurn: turn })}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                    className={`px-3 py-1 rounded-lg border text-xs font-mono font-medium transition-colors ${
                       settings.maxRecursionTurn === turn
                         ? 'bg-stone-900 border-stone-900 text-white'
                         : 'bg-stone-50 border-stone-200 text-stone-600 hover:border-stone-400'
@@ -208,13 +208,13 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+              <label className="text-xs font-medium text-stone-700 block mb-1">
                 Invariant Guard Stance
               </label>
               <button
                 type="button"
                 onClick={() => setSettings({ ...settings, failClosedArmed: !settings.failClosedArmed })}
-                className={`px-4 py-1.5 rounded-lg border text-xs font-bold transition-colors flex items-center space-x-2 ${
+                className={`px-3.5 py-1 rounded-lg border text-xs font-mono font-medium transition-colors flex items-center space-x-2 ${
                   settings.failClosedArmed
                     ? 'bg-stone-900 border-stone-900 text-white'
                     : 'bg-orange-100 border-orange-300 text-[#FF5F1F]'
@@ -222,7 +222,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               >
                 {settings.failClosedArmed ? (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
                     <span>ARMED // FAIL-CLOSED</span>
                   </>
                 ) : (
@@ -242,17 +242,17 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center space-x-2.5">
-                <Radio className="w-4 h-4 text-stone-900" />
-                <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wide">
+                <Radio className="w-4 h-4 text-stone-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
                   LRU-02: Digital Data Link (COMM/OECP)
                 </h2>
               </div>
-              <span className="text-[10px] text-stone-500 uppercase">ARINC-429</span>
+              <span className="text-xs font-mono text-stone-400">ARINC-429</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Primary Target Interface URL
                 </label>
                 <input
@@ -260,12 +260,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.targetUri}
                   onChange={(e) => setSettings({ ...settings, targetUri: e.target.value })}
                   placeholder="http://127.0.0.1:8787"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Cluster OECP Protocol Gateway URI
                 </label>
                 <input
@@ -273,19 +273,19 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.clusterOecpUri}
                   onChange={(e) => setSettings({ ...settings, clusterOecpUri: e.target.value })}
                   placeholder="ws://127.0.0.1:8788/v1"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div>
-                  <label className="text-[10px] font-bold text-stone-500 uppercase block mb-1">
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
                     Bus Baud Rate
                   </label>
                   <select
                     value={settings.busBaudRate}
                     onChange={(e) => setSettings({ ...settings, busBaudRate: e.target.value })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-mono text-stone-800 focus:outline-none focus:border-stone-900"
                   >
                     <option value="100 kHz (ARINC-429 HIGH SPEED)">100 kHz (ARINC-429 HS)</option>
                     <option value="12.5 kHz (ARINC-429 LOW SPEED)">12.5 kHz (ARINC-429 LS)</option>
@@ -294,13 +294,13 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-stone-500 uppercase block mb-1">
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
                     Avionics Channel
                   </label>
                   <select
                     value={settings.avionicsChannel}
                     onChange={(e) => setSettings({ ...settings, avionicsChannel: e.target.value as 'CH-A' | 'CH-B' | 'DUAL' })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-mono text-stone-800 focus:outline-none focus:border-stone-900"
                   >
                     <option value="CH-A">CH-A (PRIMARY)</option>
                     <option value="CH-B">CH-B (STANDBY)</option>
@@ -315,17 +315,17 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center space-x-2.5">
-                <GitPullRequest className="w-4 h-4 text-stone-900" />
-                <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wide">
+                <GitPullRequest className="w-4 h-4 text-stone-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
                   LRU-03: Repository Carrier (VCS-79)
                 </h2>
               </div>
-              <span className="text-[10px] text-stone-500 uppercase">GIT / CAS-MERGE</span>
+              <span className="text-xs font-mono text-stone-400">GIT / CAS-MERGE</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   GitHub Personal Access Token (PAT)
                 </label>
                 <input
@@ -333,12 +333,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.githubToken}
                   onChange={(e) => setSettings({ ...settings, githubToken: e.target.value })}
                   placeholder="ghp_********************************"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Authoritative Trunk Reference
                 </label>
                 <input
@@ -346,13 +346,13 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.githubTrunkRef}
                   onChange={(e) => setSettings({ ...settings, githubTrunkRef: e.target.value })}
                   placeholder="main"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-stone-100 border border-stone-200 text-stone-600 text-xs">
-                <div className="font-bold text-stone-800">CAS MERGE PROTOCOL</div>
-                <div>Compare-and-Swap authorized delivery. Verified through required status contexts.</div>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 text-xs">
+                <div className="font-medium text-stone-800">CAS Merge Protocol</div>
+                <div className="text-stone-500 mt-0.5">Compare-and-Swap authorized delivery. Verified through required status contexts.</div>
               </div>
             </div>
           </div>
@@ -361,17 +361,17 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center space-x-2.5">
-                <Cpu className="w-4 h-4 text-stone-900" />
-                <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wide">
+                <Cpu className="w-4 h-4 text-stone-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
                   LRU-04: Model Admission Harness
                 </h2>
               </div>
-              <span className="text-[10px] text-stone-500 uppercase">OPAQUE PROVIDERS</span>
+              <span className="text-xs font-mono text-stone-400">OPAQUE PROVIDERS</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Anthropic Carrier Key
                 </label>
                 <input
@@ -379,12 +379,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.providerAnthropicKey}
                   onChange={(e) => setSettings({ ...settings, providerAnthropicKey: e.target.value })}
                   placeholder="sk-ant-api03-********************************"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   OpenAI Carrier Key
                 </label>
                 <input
@@ -392,12 +392,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.providerOpenaiKey}
                   onChange={(e) => setSettings({ ...settings, providerOpenaiKey: e.target.value })}
                   placeholder="sk-proj-********************************"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Google Vertex Project ID
                 </label>
                 <input
@@ -405,7 +405,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.providerVertexProject}
                   onChange={(e) => setSettings({ ...settings, providerVertexProject: e.target.value })}
                   placeholder="the-open-engine-zeroshot"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
             </div>
@@ -415,17 +415,17 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center space-x-2.5">
-                <Cloud className="w-4 h-4 text-stone-900" />
-                <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wide">
+                <Cloud className="w-4 h-4 text-stone-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
                   LRU-05: Google Workspace DWD Key
                 </h2>
               </div>
-              <span className="text-[10px] text-stone-500 uppercase">IAM SERVICE ACC</span>
+              <span className="text-xs font-mono text-stone-400">IAM SERVICE ACC</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-stone-700 uppercase block mb-1">
+                <label className="text-xs font-medium text-stone-700 block mb-1">
                   Service Account JSON File Path
                 </label>
                 <input
@@ -433,13 +433,13 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   value={settings.googleDwdKeyPath}
                   onChange={(e) => setSettings({ ...settings, googleDwdKeyPath: e.target.value })}
                   placeholder="/home/hideo/.config/gcloud/dwd-sa-key.json"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-stone-100 border border-stone-200 text-stone-600 text-xs">
-                <div className="font-bold text-stone-800">DELEGATION STATUS: CONFIGURED</div>
-                <div>Scopes: Drive, Docs, Gmail, Sheets. Fail-closed credential binding.</div>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 text-xs">
+                <div className="font-medium text-stone-800">Delegation Status: Configured</div>
+                <div className="text-stone-500 mt-0.5">Scopes: Drive, Docs, Gmail, Sheets. Fail-closed credential binding.</div>
               </div>
             </div>
           </div>
@@ -452,29 +452,29 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               type="button"
               onClick={runBiteTest}
               disabled={biteRunning}
-              className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-900 font-bold text-xs uppercase transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 font-medium text-xs font-sans transition-colors"
             >
               <RotateCw className={`w-3.5 h-3.5 ${biteRunning ? 'animate-spin' : ''}`} />
-              <span>{biteRunning ? 'RUNNING BITE...' : 'EXECUTE BITE TEST'}</span>
+              <span>{biteRunning ? 'Running BITE...' : 'Execute BITE Test'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleResetDefaults}
-              className="px-3.5 py-2.5 rounded-xl border border-stone-200 text-stone-500 hover:text-stone-900 hover:border-stone-400 font-medium text-xs transition-colors"
+              className="px-3.5 py-2 rounded-xl border border-stone-200 text-stone-500 hover:text-stone-800 font-medium text-xs font-sans transition-colors"
               title="Reset configuration to 1979 factory envelope"
             >
-              RESET
+              Reset
             </button>
           </div>
 
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
             <button
               type="submit"
-              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase transition-all"
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-medium transition-all"
             >
               <Save className="w-3.5 h-3.5 text-[#0ABAB5]" />
-              <span>COMMIT TO NVM</span>
+              <span>Commit to NVM</span>
             </button>
           </div>
         </div>

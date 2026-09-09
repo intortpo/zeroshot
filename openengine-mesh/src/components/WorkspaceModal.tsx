@@ -111,19 +111,19 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           <div className="text-xs font-semibold text-stone-900 flex items-center space-x-2">
                             <span>{ws.name}</span>
                             {isActive && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-stone-200 border border-stone-300 text-stone-800">
+                              <span className="text-xs font-sans px-2 py-0.5 rounded-full bg-stone-200 border border-stone-300 text-stone-800 font-medium">
                                 ACTIVE
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] font-mono text-stone-400 mt-0.5">
+                          <div className="text-xs font-mono text-stone-500 mt-0.5">
                             {ws.repo} · {ws.path}
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="text-[11px] font-mono text-stone-400">
+                        <span className="text-xs font-sans text-stone-500">
                           {ws.itemCount} items
                         </span>
                         {isActive ? (
@@ -149,28 +149,28 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           ) : (
             <form onSubmit={handleCreate} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-mono text-stone-400">Workspace Name</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Workspace Name</label>
                 <input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Zeroshot Core, Motion Graph, Mobile App"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-white/25"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-stone-400">Git Repository (Optional)</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Git Repository (Optional)</label>
                 <input
                   value={repo}
                   onChange={(e) => setRepo(e.target.value)}
                   placeholder="e.g. foxlight/zero-petri"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-white/25"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-stone-400">Directory Root / Path</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Directory Root / Path</label>
                 <div className="flex items-center space-x-2">
                   <div className="p-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-400">
                     <FolderOpen className="w-4 h-4" />
@@ -179,7 +179,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     value={path}
                     onChange={(e) => setPath(e.target.value)}
                     placeholder="/home/hideo/Documents/GitHub/zero-petri"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-white/25"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
                   />
                 </div>
               </div>
@@ -188,13 +188,13 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-mono text-stone-400 hover:text-stone-900 hover:bg-white/5 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-sans font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-mono font-bold transition-all border border-stone-900"
+                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-semibold transition-all border border-stone-900"
                 >
                   Create & Open
                 </button>

@@ -38,22 +38,22 @@ const getKindBadge = (kind: PetriItemKind) => {
     case 'feat':
       return {
         label: 'feat',
-        style: 'bg-stone-100 text-stone-900 border-stone-300 font-semibold',
+        style: 'bg-stone-100 text-stone-700 border-stone-200 font-medium',
       };
     case 'bug':
       return {
         label: 'bug',
-        style: 'bg-rose-50 text-rose-700 border-rose-200',
+        style: 'bg-rose-50 text-rose-700 border-rose-200 font-medium',
       };
     case 'issue':
       return {
         label: 'issue',
-        style: 'bg-amber-50 text-amber-700 border-amber-200',
+        style: 'bg-amber-50 text-amber-700 border-amber-200 font-medium',
       };
     case 'mile':
       return {
         label: 'mile',
-        style: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        style: 'bg-indigo-50 text-indigo-700 border-indigo-200 font-medium',
       };
   }
 };
@@ -77,8 +77,8 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-x-auto p-6 sm:p-10 select-none font-sans">
-      <div className="flex space-x-8 min-w-[1600px] h-full items-stretch pb-8">
+    <div className="flex-1 w-full overflow-x-auto p-6 sm:p-8 select-none font-sans">
+      <div className="flex space-x-6 min-w-[1500px] h-full items-stretch pb-6">
         {STAGES.map((col, colIdx) => {
           const columnItems = items.filter((item) => item.stage === col.stage);
           const isMergedCol = col.stage === 'merged';
@@ -87,7 +87,7 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
           return (
             <div
               key={col.stage}
-              className={`w-[420px] flex-shrink-0 flex flex-col rounded-3xl border transition-all duration-300 backdrop-blur-2xl ${
+              className={`w-[360px] flex-shrink-0 flex flex-col rounded-2xl border transition-all duration-300 backdrop-blur-2xl ${
                 isMergedCol
                   ? 'border-emerald-200/80 bg-emerald-50/25'
                   : isInFlightCol
@@ -96,22 +96,22 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
               }`}
             >
               {/* Column Header */}
-              <div className="px-6 py-4 border-b border-stone-200/60 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+              <div className="px-5 py-3.5 border-b border-stone-200/60 flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
                   {isMergedCol ? (
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
-                      <GitMerge className="w-3.5 h-3.5 text-emerald-700" />
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
+                      <GitMerge className="w-3 h-3 text-emerald-700" />
                     </div>
                   ) : (
                     <div
-                      className={`w-2.5 h-2.5 rounded-full ${
+                      className={`w-2 h-2 rounded-full ${
                         isInFlightCol ? 'bg-[#0ABAB5] animate-pulse' : 'bg-stone-400'
                       }`}
                     />
                   )}
-                  <div className="text-sm font-mono font-bold text-stone-900 flex items-center space-x-2">
+                  <div className="text-sm font-sans font-semibold text-stone-900 flex items-center space-x-2">
                     <span>{col.label}</span>
-                    <span className="text-xs text-stone-400 font-normal">
+                    <span className="text-xs font-mono text-stone-400 font-normal">
                       ({columnItems.length})
                     </span>
                   </div>
@@ -155,18 +155,18 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                         }`}
                       >
                         {/* Header: Kind Badge, Time, and Recursion Depth Tag */}
-                        <div className="flex items-center justify-between mb-3.5">
+                        <div className="flex items-center justify-between mb-2.5">
                           <div className="flex items-center space-x-2">
                             <span
-                              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold uppercase border ${badge.style}`}
+                              className={`px-2 py-0.5 rounded text-xs font-sans font-medium uppercase border ${badge.style}`}
                             >
                               {badge.label}
                             </span>
 
                             {item.stage === 'in_flight' && (
-                              <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded-lg bg-stone-100 border border-stone-200 text-stone-800 text-xs font-mono font-medium">
+                              <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-stone-100 border border-stone-200 text-stone-700 text-xs font-sans font-normal">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
-                                <span>T{recursionDepth}</span>
+                                <span className="font-mono">T{recursionDepth}</span>
                               </span>
                             )}
                           </div>
@@ -176,17 +176,17 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                           </span>
                         </div>
 
-                        {/* Title with Clean Typography */}
-                        <div className="text-base font-semibold text-stone-900 group-hover:text-stone-950 transition-colors line-clamp-2 leading-snug">
+                        {/* Title with Clean, Legible Typography */}
+                        <div className="text-sm font-medium text-stone-900 group-hover:text-stone-950 transition-colors line-clamp-2 leading-relaxed">
                           {item.title}
                         </div>
 
                         {/* Fanned Out Subagents Section */}
                         {hasAgents && (
                           <div className="mt-3 pt-2.5 border-t border-stone-100 space-y-1.5">
-                            <div className="flex items-center justify-between text-xs font-mono text-stone-500">
+                            <div className="flex items-center justify-between text-xs font-sans text-stone-500">
                               <span>Workers ({item.agents!.length})</span>
-                              <span className="text-[11px] text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
+                              <span className="text-xs text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 font-normal">
                                 Parallel
                               </span>
                             </div>
@@ -195,13 +195,13 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                               {item.agents!.map((agent: AgentWorker) => (
                                 <div
                                   key={agent.id}
-                                  className="bg-stone-50/80 border border-stone-200/80 rounded-lg px-2.5 py-1.5 text-xs font-mono flex items-center justify-between"
+                                  className="bg-stone-50/80 border border-stone-200/80 rounded-lg px-2.5 py-1.5 text-xs flex items-center justify-between"
                                 >
-                                  <span className="font-semibold text-stone-800 flex items-center space-x-1.5">
+                                  <span className="font-sans font-medium text-stone-800 flex items-center space-x-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
                                     <span>{agent.role}</span>
                                   </span>
-                                  <span className="text-[11px] text-stone-500 uppercase">
+                                  <span className="text-xs font-mono text-stone-400 uppercase">
                                     T{agent.recursionTurn ?? 1} · {agent.status}
                                   </span>
                                 </div>
@@ -283,25 +283,25 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                                 e.stopPropagation();
                                 onFanOutAgents(item.id);
                               }}
-                              className="w-full flex items-center justify-center space-x-1.5 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-mono font-medium transition-all"
+                              className="w-full flex items-center justify-center space-x-1.5 py-1.5 rounded-lg bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-sans font-medium transition-all"
                             >
-                              <Zap className="w-3.5 h-3.5 text-stone-700" />
+                              <Zap className="w-3.5 h-3.5 text-stone-600" />
                               <span>Fan Out</span>
                             </button>
                           </div>
                         )}
 
                         {/* Footer & Column Progression Actions */}
-                        <div className="mt-3.5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-mono text-stone-500">
+                        <div className="mt-3 pt-2.5 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500 font-sans">
                           {item.commitHash ? (
-                            <div className="flex items-center space-x-1.5 text-stone-700 font-medium">
-                              <GitCommit className="w-4 h-4 text-stone-500" />
+                            <div className="flex items-center space-x-1.5 text-stone-700 font-mono">
+                              <GitCommit className="w-3.5 h-3.5 text-stone-400" />
                               <span>{item.commitHash.slice(0, 7)}</span>
                             </div>
                           ) : (
-                            <span className="text-stone-500 flex items-center space-x-1.5">
+                            <span className="text-stone-400 flex items-center space-x-1.5">
                               <Cpu className="w-3.5 h-3.5 text-stone-400" />
-                              <span>Native Task</span>
+                              <span>Task</span>
                             </span>
                           )}
 
@@ -312,9 +312,9 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                                 e.stopPropagation();
                                 onAdvanceStage(item.id);
                               }}
-                              className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 text-xs font-mono font-medium transition-colors"
+                              className="flex items-center space-x-1 px-2.5 py-1 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-sans font-medium transition-colors"
                             >
-                              <Play className="w-3 h-3 text-stone-600" />
+                              <Play className="w-3 h-3 text-stone-500" />
                               <span>Dispatch</span>
                             </button>
                           )}
@@ -328,15 +328,15 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                                     e.stopPropagation();
                                     onAdvanceStage(item.id);
                                   }}
-                                  className="flex items-center space-x-1 px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 text-xs font-mono transition-colors"
+                                  className="flex items-center space-x-1 px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-sans font-normal transition-colors"
                                 >
                                   <span>Verify</span>
-                                  <ArrowRight className="w-3 h-3 text-stone-500" />
+                                  <ArrowRight className="w-3 h-3 text-stone-400" />
                                 </button>
                               )}
-                              <div className="flex items-center space-x-1.5 text-stone-800">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-800" />
-                                <span className="font-semibold">Coding</span>
+                              <div className="flex items-center space-x-1.5 text-stone-700">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-700" />
+                                <span className="font-medium">Coding</span>
                               </div>
                             </div>
                           )}
@@ -350,15 +350,15 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                                     e.stopPropagation();
                                     onAdvanceStage(item.id);
                                   }}
-                                  className="flex items-center space-x-1 px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 text-xs font-mono transition-colors"
+                                  className="flex items-center space-x-1 px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-sans font-normal transition-colors"
                                 >
                                   <span>Gate</span>
-                                  <ArrowRight className="w-3 h-3 text-stone-500" />
+                                  <ArrowRight className="w-3 h-3 text-stone-400" />
                                 </button>
                               )}
-                              <div className="flex items-center space-x-1.5 text-stone-800">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-800" />
-                                <span className="font-semibold">Verifying</span>
+                              <div className="flex items-center space-x-1.5 text-stone-700">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-700" />
+                                <span className="font-medium">Verifying</span>
                               </div>
                             </div>
                           )}
@@ -370,7 +370,7 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                                 e.stopPropagation();
                                 onOpenApproval(item);
                               }}
-                              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#FF5F1F] hover:bg-[#E04F15] text-white text-xs font-mono font-bold transition-all shadow-sm"
+                              className="flex items-center space-x-1.5 px-3 py-1 rounded-md bg-[#FF5F1F] hover:bg-[#E04F15] text-white text-xs font-sans font-medium transition-all shadow-sm"
                             >
                               <ShieldAlert className="w-3.5 h-3.5 text-white" />
                               <span>Signoff</span>
@@ -378,8 +378,8 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                           )}
 
                           {item.stage === 'merged' && (
-                            <div className="flex items-center space-x-1.5 text-emerald-700 font-semibold">
-                              <CheckCircle2 className="w-4 h-4" />
+                            <div className="flex items-center space-x-1.5 text-emerald-700 font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Merged</span>
                             </div>
                           )}

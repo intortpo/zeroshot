@@ -67,7 +67,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <User className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-stone-900">Operator Profile & Access</h2>
+              <h2 className="text-base font-semibold text-stone-900">Operator Profile & Access</h2>
               <p className="text-xs text-stone-500">Authenticated operator identity and RBAC role</p>
             </div>
           </div>
@@ -83,18 +83,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         <div className="p-4 rounded-2xl bg-[#FAFBFB] border border-stone-200/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-stone-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-stone-900 text-white flex items-center justify-center font-semibold text-sm">
                 {activeUser.name.charAt(0)}
               </div>
               <div>
-                <div className="text-sm font-bold text-stone-900 flex items-center space-x-2">
+                <div className="text-sm font-semibold text-stone-900 flex items-center space-x-2">
                   <span>{activeUser.name}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
                     ACTIVE OPERATOR
                   </span>
                 </div>
                 <div className="text-xs text-stone-500 flex items-center space-x-1.5 mt-0.5">
-                  <Mail className="w-3 h-3 text-stone-400" />
+                  <Mail className="w-3.5 h-3.5 text-stone-400" />
                   <span>{activeUser.email}</span>
                 </div>
               </div>
@@ -103,15 +103,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-200/60 text-center text-xs">
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-[10px] text-stone-400 font-mono">ROLE</div>
+              <div className="text-xs text-stone-400 font-sans">ROLE</div>
               <div className="font-semibold text-stone-800 capitalize mt-0.5">{activeUser.role.replace('_', ' ')}</div>
             </div>
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-[10px] text-stone-400 font-mono">GATE APPROVAL</div>
+              <div className="text-xs text-stone-400 font-sans">GATE APPROVAL</div>
               <div className="font-semibold text-emerald-700 mt-0.5">Authorized</div>
             </div>
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-[10px] text-stone-400 font-mono">DEPLOY PERMISSION</div>
+              <div className="text-xs text-stone-400 font-sans">DEPLOY PERMISSION</div>
               <div className="font-semibold text-emerald-700 mt-0.5">Enabled</div>
             </div>
           </div>
@@ -147,17 +147,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-7 h-7 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center font-bold text-xs text-stone-700">
+                    <div className="w-7 h-7 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center font-semibold text-xs text-stone-700">
                       {u.name.charAt(0)}
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-stone-900">{u.name}</div>
-                      <div className="text-[11px] text-stone-500">{u.email}</div>
+                      <div className="text-xs text-stone-500">{u.email}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 capitalize">
+                    <span className="text-xs font-sans px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 capitalize">
                       {u.role.replace('_', ' ')}
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-emerald-600" />}

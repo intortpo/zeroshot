@@ -105,7 +105,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
       {/* Top Statusline (Authentic Vim/Tmux Status Header) */}
       <div className="bg-zinc-900 border border-zinc-700/80 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center space-x-3">
-          <span className="bg-zinc-100 text-zinc-950 px-2 py-0.5 font-bold">
+          <span className="bg-zinc-100 text-zinc-950 px-2 py-0.5 font-semibold">
             PETRI-TUI v8.4.0
           </span>
           <span className="text-zinc-300">
@@ -121,7 +121,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
           <span>HOST: po</span>
           <span>ARCH: x86_64</span>
           <span>MODE: CPU NATIVE</span>
-          <span className="text-emerald-400 font-bold">● ONLINE</span>
+          <span className="text-emerald-400 font-semibold">● ONLINE</span>
         </div>
       </div>
 
@@ -131,16 +131,16 @@ export const TuiView: React.FC<TuiViewProps> = ({
         <div className="lg:col-span-7 border border-zinc-700/80 bg-zinc-900/60 flex flex-col overflow-hidden">
           {/* Panel Header */}
           <div className="bg-zinc-900 px-3 py-1.5 border-b border-zinc-700/80 flex items-center justify-between text-xs text-zinc-200">
-            <span className="font-bold text-zinc-100">
+            <span className="font-semibold text-zinc-100">
               ┌─ TASKS & REPOSITORY LEDGER [{items.length}] ──────────────────────────────
             </span>
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-xs text-zinc-400">
               [↑/↓ or j/k] NAVIGATE · [ENTER] INSPECT
             </span>
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-12 px-3 py-1 bg-zinc-900/90 border-b border-zinc-800 text-[11px] font-bold text-zinc-400 uppercase">
+          <div className="grid grid-cols-12 px-3 py-1 bg-zinc-900/90 border-b border-zinc-800 text-xs font-semibold text-zinc-400 uppercase">
             <span className="col-span-1">SEL</span>
             <span className="col-span-2">REF/ID</span>
             <span className="col-span-2">STAGE</span>
@@ -162,11 +162,11 @@ export const TuiView: React.FC<TuiViewProps> = ({
                   onClick={() => setSelectedIndex(idx)}
                   className={`grid grid-cols-12 px-3 py-1.5 cursor-pointer border-b border-zinc-800/80 items-center transition-none ${
                     isSelected
-                      ? 'bg-zinc-100 text-zinc-950 font-bold'
+                      ? 'bg-zinc-100 text-zinc-950 font-semibold'
                       : 'text-zinc-300 hover:bg-zinc-800/60'
                   }`}
                 >
-                  <span className="col-span-1 font-bold">
+                  <span className="col-span-1 font-semibold">
                     {isSelected ? '▶' : ' '}
                   </span>
                   <span className="col-span-2 font-mono">
@@ -187,7 +187,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </div>
 
           {/* Panel Footer */}
-          <div className="bg-zinc-900 px-3 py-1 border-t border-zinc-700/80 text-[11px] flex justify-between text-zinc-400">
+          <div className="bg-zinc-900 px-3 py-1 border-t border-zinc-700/80 text-xs flex justify-between text-zinc-400">
             <span>SELECTED: #{selectedItem?.commitHash ? selectedItem.commitHash.slice(0, 7) : selectedItem?.id}</span>
             <span>PRESS: [F] FANOUT · [R] RECURSE · [A] ADVANCE</span>
           </div>
@@ -198,21 +198,21 @@ export const TuiView: React.FC<TuiViewProps> = ({
           {/* Upper: Chain of Thought Recursion Stream */}
           <div className="flex-1 border border-zinc-700/80 bg-zinc-900/60 flex flex-col overflow-hidden">
             <div className="bg-zinc-900 px-3 py-1.5 border-b border-zinc-700/80 flex items-center justify-between text-xs text-zinc-200">
-              <span className="font-bold text-zinc-100">
+              <span className="font-semibold text-zinc-100">
                 ┌─ EXECUTION TRACE & RECURSION ──────────────────
               </span>
-              <span className="text-[11px] text-zinc-400">TURN {selectedItem?.recursionDepth ?? 1}</span>
+              <span className="text-xs text-zinc-400">TURN {selectedItem?.recursionDepth ?? 1}</span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-2 text-xs text-zinc-300">
-              <div className="text-zinc-100 font-bold border-b border-zinc-800 pb-1">
+              <div className="text-zinc-100 font-semibold border-b border-zinc-800 pb-1">
                 TASK: {selectedItem?.title}
               </div>
 
               {selectedItem?.chainOfThought && selectedItem.chainOfThought.length > 0 ? (
                 selectedItem.chainOfThought.map((thought, tIdx) => (
                   <div key={tIdx} className="flex items-start space-x-2">
-                    <span className="text-zinc-400 font-bold select-none">❯</span>
+                    <span className="text-zinc-400 font-semibold select-none">❯</span>
                     <span className="leading-relaxed">{thought}</span>
                   </div>
                 ))
@@ -226,12 +226,12 @@ export const TuiView: React.FC<TuiViewProps> = ({
 
               {selectedItem?.agents && selectedItem.agents.length > 0 && (
                 <div className="pt-2 border-t border-zinc-800 space-y-1 text-xs">
-                  <div className="text-zinc-200 font-bold uppercase">
+                  <div className="text-zinc-200 font-semibold uppercase">
                     ACTIVE WORKER POOL ({selectedItem.agents.length}):
                   </div>
                   {selectedItem.agents.map((ag) => (
                     <div key={ag.id} className="p-1.5 bg-zinc-900 border border-zinc-700/70">
-                      <div className="flex justify-between font-bold text-zinc-100">
+                      <div className="flex justify-between font-semibold text-zinc-100">
                         <span>{ag.role}</span>
                         <span className="text-zinc-400">{ag.status}</span>
                       </div>
@@ -246,8 +246,8 @@ export const TuiView: React.FC<TuiViewProps> = ({
           {/* Lower: System & Runtime Environment */}
           <div className="h-44 border border-zinc-700/80 bg-zinc-900/60 flex flex-col justify-between text-xs">
             <div className="bg-zinc-900 px-3 py-1 border-b border-zinc-700/80 flex justify-between text-xs text-zinc-200">
-              <span className="font-bold text-zinc-100">┌─ SYSTEM & MESH RUNTIME ───────────────────</span>
-              <span className="text-[10px] text-zinc-400">VERIFIED</span>
+              <span className="font-semibold text-zinc-100">┌─ SYSTEM & MESH RUNTIME ───────────────────</span>
+              <span className="text-xs text-zinc-400">VERIFIED</span>
             </div>
 
             <div className="p-3 space-y-1 text-xs text-zinc-300">
@@ -271,7 +271,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
               </div>
             </div>
 
-            <div className="bg-zinc-900 px-3 py-1 border-t border-zinc-700/80 text-[11px] flex justify-between text-zinc-400">
+            <div className="bg-zinc-900 px-3 py-1 border-t border-zinc-700/80 text-xs flex justify-between text-zinc-400">
               <span>IPC: TAURI V2</span>
               <span>NETWORK: STANDALONE NODE</span>
             </div>
@@ -284,7 +284,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
         <div className="bg-zinc-900/90 border border-zinc-700/80 px-3 py-1.5 mb-2 text-xs space-y-0.5 max-h-16 overflow-y-auto text-zinc-300">
           {consoleLogs.slice(0, 3).map((log, lIdx) => (
             <div key={lIdx} className="truncate">
-              <span className="text-zinc-400 font-bold">›</span> {log}
+              <span className="text-zinc-400 font-semibold">›</span> {log}
             </div>
           ))}
         </div>
@@ -292,7 +292,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
 
       {/* Interactive Command Line & View Switcher */}
       <div className="bg-zinc-900 border border-zinc-700/80 p-2 flex items-center space-x-3 text-xs sm:text-sm">
-        <span className="text-zinc-300 font-bold whitespace-nowrap pl-1">
+        <span className="text-zinc-300 font-semibold whitespace-nowrap pl-1">
           petri:main&gt;
         </span>
 

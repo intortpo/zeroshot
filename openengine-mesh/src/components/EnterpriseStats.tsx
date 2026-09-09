@@ -104,13 +104,13 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
   return (
     <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none space-y-8 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-5">
         <div>
           <div className="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
             <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
-            <span className="font-semibold tracking-wider uppercase">Runtime Telemetry</span>
+            <span className="uppercase tracking-wider">Runtime Telemetry</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+          <h1 className="text-xl font-semibold text-stone-900 tracking-tight">
             Telemetry & Invariants
           </h1>
         </div>
@@ -119,9 +119,9 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
           <button
             onClick={handleReflect}
             disabled={isReflecting}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-mono font-semibold transition-all"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-sans font-medium transition-all"
           >
-            <RotateCw className={`w-3.5 h-3.5 text-stone-700 ${isReflecting ? 'animate-spin' : ''}`} />
+            <RotateCw className={`w-3.5 h-3.5 text-stone-600 ${isReflecting ? 'animate-spin' : ''}`} />
             <span>{isReflecting ? 'Analyzing...' : 'Self-Learning Reflection'}</span>
           </button>
         </div>
@@ -130,152 +130,152 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       {/* Real Repository Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Merged Commits */}
-        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
+        <div className="p-4 rounded-xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
             <span>MERGED COMMITS</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
             {mergedCount}
           </div>
-          <div className="text-xs text-stone-500 font-mono">
+          <div className="text-xs text-stone-400 font-mono">
             main
           </div>
         </div>
 
         {/* In-Flight Work */}
-        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
+        <div className="p-4 rounded-xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
             <span>IN-FLIGHT</span>
             <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-pulse" />
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
             {inFlightCount}
           </div>
-          <div className="text-xs text-stone-500 font-mono">
+          <div className="text-xs text-stone-400 font-mono">
             active
           </div>
         </div>
 
         {/* Gated Review */}
-        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
+        <div className="p-4 rounded-xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
             <span>GATED</span>
             <span className="w-2 h-2 rounded-full bg-[#FF5F1F]" />
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
             {gatedCount}
           </div>
-          <div className="text-xs text-stone-500 font-mono">
+          <div className="text-xs text-stone-400 font-mono">
             signoff required
           </div>
         </div>
 
         {/* Total Tasks Tracked */}
-        <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono font-semibold text-stone-500 tracking-wider">
+        <div className="p-4 rounded-xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
             <span>TOTAL TASKS</span>
-            <GitCommit className="w-4 h-4 text-stone-500" />
+            <GitCommit className="w-4 h-4 text-stone-400" />
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
             {totalTasks}
           </div>
-          <div className="text-xs text-stone-500 font-mono">
+          <div className="text-xs text-stone-400 font-mono">
             {backlogCount} backlog
           </div>
         </div>
       </div>
 
       {/* Real Environment & Invariant Rules Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Host Environment Spec (5 cols) */}
-        <div className="lg:col-span-5 p-7 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-5">
-          <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
-            <div className="flex items-center space-x-2.5">
-              <Cpu className="w-5 h-5 text-stone-700" />
-              <h3 className="text-base font-bold text-stone-900">Host Hardware & Environment</h3>
+        <div className="lg:col-span-5 p-6 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-4">
+          <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+            <div className="flex items-center space-x-2">
+              <Cpu className="w-4 h-4 text-stone-700" />
+              <h3 className="text-sm font-semibold text-stone-900">Host Hardware & Environment</h3>
             </div>
-            <span className="text-xs font-mono px-2.5 py-0.5 rounded-lg bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200">
               verified
             </span>
           </div>
 
-          <div className="space-y-3.5 text-sm">
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+          <div className="space-y-2.5 text-xs font-sans">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Host Name</span>
-              <span className="font-mono font-semibold text-stone-900">po</span>
+              <span className="font-mono text-stone-800 font-medium">po</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Operating System</span>
-              <span className="font-mono text-stone-800">Linux 7.1.9-arch1-2 (x86_64)</span>
+              <span className="font-mono text-stone-700">Linux 7.1.9-arch1-2 (x86_64)</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Active Workspace</span>
-              <span className="font-mono text-stone-800">{activeWorkspace?.name || 'zero-petri'}</span>
+              <span className="font-mono text-stone-700">{activeWorkspace?.name || 'zero-petri'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Repository Path</span>
-              <span className="font-mono text-stone-800 truncate max-w-[220px]" title="/home/hideo/Documents/GitHub/zero-petri">
+              <span className="font-mono text-stone-700 truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
                 .../GitHub/zero-petri
               </span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Execution Hardware</span>
-              <span className="font-mono text-stone-800">{localNode?.deviceName || 'Generic Linux Client'}</span>
+              <span className="font-mono text-stone-700">{localNode?.deviceName || 'Generic Linux Client'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-stone-100">
+            <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Active Operator</span>
-              <span className="font-mono text-stone-800 font-medium">{activeUser?.name || 'Hideo'}</span>
+              <span className="font-sans text-stone-800 font-medium">{activeUser?.name || 'Hideo'}</span>
             </div>
-            <div className="flex justify-between py-1.5">
+            <div className="flex justify-between py-1">
               <span className="text-stone-500">Git Remote</span>
-              <span className="font-mono text-stone-800">github.com:foxlight/zero-petri</span>
+              <span className="font-mono text-stone-700">github.com:foxlight/zero-petri</span>
             </div>
           </div>
         </div>
 
         {/* Right: Architectural Invariants & Learned Heuristics (7 cols) */}
-        <div className="lg:col-span-7 p-7 rounded-3xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-5">
-          <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
-            <div className="flex items-center space-x-2.5">
-              <Brain className="w-5 h-5 text-stone-700" />
-              <h3 className="text-base font-bold text-stone-900">
+        <div className="lg:col-span-7 p-6 rounded-2xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-4">
+          <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+            <div className="flex items-center space-x-2">
+              <Brain className="w-4 h-4 text-stone-700" />
+              <h3 className="text-sm font-semibold text-stone-900">
                 Architectural Invariants & Heuristics ({rules.length})
               </h3>
             </div>
-            <span className="text-xs font-mono text-stone-800 bg-stone-100 px-2.5 py-0.5 rounded-lg border border-stone-200 font-semibold">
-              self-learning active
+            <span className="text-xs font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
+              active
             </span>
           </div>
 
-          <form onSubmit={handleAddRule} className="flex gap-2.5">
+          <form onSubmit={handleAddRule} className="flex gap-2">
             <input
               type="text"
               value={newRuleInput}
               onChange={(e) => setNewRuleInput(e.target.value)}
               placeholder="Add distilled invariant rule to memory..."
-              className="flex-1 px-4 py-2.5 rounded-2xl border border-stone-200 text-sm bg-white/80 text-stone-900 focus:outline-none focus:border-stone-900 font-sans"
+              className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 text-xs bg-white text-stone-900 focus:outline-none focus:border-stone-900 font-sans"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-sm font-semibold border border-stone-900 flex items-center space-x-1.5 transition-colors"
+              className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-medium border border-stone-900 flex items-center space-x-1 transition-colors"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
             </button>
           </form>
 
-          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="p-4 rounded-2xl bg-white/80 border border-stone-200/80 hover:border-stone-400 transition-all text-sm"
+                className="p-3.5 rounded-xl bg-white/80 border border-stone-200/80 hover:border-stone-400 transition-all text-xs"
               >
-                <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-                  <span className="text-stone-900 font-bold">{rule.category}</span>
-                  <span className="text-stone-400 font-medium">{rule.source}</span>
+                <div className="flex items-center justify-between text-xs font-sans mb-1">
+                  <span className="text-stone-800 font-medium">{rule.category}</span>
+                  <span className="text-stone-400 font-mono">{rule.source}</span>
                 </div>
-                <div className="text-stone-800 leading-relaxed font-sans font-medium">
+                <div className="text-stone-700 leading-relaxed font-sans font-normal">
                   {rule.title}
                 </div>
               </div>
