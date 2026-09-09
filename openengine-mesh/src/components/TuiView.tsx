@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PetriItem, Workspace, UserProfile } from '../types';
+import { PetriItem, Workspace, UserProfile, PetriViewMode } from '../types';
 
 interface TuiViewProps {
   items: PetriItem[];
@@ -8,7 +8,7 @@ interface TuiViewProps {
   onFanOutAgents?: (itemId: string) => void;
   onAdvanceStage?: (itemId: string) => void;
   onRecurseAgent?: (itemId: string) => void;
-  onSelectView?: (view: 'board' | 'skills' | 'memory' | 'stats' | 'tui') => void;
+  onSelectView?: (view: PetriViewMode) => void;
 }
 
 export const TuiView: React.FC<TuiViewProps> = ({
@@ -59,9 +59,10 @@ export const TuiView: React.FC<TuiViewProps> = ({
           ...prev,
         ]);
       } else if (e.key === '1') onSelectView?.('board');
-      else if (e.key === '2') onSelectView?.('skills');
-      else if (e.key === '3') onSelectView?.('memory');
-      else if (e.key === '4') onSelectView?.('stats');
+      else if (e.key === '2') onSelectView?.('zero');
+      else if (e.key === '3') onSelectView?.('skills');
+      else if (e.key === '4') onSelectView?.('memory');
+      else if (e.key === '5') onSelectView?.('stats');
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -90,6 +91,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
     } else if (cmd === 'clear') {
       setConsoleLogs([]);
     } else if (cmd === 'board') onSelectView?.('board');
+    else if (cmd === 'zero') onSelectView?.('zero');
     else if (cmd === 'skills') onSelectView?.('skills');
     else if (cmd === 'memory') onSelectView?.('memory');
     else if (cmd === 'stats') onSelectView?.('stats');
@@ -315,24 +317,31 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </button>
           <button
             type="button"
+            onClick={() => onSelectView?.('zero')}
+            className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-600 transition-colors"
+          >
+            [2] ZERO
+          </button>
+          <button
+            type="button"
             onClick={() => onSelectView?.('skills')}
             className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-600 transition-colors"
           >
-            [2] SKILLS
+            [3] SKILLS
           </button>
           <button
             type="button"
             onClick={() => onSelectView?.('memory')}
             className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-600 transition-colors"
           >
-            [3] MEMORY
+            [4] MEMORY
           </button>
           <button
             type="button"
             onClick={() => onSelectView?.('stats')}
             className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-600 transition-colors"
           >
-            [4] STATS
+            [5] STATS
           </button>
         </div>
       </div>

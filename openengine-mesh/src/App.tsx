@@ -12,8 +12,9 @@ import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
+import { ZeroView } from './components/ZeroView';
 import { useMeshLedger } from './hooks/useMeshLedger';
-import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile } from './types';
+import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
 
 export function App() {
   const {
@@ -26,8 +27,8 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'
-  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'>('board');
+  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'
+  const [currentView, setCurrentView] = useState<PetriViewMode>('board');
 
   // Enterprise Users & Identity State (Authentic User)
   const [users, setUsers] = useState<UserProfile[]>([
@@ -420,6 +421,20 @@ export function App() {
                 onRecurseAgent={handleRecurseAgent}
               />
             </div>
+          </div>
+        )}
+ 
+        {/* View: Zero (Zeroshot v8 Engine & Invariants) */}
+        {currentView === 'zero' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <ZeroView
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              onDispatchIntent={(prompt, kind) => {
+                handleCreateIntent(prompt, kind);
+                setCurrentView('board');
+              }}
+            />
           </div>
         )}
 

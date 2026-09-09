@@ -222,3 +222,5 @@ export interface EnterpriseStats {
   selfLearningConfidence: number;
   invariantPassRate: number;
 }
+
+export type PetriViewMode = 'board' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';

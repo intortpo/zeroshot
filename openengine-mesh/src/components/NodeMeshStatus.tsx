@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Minus,
   X,
@@ -9,8 +8,9 @@ import {
   BarChart3,
   Terminal,
   Sliders,
+  Disc,
 } from 'lucide-react';
-import { NodeSpec, Workspace, UserProfile } from '../types';
+import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
 
 interface NodeMeshStatusProps {
   localNode: NodeSpec;
@@ -22,8 +22,8 @@ interface NodeMeshStatusProps {
   onOpenWorkspaceModal: () => void;
   activeUser?: UserProfile;
   onOpenUserModal: () => void;
-  currentView: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings';
-  onSelectView: (view: 'board' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings') => void;
+  currentView: PetriViewMode;
+  onSelectView: (view: PetriViewMode) => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -99,6 +99,18 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         >
           <Kanban className={`w-4 h-4 ${currentView === 'board' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Board</span>
+        </button>
+
+        <button
+          onClick={() => onSelectView('zero')}
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
+            currentView === 'zero'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+          }`}
+        >
+          <Disc className={`w-4 h-4 ${currentView === 'zero' ? 'text-stone-900' : 'text-stone-400'}`} />
+          <span>Zero</span>
         </button>
 
         <button

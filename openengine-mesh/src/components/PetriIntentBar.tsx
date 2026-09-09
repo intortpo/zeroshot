@@ -78,7 +78,7 @@ export const PetriIntentBar: React.FC<PetriIntentBarProps> = ({ onSubmitIntent }
 
   return (
     <div className="w-full px-5 sm:px-8 pt-5 pb-2">
-      <div className="max-w-4xl mx-auto backdrop-blur-2xl bg-white/65 border border-stone-200/80 rounded-2xl p-3 sm:p-3.5 transition-colors hover:border-stone-400">
+      <div className="max-w-4xl mx-auto subtle-depth rounded-2xl p-3 sm:p-3.5 transition-all hover:border-stone-400/80">
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2.5">
           {/* Kind Selector Pills */}
           <div className="flex items-center space-x-1 bg-stone-100/70 p-1 rounded-xl border border-stone-200/80 self-stretch sm:self-auto justify-center">

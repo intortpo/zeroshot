@@ -87,12 +87,12 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
           return (
             <div
               key={col.stage}
-              className={`w-[360px] flex-shrink-0 flex flex-col rounded-2xl border transition-all duration-300 backdrop-blur-2xl ${
+              className={`w-[360px] flex-shrink-0 flex flex-col rounded-2xl transition-all duration-300 ${
                 isMergedCol
-                  ? 'border-emerald-200/80 bg-emerald-50/25'
+                  ? 'border border-emerald-200/80 bg-emerald-50/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_2px_12px_rgba(0,0,0,0.02)]'
                   : isInFlightCol
-                  ? 'border-stone-300/90 bg-white/60'
-                  : 'border-stone-200/80 bg-white/45'
+                  ? 'subtle-depth border-stone-300/90'
+                  : 'subtle-depth'
               }`}
             >
               {/* Column Header */}
@@ -144,14 +144,14 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                       <div
                         key={item.id}
                         onClick={() => onSelectItem?.(item)}
-                        className={`p-6 rounded-2xl border transition-all duration-200 cursor-pointer group backdrop-blur-xl ${
+                        className={`p-6 rounded-2xl subtle-depth-card subtle-depth-interactive cursor-pointer group ${
                           item.stage === 'gated'
-                            ? 'border-amber-300 bg-amber-50/60 hover:border-amber-400'
+                            ? 'border-amber-300/90 bg-amber-50/70 hover:border-amber-400'
                             : item.stage === 'merged'
-                            ? 'border-emerald-200/90 bg-white/70 hover:border-emerald-300'
+                            ? 'border-emerald-200/90 bg-white/90 hover:border-emerald-300'
                             : item.stage === 'in_flight'
-                            ? 'border-stone-400/80 bg-white/90 hover:border-stone-600'
-                            : 'border-stone-200/80 bg-white/75 hover:border-stone-400'
+                            ? 'border-stone-400/90 bg-white/95 hover:border-stone-600'
+                            : 'border-stone-200/90 bg-white/85 hover:border-stone-400'
                         }`}
                       >
                         {/* Header: Kind Badge, Time, and Recursion Depth Tag */}
