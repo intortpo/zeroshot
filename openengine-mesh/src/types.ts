@@ -1,8 +1,25 @@
 export type PetriItemKind = 'bug' | 'issue' | 'feat' | 'mile';
 export type PetriStage = 'backlog' | 'in_flight' | 'verifying' | 'gated' | 'merged';
 
+export interface AgentWorker {
+  id: string;
+  role: string;
+  status: 'idle' | 'thinking' | 'recursing' | 'executing' | 'done';
+  thought?: string;
+  recursionTurn?: number;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  repo: string;
+  path: string;
+  itemCount: number;
+}
+
 export interface PetriItem {
   id: string;
+  workspaceId?: string;
   kind: PetriItemKind;
   title: string;
   description?: string;
@@ -13,6 +30,10 @@ export interface PetriItem {
   commitHash?: string;
   createdAt: number;
   updatedAt: number;
+  agents?: AgentWorker[];
+  chainOfThought?: string[];
+  recursionDepth?: number;
+  isFannedOut?: boolean;
 }
 
 export type NodeRole = 'rtx_host' | 'thin_client';
