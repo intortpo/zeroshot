@@ -225,14 +225,14 @@ fn finish_line_sensor(
     },
     {
       id: 'jumpy',
-      title: 'Fish Folk: Jumpy',
-      tagline: 'Tactical 2D Bevy & Rapier2D fish brawler with weapon pickups, linear recoil impulses, and platform arena combat',
+      title: 'Jumpy Dudes: Tactical Arena',
+      tagline: 'Tactical 2D Bevy & Rapier2D platform brawler featuring the Dudes with unique character abilities, weapon pickups, and linear recoil physics',
       dimension: '2d',
       bevyVersion: '0.15',
       avianVersion: '0.2 / Rapier2d 0.19',
       status: 'published',
-      playCount: 846,
-      likes: 274,
+      playCount: 1120,
+      likes: 384,
       thumbnailColor: '#FF5F1F',
       physicsConfig: {
         gravity: 19.6,
@@ -242,14 +242,14 @@ fn finish_line_sensor(
         substeps: 8,
       },
       gameLoop: {
-        modeName: 'Tactical Fish Arena Deathmatch',
+        modeName: 'Dudes Tactical Arena Deathmatch',
         cameraPerspective: '2d_sidescroll',
-        primaryInput: 'A/D Move + Space Jump + J Fire (Recoil) + K Pick/Throw',
-        objective: 'Outmaneuver and eliminate opponent fish using weapon recoil and tactical platform positioning',
-        scoringRule: 'First fish to 5 knockouts wins the match',
+        primaryInput: 'A/D Move + Space Jump + Q Character Ability + J Fire (Recoil) + K Pick/Throw',
+        objective: 'Unleash your Dude signature ability (Jetpack, Blink, Dragon Breath, Forcefield, Freeze) and outmaneuver opponents in tactical platform combat',
+        scoringRule: 'First Dude to 5 knockouts wins the match',
         failCondition: 'Depleting 3 stock lives or falling off stage',
       },
-      bevyCode: `//! Bevy 0.15 + Rapier2D / Avian2d Tactical Fish Brawler (Fish Folk: Jumpy)
+      bevyCode: `//! Bevy 0.15 + Rapier2D / Avian2d Tactical Dudes Arena with Unique Abilities
 use bevy::prelude::*;
 use avian2d::prelude::*;
 
@@ -257,12 +257,13 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
         .insert_resource(Gravity(Vec2::NEG_Y * 19.6))
-        .add_systems(Startup, (setup_arena_platforms, spawn_fish_fighters, spawn_weapon_crates))
+        .add_systems(Startup, (setup_arena_platforms, spawn_dude_fighters, spawn_weapon_crates))
         .add_systems(
             Update,
             (
-                fish_movement_system,
-                fish_weapon_fire_system,
+                dude_movement_system,
+                dude_ability_system,
+                dude_weapon_fire_system,
                 recoil_physics_system,
                 projectile_ballistics_system,
                 deathmatch_scoring_system,
@@ -271,12 +272,33 @@ fn main() {
         .run();
 }
 
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+enum DudeKind {
+    Astronaut,    // Zero-G Thruster jetpack boost & low gravity glide
+    Alien,        // Plasma Disintegrator bouncy piercing orb
+    Wizard,       // Arcane Blink teleport dash & mana shockwave
+    Dragon,       // Dragon's Breath sweeping flame cone
+    MegaBot,      // EMP Forcefield deflecting bullets
+    Swashbuckler, // Shadow Blade Dash with invincibility frames & triple jump
+    IceElemental, // Glacial Nova freezing nearby opponents in ice
+    Vampire,      // Bat Swarm Drain stealing health from enemies
+    TRex,         // Primal Roar seismic blast
+    Ghost,        // Ethereal Phase passing through walls and bullets
+    Blobfish,     // Goo Splashdown bouncy ground slam
+    Cat,          // Claw Frenzy multi-slash critical leap
+}
+
 #[derive(Component)]
-struct FishFighter {
+struct DudeActor {
+    kind: DudeKind,
     health: f32,
+    max_health: f32,
     stocks: u8,
     facing_dir: f32,
     is_grounded: bool,
+    jump_count: u8,
+    ability_cooldown: Timer,
+    ability_active: Timer,
     equipped_weapon: Option<WeaponKind>,
 }
 
@@ -298,12 +320,13 @@ struct Projectile {
     damage: f32,
     lifetime: Timer,
     owner: Entity,
+    is_plasma: bool,
 }
 
 fn setup_arena_platforms(mut commands: Commands) {
     commands.spawn((Camera2d::default(),));
 
-    // Ground Platform (Static Avian2D Collider)
+    // Ground Platform
     commands.spawn((
         Sprite::from_color(Color::srgb(0.2, 0.25, 0.33), Vec2::new(680.0, 32.0)),
         Transform::from_xyz(0.0, -180.0, 0.0),
@@ -312,7 +335,7 @@ fn setup_arena_platforms(mut commands: Commands) {
         Friction::new(0.85),
     ));
 
-    // Floating Tactical Ledges (One-way pass-through)
+    // Floating Tactical Ledges
     for x in [-200.0, 200.0] {
         commands.spawn((
             Sprite::from_color(Color::srgb(0.95, 0.95, 0.95), Vec2::new(180.0, 14.0)),
@@ -323,20 +346,25 @@ fn setup_arena_platforms(mut commands: Commands) {
     }
 }
 
-fn spawn_fish_fighters(mut commands: Commands) {
-    // Player Fish Fighter (Tiffany Turquoise)
+fn spawn_dude_fighters(mut commands: Commands) {
+    // Player Astronaut Dude
     commands.spawn((
-        FishFighter {
+        DudeActor {
+            kind: DudeKind::Astronaut,
             health: 100.0,
+            max_health: 100.0,
             stocks: 3,
             facing_dir: 1.0,
             is_grounded: true,
+            jump_count: 0,
+            ability_cooldown: Timer::from_seconds(5.0, TimerMode::Once),
+            ability_active: Timer::from_seconds(3.0, TimerMode::Once),
             equipped_weapon: Some(WeaponKind::BubbleBlaster),
         },
-        Sprite::from_color(Color::srgb(0.04, 0.73, 0.71), Vec2::new(32.0, 24.0)),
+        Sprite::from_color(Color::srgb(0.0, 0.75, 0.95), Vec2::new(36.0, 36.0)),
         Transform::from_xyz(-120.0, -100.0, 1.0),
         RigidBody::Dynamic,
-        Collider::capsule(10.0, 6.0),
+        Collider::capsule(12.0, 8.0),
         Friction::new(0.8),
         Restitution::new(0.2),
         LockedAxes::ROTATION_LOCKED,
@@ -354,47 +382,84 @@ fn spawn_weapon_crates(mut commands: Commands) {
     ));
 }
 
-fn fish_movement_system(
+fn dude_movement_system(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut LinearVelocity, &mut FishFighter)>,
+    mut query: Query<(&mut LinearVelocity, &mut DudeActor)>,
 ) {
-    for (mut velocity, mut fish) in &mut query {
+    for (mut velocity, mut dude) in &mut query {
         let mut move_x = 0.0;
         if keyboard.pressed(KeyCode::KeyA) {
             move_x -= 1.0;
-            fish.facing_dir = -1.0;
+            dude.facing_dir = -1.0;
         }
         if keyboard.pressed(KeyCode::KeyD) {
             move_x += 1.0;
-            fish.facing_dir = 1.0;
+            dude.facing_dir = 1.0;
         }
 
-        velocity.x = move_x * 260.0;
+        let speed = if dude.kind == DudeKind::Alien { 310.0 } else { 260.0 };
+        velocity.x = move_x * speed;
 
-        if keyboard.just_pressed(KeyCode::Space) && fish.is_grounded {
+        let max_jumps = if dude.kind == DudeKind::Swashbuckler { 3 } else { 2 };
+        if keyboard.just_pressed(KeyCode::Space) && (dude.is_grounded || dude.jump_count < max_jumps) {
             velocity.y = 490.0;
-            fish.is_grounded = false;
+            dude.is_grounded = false;
+            dude.jump_count += 1;
         }
     }
 }
 
-fn fish_weapon_fire_system(
+fn dude_ability_system(
     mut commands: Commands,
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(Entity, &mut FishFighter, &Transform)>,
+    mut query: Query<(Entity, &mut LinearVelocity, &mut DudeActor, &Transform)>,
 ) {
-    for (entity, fish, transform) in &mut query {
+    for (entity, mut velocity, mut dude, transform) in &mut query {
+        if keyboard.just_pressed(KeyCode::KeyQ) && dude.ability_cooldown.finished() {
+            dude.ability_cooldown.reset();
+            match dude.kind {
+                DudeKind::Astronaut => {
+                    // Zero-G Thruster: High vertical and horizontal boost
+                    velocity.y = 560.0;
+                    velocity.x += dude.facing_dir * 380.0;
+                }
+                DudeKind::Wizard => {
+                    // Arcane Blink: Teleport dash in facing direction
+                    commands.entity(entity).insert(Transform::from_xyz(
+                        transform.translation.x + dude.facing_dir * 180.0,
+                        transform.translation.y,
+                        transform.translation.z,
+                    ));
+                }
+                DudeKind::Swashbuckler => {
+                    // Shadow Blade Dash
+                    velocity.x = dude.facing_dir * 600.0;
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn dude_weapon_fire_system(
+    mut commands: Commands,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(Entity, &mut DudeActor, &Transform)>,
+) {
+    for (entity, dude, transform) in &mut query {
         if keyboard.just_pressed(KeyCode::KeyJ) {
-            if let Some(weapon) = fish.equipped_weapon {
+            if let Some(weapon) = dude.equipped_weapon {
                 let recoil_force = match weapon {
                     WeaponKind::BubbleBlaster => 320.0,
                     WeaponKind::FishBazooka => 680.0,
                     WeaponKind::LaserPike => 180.0,
                 };
 
+                let dampener = if dude.kind == DudeKind::Dragon { 0.5 } else { 1.0 };
+
                 // Linear Recoil Kick Impulse (Avian2D Physics)
                 commands.entity(entity).insert(ExternalImpulse {
-                    impulse: Vec2::new(-fish.facing_dir * recoil_force, 40.0),
+                    impulse: Vec2::new(-dude.facing_dir * recoil_force * dampener, 40.0),
                     ..default()
                 });
 
@@ -404,12 +469,13 @@ fn fish_weapon_fire_system(
                         damage: 35.0,
                         lifetime: Timer::from_seconds(2.0, TimerMode::Once),
                         owner: entity,
+                        is_plasma: false,
                     },
                     Sprite::from_color(Color::srgb(1.0, 0.37, 0.12), Vec2::new(10.0, 6.0)),
-                    Transform::from_xyz(transform.translation.x + fish.facing_dir * 20.0, transform.translation.y, 1.0),
+                    Transform::from_xyz(transform.translation.x + dude.facing_dir * 20.0, transform.translation.y, 1.0),
                     RigidBody::Dynamic,
                     Collider::circle(4.0),
-                    LinearVelocity(Vec2::new(fish.facing_dir * 600.0, 0.0)),
+                    LinearVelocity(Vec2::new(dude.facing_dir * 600.0, 0.0)),
                 ));
             }
         }
@@ -423,40 +489,40 @@ fn deathmatch_scoring_system() {}`,
         {
           id: 'm-jumpy-1',
           sender: 'designer',
-          text: "Welcome to Fish Folk: Jumpy! I am your Bevy MCP Game Architect. Let's design a tactical 2D fish platformer brawler inspired by Spicy Lobster & Duck Game, powered by Bevy 0.15 and Rapier2D / Avian2D physics.",
+          text: "Welcome to Jumpy Dudes! I am your Bevy MCP Game Architect. Let's design a tactical 2D platform brawler where every Dude from the roster has their own signature ability (Zero-G Thruster, Arcane Blink, Dragon's Breath, EMP Forcefield, Glacial Nova, and more) powered by Bevy 0.15 and Rapier2D / Avian2D physics.",
           timestamp: Date.now() - 3600000,
         },
         {
           id: 'm-jumpy-2',
           sender: 'designer',
-          text: 'Synthesized Jumpy arena: multi-tier floating ledges, tactical weapon pickups (Bubble Blaster, Fish Bazooka, Laser Pike), and authentic linear recoil physics kicking fish backwards on every shot. You can toggle between our live Avian2D physics arena and the official WASM web player anytime!',
+          text: 'Loaded all 190 Dude characters from the repository into our 2D tactical arena! You can switch Dudes anytime in the selector strip to unleash their abilities: Astro Dude Zero-G float, Alien plasma orbs, Wizard teleport blinks, Dragon fire breath, Mega Bot EMP shield, Swashbuckler triple jump, Ice freeze, Vampire lifesteal, and more!',
           timestamp: Date.now() - 3000000,
-          bevyUpdate: 'Setup Bevy 0.15 + Avian2d FishFighter, WeaponCrate pickups, and linear recoil impulse system',
+          bevyUpdate: 'Setup Bevy 0.15 + Avian2d DudeActor, DudeKind abilities, and linear recoil impulse system',
         },
       ],
       pendingQuestion: {
-        id: 'q-jumpy-recoil',
+        id: 'q-jumpy-abilities',
         category: 'physics',
-        title: 'Step 1: Weapon Recoil & Pushback Physics',
-        description: 'How strong should the weapon recoil impulse kick fish backward when firing?',
+        title: 'Step 1: Dude Ability Cooldowns & Balance',
+        description: 'How frequently should Dudes be able to unleash their signature abilities in combat?',
         options: [
           {
-            id: 'opt-recoil-tactical',
-            label: 'Tactical Jumpy Classic (Moderate linear kick + aerial drift)',
-            description: 'Balanced competitive kickback where weapons feel punchy without disorienting players.',
-            physicsSnippet: 'Recoil::new(320.0) with air damping 0.15',
+            id: 'opt-ability-tactical',
+            label: 'Tactical Cadence (4-6s Cooldowns with High-Impact Plays)',
+            description: 'Strategic timing where abilities turn the tide of high-stakes duels.',
+            physicsSnippet: 'AbilityCooldown::new(4.5..6.0s) & high-impact momentum impulses',
           },
           {
-            id: 'opt-recoil-heavy',
-            label: 'Heavy Artillery (Massive bazooka kick, use recoil for rocket jumping)',
-            description: 'Chaotic high-impulse recoil where firing down launches the fish airborne!',
-            physicsSnippet: 'Recoil::new(680.0) with high aerial impulse',
+            id: 'opt-ability-mayhem',
+            label: 'Ability Mayhem (2-3s Fast Cooldowns for Nonstop Action)',
+            description: 'Chaotic party mode with constant teleports, fire breath, and zero-g boosts.',
+            physicsSnippet: 'AbilityCooldown::new(2.5s) & rapid energy recharge',
           },
           {
-            id: 'opt-recoil-arcade',
-            label: 'Smooth Arcade (Low recoil pushback for fast run & gun)',
-            description: 'Fast platforming focus with gentle momentum shifts.',
-            physicsSnippet: 'Recoil::new(140.0) with rapid recovery',
+            id: 'opt-ability-meter',
+            label: 'Overdrive Meter (Charges on Weapon Hits and Knockouts)',
+            description: 'Reward landing weapon shots to build up super ability charges.',
+            physicsSnippet: 'OverdriveMeter: charge += damage_dealt * 0.4',
           },
         ],
       },
@@ -880,14 +946,14 @@ fn setup_pinball_table(mut commands: Commands) {
         nextQuestion = undefined;
       }
     } else if (activeGame.id === 'jumpy') {
-      if (activeGame.pendingQuestion.id === 'q-jumpy-recoil') {
-        designerResponse = `Calibrated weapon recoil physics: ${chosenText}. Added Rapier2d / Avian2d linear impulse kickback to all firearm systems.`;
-        bevySnippetUpdate = 'Updated ExternalImpulse recoil vector & air friction damping';
+      if (activeGame.pendingQuestion.id === 'q-jumpy-abilities') {
+        designerResponse = `Calibrated Dude character abilities: ${chosenText}. Added cooldown timers, passive modifiers, and active particle durations to Bevy ECS DudeActor components.`;
+        bevySnippetUpdate = 'Updated dude_ability_system & ability cooldown timers';
         nextQuestion = {
           id: 'q-jumpy-weapons',
           category: 'rules',
-          title: 'Step 2: Weapon Spawn Pool & Respawn Timers',
-          description: 'Which weapons should spawn in the arena floating crate locations?',
+          title: 'Step 2: Tactical Weapon Arsenal & Crate Spawns',
+          description: 'Which weapons should spawn in the arena floating crate locations alongside character abilities?',
           options: [
             {
               id: 'opt-wep-classic',

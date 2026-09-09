@@ -5,6 +5,7 @@ import {
   Flame,
   RefreshCw,
   Trophy,
+  Zap,
 } from 'lucide-react';
 import { GamePhysicsConfig } from '../../types';
 
@@ -15,6 +16,140 @@ interface JumpyFishCanvasProps {
 
 type PlayMode = 'sim' | 'wasm';
 type WeaponType = 'bubble_blaster' | 'fish_bazooka' | 'laser_pike';
+
+export interface DudeDef {
+  id: string;
+  name: string;
+  svgPath: string;
+  abilityName: string;
+  abilityDescription: string;
+  abilityCooldown: number;
+  passiveDescription: string;
+  color: string;
+}
+
+export const DUDES_ROSTER: DudeDef[] = [
+  {
+    id: 'astronaut',
+    name: 'Astro Dude',
+    svgPath: '/dudes/astronaut.svg',
+    abilityName: 'Zero-G Thruster',
+    abilityDescription: 'Rocket boost upward & forward with low-gravity glide',
+    abilityCooldown: 5.0,
+    passiveDescription: '-40% fall gravity glide',
+    color: '#00c0f3',
+  },
+  {
+    id: 'alien',
+    name: 'Alien Invader',
+    svgPath: '/dudes/alien.svg',
+    abilityName: 'Plasma Disintegrator',
+    abilityDescription: 'Fires an overcharged bouncing plasma orb piercing ledges',
+    abilityCooldown: 4.5,
+    passiveDescription: '+20% locomotion agility',
+    color: '#10b981',
+  },
+  {
+    id: 'wizard',
+    name: 'Arcane Wizard',
+    svgPath: '/dudes/wizard.svg',
+    abilityName: 'Arcane Blink',
+    abilityDescription: 'Instant teleport dash with a radial mana shockwave',
+    abilityCooldown: 4.0,
+    passiveDescription: 'Spells travel +35% faster',
+    color: '#a855f7',
+  },
+  {
+    id: 'dragon',
+    name: 'Fire Drake',
+    svgPath: '/dudes/dragon.svg',
+    abilityName: "Dragon's Breath",
+    abilityDescription: 'Unleashes a sweeping torrent of scorching flame particles',
+    abilityCooldown: 6.0,
+    passiveDescription: '-50% recoil knockback taken',
+    color: '#ef4444',
+  },
+  {
+    id: 'mega_bot',
+    name: 'Mega Bot',
+    svgPath: '/dudes/mega_bot.svg',
+    abilityName: 'EMP Forcefield',
+    abilityDescription: 'Deploys an electromagnetic barrier reflecting incoming bullets',
+    abilityCooldown: 7.0,
+    passiveDescription: 'Armored plating (+30 max health)',
+    color: '#3b82f6',
+  },
+  {
+    id: 'swashbuckler',
+    name: 'Swashbuckler',
+    svgPath: '/dudes/swashbuckler.svg',
+    abilityName: 'Shadow Blade Dash',
+    abilityDescription: 'High-speed forward blade slash with invulnerability frames',
+    abilityCooldown: 4.0,
+    passiveDescription: 'Triple-jump aerial agility',
+    color: '#f59e0b',
+  },
+  {
+    id: 'ice_elemental',
+    name: 'Ice Elemental',
+    svgPath: '/dudes/ice_elemental.svg',
+    abilityName: 'Glacial Nova',
+    abilityDescription: 'Freezes all nearby opponents in solid ice blocks for 2.5s',
+    abilityCooldown: 6.5,
+    passiveDescription: 'Slippery frost trails',
+    color: '#67e8f9',
+  },
+  {
+    id: 'vampire',
+    name: 'Count Vampire',
+    svgPath: '/dudes/vampire.svg',
+    abilityName: 'Bat Swarm Drain',
+    abilityDescription: 'Transforms into fluttering bats stealing 40 HP from enemies',
+    abilityCooldown: 5.5,
+    passiveDescription: '15% lifesteal on weapon hits',
+    color: '#881337',
+  },
+  {
+    id: 'tyrannosaurus_rex',
+    name: 'T-Rex Dino',
+    svgPath: '/dudes/tyrannosaurus_rex.svg',
+    abilityName: 'Primal Roar',
+    abilityDescription: 'Massive acoustic shockwave launching enemies off platforms',
+    abilityCooldown: 6.0,
+    passiveDescription: '+50% explosion force & knockback',
+    color: '#15803d',
+  },
+  {
+    id: 'ghost',
+    name: 'Spooky Ghost',
+    svgPath: '/dudes/ghost.svg',
+    abilityName: 'Ethereal Phase',
+    abilityDescription: 'Phases out of reality for 3.5s, immune to bullets and walls',
+    abilityCooldown: 7.0,
+    passiveDescription: 'Smooth levitation',
+    color: '#94a3b8',
+  },
+  {
+    id: 'blobfish',
+    name: 'Squishy Blobfish',
+    svgPath: '/dudes/blobfish.svg',
+    abilityName: 'Goo Splashdown',
+    abilityDescription: 'Leaps high and body slams the ground with a slowing goo puddle',
+    abilityCooldown: 4.5,
+    passiveDescription: 'High-restitution jelly bounce',
+    color: '#f43f5e',
+  },
+  {
+    id: 'cat',
+    name: 'Ninja Cat',
+    svgPath: '/dudes/cat.svg',
+    abilityName: 'Claw Frenzy',
+    abilityDescription: 'Rapid multi-slash critical damage leaps across the platform',
+    abilityCooldown: 4.0,
+    passiveDescription: 'Fast acrobatic recovery',
+    color: '#ea580c',
+  },
+];
 
 interface WeaponDef {
   name: string;
@@ -71,6 +206,7 @@ interface Projectile {
   ownerIsPlayer: boolean;
   life: number;
   isExplosive?: boolean;
+  isPlasma?: boolean;
 }
 
 interface Particle {
@@ -93,21 +229,25 @@ interface WeaponPickupEntity {
   available: boolean;
 }
 
-interface FishActor {
+interface DudeActor {
+  dude: DudeDef;
   x: number;
   y: number;
   vx: number;
   vy: number;
-  facing: 1 | -1; // 1 = right, -1 = left
+  facing: 1 | -1;
   isGrounded: boolean;
   isPlayer: boolean;
-  color: string;
-  hatColor: string;
   health: number;
+  maxHealth: number;
   stocks: number;
   weapon: WeaponType;
   fireCooldown: number;
-  tailPhase: number;
+  abilityCooldownRemaining: number;
+  abilityActiveDuration: number;
+  frozenTimer: number;
+  wobblePhase: number;
+  jumpCount: number;
   score: number;
 }
 
@@ -117,19 +257,38 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+
   const [playMode, setPlayMode] = useState<PlayMode>('sim');
+  const [playerDudeId, setPlayerDudeId] = useState<string>('astronaut');
   const [playerScore, setPlayerScore] = useState<number>(0);
   const [playerStocks, setPlayerStocks] = useState<number>(3);
   const [currentWeapon, setCurrentWeapon] = useState<WeaponType>('bubble_blaster');
+  const [abilityCooldownPercent, setAbilityCooldownPercent] = useState<number>(100);
+  const [abilityReady, setAbilityReady] = useState<boolean>(true);
   const [matchStatus, setMatchStatus] = useState<'battling' | 'victory' | 'defeated'>('battling');
 
-  // Input states
+  const selectedDude = DUDES_ROSTER.find((d) => d.id === playerDudeId) || DUDES_ROSTER[0];
+
+  // Preload Dude SVGs into HTMLImageElement cache
+  useEffect(() => {
+    DUDES_ROSTER.forEach((d) => {
+      if (!imageCacheRef.current.has(d.id)) {
+        const img = new Image();
+        img.src = d.svgPath;
+        imageCacheRef.current.set(d.id, img);
+      }
+    });
+  }, []);
+
+  // Keyboard input states
   const keysRef = useRef<{
     left: boolean;
     right: boolean;
     up: boolean;
     down: boolean;
     fire: boolean;
+    ability: boolean;
     pickup: boolean;
   }>({
     left: false,
@@ -137,11 +296,13 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
     up: false,
     down: false,
     fire: false,
+    ability: false,
     pickup: false,
   });
 
   const triggerJumpRef = useRef(false);
   const triggerFireRef = useRef(false);
+  const triggerAbilityRef = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -158,6 +319,10 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         keysRef.current.fire = true;
         triggerFireRef.current = true;
       }
+      if (e.code === 'KeyQ' || e.code === 'ShiftLeft' || e.code === 'KeyX') {
+        keysRef.current.ability = true;
+        triggerAbilityRef.current = true;
+      }
       if (e.code === 'KeyK' || e.code === 'KeyE') keysRef.current.pickup = true;
     };
 
@@ -167,6 +332,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
       if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') keysRef.current.up = false;
       if (e.code === 'KeyS' || e.code === 'ArrowDown') keysRef.current.down = false;
       if (e.code === 'KeyJ' || e.code === 'KeyF') keysRef.current.fire = false;
+      if (e.code === 'KeyQ' || e.code === 'ShiftLeft' || e.code === 'KeyX') keysRef.current.ability = false;
       if (e.code === 'KeyK' || e.code === 'KeyE') keysRef.current.pickup = false;
     };
 
@@ -192,17 +358,12 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    // Arena Platforms
+    // Tactical Floating Platforms
     const platforms: Platform[] = [
-      // Ground
       { x: 40, y: height - 42, w: width - 80, h: 36 },
-      // Left Floating Ledge
       { x: 80, y: height - 140, w: 180, h: 14, isOneWay: true },
-      // Right Floating Ledge
       { x: width - 260, y: height - 140, w: 180, h: 14, isOneWay: true },
-      // Center High Platform
       { x: width / 2 - 130, y: height - 230, w: 260, h: 16, isOneWay: true },
-      // Top Sniper Perch
       { x: width / 2 - 70, y: height - 310, w: 140, h: 12, isOneWay: true },
     ];
 
@@ -213,8 +374,13 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
       { x: width / 2, y: height - 255, type: 'fish_bazooka', respawnTimer: 0, available: true },
     ];
 
-    // Actors: 1 Player + 2 AI Fish
-    const player: FishActor = {
+    // Pick 2 distinct AI opponents from roster
+    const remainingDudes = DUDES_ROSTER.filter((d) => d.id !== playerDudeId);
+    const botDude1 = remainingDudes[0] || DUDES_ROSTER[1];
+    const botDude2 = remainingDudes[1] || DUDES_ROSTER[2];
+
+    const player: DudeActor = {
+      dude: selectedDude,
       x: 120,
       y: height - 100,
       vx: 0,
@@ -222,18 +388,22 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
       facing: 1,
       isGrounded: false,
       isPlayer: true,
-      color: '#0ABAB5',
-      hatColor: '#FF5F1F',
-      health: 100,
+      health: selectedDude.id === 'mega_bot' ? 130 : 100,
+      maxHealth: selectedDude.id === 'mega_bot' ? 130 : 100,
       stocks: 3,
       weapon: 'bubble_blaster',
       fireCooldown: 0,
-      tailPhase: 0,
+      abilityCooldownRemaining: 0,
+      abilityActiveDuration: 0,
+      frozenTimer: 0,
+      wobblePhase: 0,
+      jumpCount: 0,
       score: 0,
     };
 
-    const bots: FishActor[] = [
+    const bots: DudeActor[] = [
       {
+        dude: botDude1,
         x: width - 140,
         y: height - 100,
         vx: 0,
@@ -241,16 +411,20 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         facing: -1,
         isGrounded: false,
         isPlayer: false,
-        color: '#f43f5e',
-        hatColor: '#3b82f6',
-        health: 100,
+        health: botDude1.id === 'mega_bot' ? 130 : 100,
+        maxHealth: botDude1.id === 'mega_bot' ? 130 : 100,
         stocks: 3,
         weapon: 'laser_pike',
         fireCooldown: 0.5,
-        tailPhase: 1,
+        abilityCooldownRemaining: 2.0,
+        abilityActiveDuration: 0,
+        frozenTimer: 0,
+        wobblePhase: 1,
+        jumpCount: 0,
         score: 0,
       },
       {
+        dude: botDude2,
         x: width / 2 - 40,
         y: height - 260,
         vx: 0,
@@ -258,18 +432,21 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         facing: 1,
         isGrounded: false,
         isPlayer: false,
-        color: '#eab308',
-        hatColor: '#10b981',
-        health: 100,
+        health: botDude2.id === 'mega_bot' ? 130 : 100,
+        maxHealth: botDude2.id === 'mega_bot' ? 130 : 100,
         stocks: 3,
-        weapon: 'bubble_blaster',
+        weapon: 'fish_bazooka',
         fireCooldown: 0.8,
-        tailPhase: 2,
+        abilityCooldownRemaining: 3.5,
+        abilityActiveDuration: 0,
+        frozenTimer: 0,
+        wobblePhase: 2,
+        jumpCount: 0,
         score: 0,
       },
     ];
 
-    const actors: FishActor[] = [player, ...bots];
+    const actors: DudeActor[] = [player, ...bots];
     let projectiles: Projectile[] = [];
     let particles: Particle[] = [];
 
@@ -291,32 +468,203 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
       }
     };
 
-    const respawnFish = (fish: FishActor) => {
-      fish.stocks -= 1;
-      fish.health = 100;
-      fish.vx = 0;
-      fish.vy = 0;
-      fish.x = Math.random() * (width - 240) + 120;
-      fish.y = 80;
-      spawnParticles(fish.x, fish.y, fish.color, 24, 180);
+    const respawnDude = (dudeActor: DudeActor) => {
+      dudeActor.stocks -= 1;
+      dudeActor.health = dudeActor.maxHealth;
+      dudeActor.vx = 0;
+      dudeActor.vy = 0;
+      dudeActor.x = Math.random() * (width - 240) + 120;
+      dudeActor.y = 80;
+      dudeActor.frozenTimer = 0;
+      dudeActor.abilityActiveDuration = 0;
+      spawnParticles(dudeActor.x, dudeActor.y, dudeActor.dude.color, 24, 180);
 
-      if (fish.isPlayer) {
-        setPlayerStocks(fish.stocks);
-        if (fish.stocks <= 0) {
+      if (dudeActor.isPlayer) {
+        setPlayerStocks(dudeActor.stocks);
+        if (dudeActor.stocks <= 0) {
           setMatchStatus('defeated');
         }
       }
     };
 
-    // Main physics frame loop
+    // Execute character ability
+    const executeAbility = (actor: DudeActor) => {
+      actor.abilityCooldownRemaining = actor.dude.abilityCooldown;
+      actor.abilityActiveDuration = 3.0;
+
+      switch (actor.dude.id) {
+        case 'astronaut': {
+          // Zero-G Thruster: Rocket boost upward & forward
+          actor.vy = -560;
+          actor.vx += actor.facing * 380;
+          spawnParticles(actor.x, actor.y + 20, '#00c0f3', 28, 220);
+          break;
+        }
+        case 'alien': {
+          // Plasma Disintegrator: fires super bouncing plasma orb
+          projectiles.push({
+            x: actor.x + actor.facing * 28,
+            y: actor.y,
+            vx: actor.facing * 750,
+            vy: (Math.random() - 0.5) * 50,
+            radius: 9,
+            color: '#10b981',
+            damage: 65,
+            ownerIsPlayer: actor.isPlayer,
+            life: 3.5,
+            isPlasma: true,
+          });
+          spawnParticles(actor.x + actor.facing * 28, actor.y, '#10b981', 18, 160);
+          break;
+        }
+        case 'wizard': {
+          // Arcane Blink: Teleport dash in facing direction + shockwave
+          const oldX = actor.x;
+          actor.x += actor.facing * 180;
+          actor.x = Math.max(60, Math.min(width - 60, actor.x));
+          spawnParticles(oldX, actor.y, '#a855f7', 20, 180);
+          spawnParticles(actor.x, actor.y, '#c084fc', 24, 200);
+
+          // Radial mana blast hitting enemies near arrival
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            if (Math.hypot(target.x - actor.x, target.y - actor.y) < 70) {
+              target.health -= 35;
+              target.vx += (target.x > actor.x ? 1 : -1) * 350;
+              target.vy -= 160;
+              spawnParticles(target.x, target.y, '#a855f7', 16, 140);
+            }
+          });
+          break;
+        }
+        case 'dragon': {
+          // Dragon's Breath: cone of burning flames
+          for (let f = 0; f < 18; f++) {
+            const spread = (Math.random() - 0.5) * 0.4;
+            projectiles.push({
+              x: actor.x + actor.facing * 20,
+              y: actor.y,
+              vx: actor.facing * (450 + Math.random() * 120),
+              vy: spread * 300,
+              radius: 6,
+              color: '#ef4444',
+              damage: 18,
+              ownerIsPlayer: actor.isPlayer,
+              life: 0.8,
+              isExplosive: true,
+            });
+          }
+          spawnParticles(actor.x, actor.y, '#f97316', 22, 190);
+          break;
+        }
+        case 'mega_bot': {
+          // EMP Forcefield shield active (deflects bullets for 3s)
+          spawnParticles(actor.x, actor.y, '#3b82f6', 20, 150);
+          break;
+        }
+        case 'swashbuckler': {
+          // Shadow Blade Dash
+          actor.vx = actor.facing * 600;
+          actor.vy = -120;
+          spawnParticles(actor.x, actor.y, '#f59e0b', 24, 200);
+
+          // Slice enemies in path
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            if (Math.hypot(target.x - actor.x, target.y - actor.y) < 65) {
+              target.health -= 45;
+              target.vx += actor.facing * 420;
+              target.vy -= 180;
+              spawnParticles(target.x, target.y, '#f59e0b', 20, 180);
+            }
+          });
+          break;
+        }
+        case 'ice_elemental': {
+          // Glacial Nova: Freezes opponents within radius
+          spawnParticles(actor.x, actor.y, '#67e8f9', 32, 240);
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            if (Math.hypot(target.x - actor.x, target.y - actor.y) < 160) {
+              target.frozenTimer = 2.5;
+              target.vx = 0;
+              target.vy = 0;
+              spawnParticles(target.x, target.y, '#38bdf8', 20, 120);
+            }
+          });
+          break;
+        }
+        case 'vampire': {
+          // Bat Swarm Drain: lunge and steal health
+          actor.vx = actor.facing * 480;
+          actor.vy = -200;
+          spawnParticles(actor.x, actor.y, '#881337', 24, 180);
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            if (Math.hypot(target.x - actor.x, target.y - actor.y) < 60) {
+              target.health -= 40;
+              actor.health = Math.min(actor.maxHealth, actor.health + 40);
+              target.vx += actor.facing * 320;
+              spawnParticles(actor.x, actor.y, '#10b981', 16, 120);
+            }
+          });
+          break;
+        }
+        case 'tyrannosaurus_rex': {
+          // Primal Roar: Massive radial shockwave
+          spawnParticles(actor.x, actor.y, '#15803d', 36, 280);
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            const dist = Math.hypot(target.x - actor.x, target.y - actor.y);
+            if (dist < 220) {
+              const nx = (target.x - actor.x) / (dist || 1);
+              target.vx += nx * 650;
+              target.vy -= 260;
+              target.health -= 25;
+              spawnParticles(target.x, target.y, '#22c55e', 18, 160);
+            }
+          });
+          break;
+        }
+        case 'ghost': {
+          // Ethereal phase
+          spawnParticles(actor.x, actor.y, '#94a3b8', 20, 120);
+          break;
+        }
+        case 'blobfish': {
+          // Goo Splashdown: leap & slam
+          actor.vy = -540;
+          spawnParticles(actor.x, actor.y, '#f43f5e', 24, 160);
+          break;
+        }
+        case 'cat': {
+          // Claw frenzy
+          actor.vx = actor.facing * 520;
+          actor.vy = -220;
+          spawnParticles(actor.x, actor.y, '#ea580c', 24, 200);
+          actors.forEach((target) => {
+            if (target === actor || target.stocks <= 0) return;
+            if (Math.hypot(target.x - actor.x, target.y - actor.y) < 60) {
+              target.health -= 50;
+              target.vx += actor.facing * 380;
+              target.vy -= 160;
+              spawnParticles(target.x, target.y, '#f97316', 20, 160);
+            }
+          });
+          break;
+        }
+      }
+    };
+
+    // Main game frame tick
     const frame = (time: number) => {
       animId = requestAnimationFrame(frame);
       const dt = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
 
-      const gravity = (physicsConfig.gravity / 9.81) * 980;
+      const baseGravity = (physicsConfig.gravity / 9.81) * 980;
 
-      // 1. Process Weapon Pickups
+      // 1. Weapon Pickups
       weaponSpawns.forEach((w) => {
         if (!w.available) {
           w.respawnTimer -= dt;
@@ -327,147 +675,195 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         }
       });
 
-      // 2. Process Actors
-      actors.forEach((fish) => {
-        if (fish.stocks <= 0) return;
+      // 2. Dude Actors Simulation
+      actors.forEach((dudeActor) => {
+        if (dudeActor.stocks <= 0) return;
 
-        fish.tailPhase += dt * 14;
-        fish.fireCooldown = Math.max(0, fish.fireCooldown - dt);
+        dudeActor.wobblePhase += dt * 10;
+        dudeActor.fireCooldown = Math.max(0, dudeActor.fireCooldown - dt);
+        dudeActor.abilityCooldownRemaining = Math.max(0, dudeActor.abilityCooldownRemaining - dt);
+        dudeActor.abilityActiveDuration = Math.max(0, dudeActor.abilityActiveDuration - dt);
 
-        if (fish.isPlayer) {
-          const moveSpeed = 260;
+        // If frozen by Ice Elemental
+        if (dudeActor.frozenTimer > 0) {
+          dudeActor.frozenTimer -= dt;
+          dudeActor.vx *= 0.8;
+          return;
+        }
+
+        // Apply Passive Gravity Modifier (e.g. Astronaut Zero-G glide)
+        let dudeGravity = baseGravity;
+        if (dudeActor.dude.id === 'astronaut' && dudeActor.vy > 0) {
+          dudeGravity *= 0.6; // 40% reduced falling gravity
+        }
+
+        if (dudeActor.isPlayer) {
+          // Update HUD ability states
+          const cdRatio = Math.max(0, 1 - dudeActor.abilityCooldownRemaining / dudeActor.dude.abilityCooldown);
+          setAbilityCooldownPercent(Math.round(cdRatio * 100));
+          setAbilityReady(dudeActor.abilityCooldownRemaining <= 0);
+
+          // Player Locomotion
+          let moveSpeed = 260;
+          if (dudeActor.dude.id === 'alien') moveSpeed *= 1.2;
+
           if (keysRef.current.left) {
-            fish.vx = -moveSpeed;
-            fish.facing = -1;
+            dudeActor.vx = -moveSpeed;
+            dudeActor.facing = -1;
           } else if (keysRef.current.right) {
-            fish.vx = moveSpeed;
-            fish.facing = 1;
+            dudeActor.vx = moveSpeed;
+            dudeActor.facing = 1;
           } else {
-            fish.vx *= 0.82;
+            dudeActor.vx *= 0.82;
           }
 
-          if (triggerJumpRef.current && fish.isGrounded) {
-            fish.vy = -490;
-            fish.isGrounded = false;
+          // Jumping (Swashbuckler has triple jump, others double jump)
+          const maxJumps = dudeActor.dude.id === 'swashbuckler' ? 3 : 2;
+          if (triggerJumpRef.current) {
+            if (dudeActor.isGrounded || dudeActor.jumpCount < maxJumps) {
+              dudeActor.vy = -490;
+              dudeActor.isGrounded = false;
+              dudeActor.jumpCount += 1;
+              spawnParticles(dudeActor.x, dudeActor.y + 16, dudeActor.dude.color, 8, 80);
+            }
             triggerJumpRef.current = false;
-            spawnParticles(fish.x, fish.y + 16, '#0ABAB5', 8, 80);
           }
 
+          // Trigger Special Ability
+          if ((keysRef.current.ability || triggerAbilityRef.current) && dudeActor.abilityCooldownRemaining <= 0) {
+            executeAbility(dudeActor);
+            triggerAbilityRef.current = false;
+          }
+
+          // Weapon Pickup check
           if (keysRef.current.pickup) {
             weaponSpawns.forEach((w) => {
-              if (w.available && Math.hypot(fish.x - w.x, fish.y - w.y) < 32) {
-                fish.weapon = w.type;
+              if (w.available && Math.hypot(dudeActor.x - w.x, dudeActor.y - w.y) < 32) {
+                dudeActor.weapon = w.type;
                 w.available = false;
                 w.respawnTimer = 6.0;
                 setCurrentWeapon(w.type);
-                spawnParticles(fish.x, fish.y, WEAPONS[w.type].color, 16, 140);
+                spawnParticles(dudeActor.x, dudeActor.y, WEAPONS[w.type].color, 16, 140);
               }
             });
           }
 
           // Fire Weapon (Linear Recoil Kick)
-          if ((keysRef.current.fire || triggerFireRef.current) && fish.fireCooldown <= 0) {
-            const wDef = WEAPONS[fish.weapon];
-            fish.fireCooldown = wDef.fireRate;
+          if ((keysRef.current.fire || triggerFireRef.current) && dudeActor.fireCooldown <= 0) {
+            const wDef = WEAPONS[dudeActor.weapon];
+            dudeActor.fireCooldown = wDef.fireRate;
             triggerFireRef.current = false;
 
-            const spawnX = fish.x + fish.facing * 24;
-            const spawnY = fish.y - 2;
+            const spawnX = dudeActor.x + dudeActor.facing * 24;
+            const spawnY = dudeActor.y - 2;
             projectiles.push({
               x: spawnX,
               y: spawnY,
-              vx: fish.facing * wDef.speed,
+              vx: dudeActor.facing * (dudeActor.dude.id === 'wizard' ? wDef.speed * 1.35 : wDef.speed),
               vy: (Math.random() - 0.5) * 40,
-              radius: fish.weapon === 'fish_bazooka' ? 6 : 4,
+              radius: dudeActor.weapon === 'fish_bazooka' ? 6 : 4,
               color: wDef.color,
               damage: wDef.damage,
               ownerIsPlayer: true,
               life: 2.2,
-              isExplosive: fish.weapon === 'fish_bazooka',
+              isExplosive: dudeActor.weapon === 'fish_bazooka',
             });
 
             // RECOIL LINEAR IMPULSE
-            fish.vx -= fish.facing * wDef.recoil;
-            if (!fish.isGrounded) {
-              fish.vy -= 80;
+            let recoilForce = wDef.recoil;
+            if (dudeActor.dude.id === 'dragon') recoilForce *= 0.5; // Dragon passive recoil dampener
+            dudeActor.vx -= dudeActor.facing * recoilForce;
+            if (!dudeActor.isGrounded) {
+              dudeActor.vy -= 80;
             }
             spawnParticles(spawnX, spawnY, wDef.color, 10, 160);
           }
         } else {
-          // AI Bot
+          // AI Bot Logic
           const target = player;
-          const distToTarget = Math.hypot(target.x - fish.x, target.y - fish.y);
-          fish.facing = target.x > fish.x ? 1 : -1;
+          const distToTarget = Math.hypot(target.x - dudeActor.x, target.y - dudeActor.y);
+          dudeActor.facing = target.x > dudeActor.x ? 1 : -1;
 
           if (distToTarget > 200) {
-            fish.vx = fish.facing * 180;
+            dudeActor.vx = dudeActor.facing * 180;
           } else if (distToTarget < 90) {
-            fish.vx = -fish.facing * 140;
+            dudeActor.vx = -dudeActor.facing * 140;
           } else {
-            fish.vx *= 0.85;
+            dudeActor.vx *= 0.85;
           }
 
-          if (fish.isGrounded && (Math.random() < 0.02 || (target.y < fish.y - 40 && Math.random() < 0.06))) {
-            fish.vy = -470;
-            fish.isGrounded = false;
+          if (dudeActor.isGrounded && (Math.random() < 0.02 || (target.y < dudeActor.y - 40 && Math.random() < 0.06))) {
+            dudeActor.vy = -470;
+            dudeActor.isGrounded = false;
           }
 
-          if (distToTarget < 340 && Math.abs(target.y - fish.y) < 70 && fish.fireCooldown <= 0) {
-            const wDef = WEAPONS[fish.weapon];
-            fish.fireCooldown = wDef.fireRate * (1.2 + Math.random() * 0.4);
+          // Bot Weapon Fire
+          if (distToTarget < 340 && Math.abs(target.y - dudeActor.y) < 70 && dudeActor.fireCooldown <= 0) {
+            const wDef = WEAPONS[dudeActor.weapon];
+            dudeActor.fireCooldown = wDef.fireRate * (1.2 + Math.random() * 0.4);
 
-            const spawnX = fish.x + fish.facing * 24;
-            const spawnY = fish.y - 2;
+            const spawnX = dudeActor.x + dudeActor.facing * 24;
+            const spawnY = dudeActor.y - 2;
             projectiles.push({
               x: spawnX,
               y: spawnY,
-              vx: fish.facing * wDef.speed,
+              vx: dudeActor.facing * wDef.speed,
               vy: (Math.random() - 0.5) * 30,
-              radius: fish.weapon === 'fish_bazooka' ? 6 : 4,
+              radius: dudeActor.weapon === 'fish_bazooka' ? 6 : 4,
               color: wDef.color,
               damage: wDef.damage,
               ownerIsPlayer: false,
               life: 2.2,
-              isExplosive: fish.weapon === 'fish_bazooka',
+              isExplosive: dudeActor.weapon === 'fish_bazooka',
             });
 
-            fish.vx -= fish.facing * wDef.recoil;
+            dudeActor.vx -= dudeActor.facing * wDef.recoil;
+          }
+
+          // Bot Special Ability Activation
+          if (distToTarget < 260 && dudeActor.abilityCooldownRemaining <= 0 && Math.random() < 0.05) {
+            executeAbility(dudeActor);
           }
         }
 
-        fish.vy += gravity * dt;
-        fish.x += fish.vx * dt;
-        fish.y += fish.vy * dt;
+        // Apply Dynamics
+        dudeActor.vy += dudeGravity * dt;
+        dudeActor.x += dudeActor.vx * dt;
+        dudeActor.y += dudeActor.vy * dt;
 
-        // Platform collisions
-        fish.isGrounded = false;
-        const fishHalfW = 16;
-        const fishHalfH = 14;
+        // Platform Collisions (Unless in Ghost Ethereal Phase)
+        const isEthereal = dudeActor.dude.id === 'ghost' && dudeActor.abilityActiveDuration > 0;
+        dudeActor.isGrounded = false;
+        const halfW = 18;
+        const halfH = 20;
 
-        platforms.forEach((p) => {
-          if (
-            fish.x + fishHalfW > p.x &&
-            fish.x - fishHalfW < p.x + p.w &&
-            fish.y + fishHalfH >= p.y &&
-            fish.y + fishHalfH <= p.y + 16 &&
-            fish.vy >= 0
-          ) {
-            fish.y = p.y - fishHalfH;
-            fish.vy = 0;
-            fish.isGrounded = true;
-          }
-        });
-
-        if (fish.x < 48) {
-          fish.x = 48;
-          fish.vx = 0;
-        } else if (fish.x > width - 48) {
-          fish.x = width - 48;
-          fish.vx = 0;
+        if (!isEthereal) {
+          platforms.forEach((p) => {
+            if (
+              dudeActor.x + halfW > p.x &&
+              dudeActor.x - halfW < p.x + p.w &&
+              dudeActor.y + halfH >= p.y &&
+              dudeActor.y + halfH <= p.y + 16 &&
+              dudeActor.vy >= 0
+            ) {
+              dudeActor.y = p.y - halfH;
+              dudeActor.vy = 0;
+              dudeActor.isGrounded = true;
+              dudeActor.jumpCount = 0;
+            }
+          });
         }
 
-        if (fish.y > height + 60) {
-          respawnFish(fish);
+        if (dudeActor.x < 48) {
+          dudeActor.x = 48;
+          dudeActor.vx = 0;
+        } else if (dudeActor.x > width - 48) {
+          dudeActor.x = width - 48;
+          dudeActor.vx = 0;
+        }
+
+        if (dudeActor.y > height + 60) {
+          respawnDude(dudeActor);
         }
       });
 
@@ -478,6 +874,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         pr.y += pr.vy * dt;
         pr.life -= dt;
 
+        // Particle trail
         if (Math.random() < 0.4) {
           particles.push({
             x: pr.x,
@@ -493,26 +890,46 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         }
 
         let hitPlatform = false;
-        for (const p of platforms) {
-          if (pr.x >= p.x && pr.x <= p.x + p.w && pr.y >= p.y && pr.y <= p.y + p.h) {
-            hitPlatform = true;
-            break;
+        if (!pr.isPlasma) {
+          for (const p of platforms) {
+            if (pr.x >= p.x && pr.x <= p.x + p.w && pr.y >= p.y && pr.y <= p.y + p.h) {
+              hitPlatform = true;
+              break;
+            }
           }
         }
 
-        let hitFish = false;
-        actors.forEach((fish) => {
-          if (fish.stocks <= 0) return;
-          if (pr.ownerIsPlayer === fish.isPlayer) return;
+        let hitDude = false;
+        actors.forEach((actor) => {
+          if (actor.stocks <= 0) return;
+          if (pr.ownerIsPlayer === actor.isPlayer) return;
 
-          if (Math.hypot(pr.x - fish.x, pr.y - fish.y) < 22) {
-            hitFish = true;
-            fish.health -= pr.damage;
-            fish.vx += (pr.vx > 0 ? 1 : -1) * 280;
-            fish.vy -= 120;
-            spawnParticles(fish.x, fish.y, '#f43f5e', 14, 160);
+          // Ghost ethereal immunity
+          if (actor.dude.id === 'ghost' && actor.abilityActiveDuration > 0) return;
 
-            if (fish.health <= 0) {
+          // Mega Bot Forcefield reflection
+          if (actor.dude.id === 'mega_bot' && actor.abilityActiveDuration > 0) {
+            if (Math.hypot(pr.x - actor.x, pr.y - actor.y) < 45) {
+              pr.vx = -pr.vx * 1.2;
+              pr.ownerIsPlayer = !pr.ownerIsPlayer;
+              spawnParticles(pr.x, pr.y, '#3b82f6', 14, 180);
+              return;
+            }
+          }
+
+          if (Math.hypot(pr.x - actor.x, pr.y - actor.y) < 26) {
+            hitDude = true;
+            actor.health -= pr.damage;
+            actor.vx += (pr.vx > 0 ? 1 : -1) * 280;
+            actor.vy -= 120;
+            spawnParticles(actor.x, actor.y, actor.dude.color, 14, 160);
+
+            // Vampire lifesteal passive
+            if (pr.ownerIsPlayer && selectedDude.id === 'vampire') {
+              player.health = Math.min(player.maxHealth, player.health + pr.damage * 0.15);
+            }
+
+            if (actor.health <= 0) {
               if (pr.ownerIsPlayer) {
                 setPlayerScore((s) => {
                   const ns = s + 1;
@@ -520,12 +937,12 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                   return ns;
                 });
               }
-              respawnFish(fish);
+              respawnDude(actor);
             }
           }
         });
 
-        if (hitPlatform || hitFish || pr.life <= 0) {
+        if (hitPlatform || hitDude || pr.life <= 0) {
           spawnParticles(pr.x, pr.y, pr.color, pr.isExplosive ? 28 : 10, pr.isExplosive ? 240 : 120);
           projectiles.splice(i, 1);
         }
@@ -543,15 +960,17 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         }
       }
 
-      // 5. Render Stage
+      // 5. Render Canvas Viewport
       ctx.clearRect(0, 0, width, height);
 
+      // Arena Background
       const grad = ctx.createLinearGradient(0, 0, 0, height);
       grad.addColorStop(0, '#f8fafc');
       grad.addColorStop(1, '#f1f5f9');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
+      // Subtle Grid
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
       for (let gx = 0; gx < width; gx += 40) {
@@ -626,99 +1045,91 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         ctx.restore();
       });
 
-      // Fish Actors
-      actors.forEach((fish) => {
-        if (fish.stocks <= 0) return;
+      // Render Dude Actors (Using actual SVGs from /dudes/)
+      actors.forEach((actor) => {
+        if (actor.stocks <= 0) return;
 
         ctx.save();
-        ctx.translate(fish.x, fish.y);
-        ctx.scale(fish.facing, 1);
+        ctx.translate(actor.x, actor.y);
+        ctx.scale(actor.facing, 1);
 
-        // Body Shadow
+        // Ground shadow
         ctx.beginPath();
-        ctx.ellipse(0, 16, 14, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 22, 16, 4, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#cbd5e1';
         ctx.fill();
 
-        // Fish Tail
-        const tailWiggle = Math.sin(fish.tailPhase) * 6;
-        ctx.beginPath();
-        ctx.moveTo(-12, 0);
-        ctx.lineTo(-24, -10 + tailWiggle);
-        ctx.lineTo(-20, 0);
-        ctx.lineTo(-24, 10 + tailWiggle);
-        ctx.closePath();
-        ctx.fillStyle = fish.color;
-        ctx.fill();
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        // Active Ability Auras
+        if (actor.abilityActiveDuration > 0) {
+          if (actor.dude.id === 'mega_bot') {
+            // EMP Dome
+            ctx.beginPath();
+            ctx.arc(0, 0, 36, 0, Math.PI * 2);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+            ctx.fill();
+            ctx.stroke();
+          } else if (actor.dude.id === 'astronaut') {
+            // Jetpack exhaust particles
+            ctx.fillStyle = '#00c0f3';
+            ctx.beginPath();
+            ctx.arc(-14, 18, 5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
 
-        // Fish Main Body
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 16, 12, 0, 0, Math.PI * 2);
-        ctx.fillStyle = fish.color;
-        ctx.fill();
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 1.8;
-        ctx.stroke();
+        // Draw Dude SVG Image from Cache
+        const dudeImg = imageCacheRef.current.get(actor.dude.id);
+        const dudeSize = 44;
 
-        // Fish Belly
-        ctx.beginPath();
-        ctx.ellipse(2, 4, 11, 6, 0, 0, Math.PI);
-        ctx.fillStyle = '#ffffff88';
-        ctx.fill();
+        if (actor.dude.id === 'ghost' && actor.abilityActiveDuration > 0) {
+          ctx.globalAlpha = 0.45; // Ethereal phase transparency
+        }
 
-        // Fish Fin
-        ctx.beginPath();
-        ctx.ellipse(-2, 2, 6, 4, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fillStyle = fish.hatColor;
-        ctx.fill();
+        if (dudeImg && dudeImg.complete && dudeImg.naturalWidth > 0) {
+          ctx.drawImage(dudeImg, -dudeSize / 2, -dudeSize / 2 - 2, dudeSize, dudeSize);
+        } else {
+          // Fallback cartoon body with dude's color
+          ctx.beginPath();
+          ctx.roundRect(-16, -18, 32, 36, 12);
+          ctx.fillStyle = actor.dude.color;
+          ctx.fill();
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        }
 
-        // Fish Eye
-        ctx.beginPath();
-        ctx.arc(7, -3, 5, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-
-        // Pupil
-        ctx.beginPath();
-        ctx.arc(9, -3, 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = '#0f172a';
-        ctx.fill();
-
-        // Fish Hat
-        ctx.beginPath();
-        ctx.roundRect(-8, -16, 16, 6, 3);
-        ctx.fillStyle = fish.hatColor;
-        ctx.fill();
-        ctx.stroke();
-
-        // Held Weapon
-        const wDef = WEAPONS[fish.weapon];
+        // Held Weapon Sprite
+        const wDef = WEAPONS[actor.weapon];
         ctx.fillStyle = wDef.color;
-        ctx.fillRect(6, 1, 14, 5);
+        ctx.fillRect(8, 2, 14, 5);
         ctx.strokeStyle = '#0f172a';
         ctx.lineWidth = 1.2;
-        ctx.strokeRect(6, 1, 14, 5);
+        ctx.strokeRect(8, 2, 14, 5);
+
+        // Frozen ice overlay if frozen by Ice Elemental
+        if (actor.frozenTimer > 0) {
+          ctx.fillStyle = 'rgba(103, 232, 249, 0.45)';
+          ctx.fillRect(-22, -26, 44, 52);
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-22, -26, 44, 52);
+        }
 
         ctx.restore();
 
-        // Health Bar
+        // Health Bar above Dude
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(fish.x - 16, fish.y - 24, 32, 4);
-        ctx.fillStyle = fish.isPlayer ? '#0ABAB5' : '#ef4444';
-        ctx.fillRect(fish.x - 16, fish.y - 24, (fish.health / 100) * 32, 4);
+        ctx.fillRect(actor.x - 18, actor.y - 30, 36, 4);
+        ctx.fillStyle = actor.isPlayer ? '#0ABAB5' : '#ef4444';
+        ctx.fillRect(actor.x - 18, actor.y - 30, (actor.health / actor.maxHealth) * 36, 4);
 
-        if (fish.isPlayer) {
-          ctx.fillStyle = '#0ABAB5';
-          ctx.font = 'bold 9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('YOU', fish.x, fish.y - 28);
-        }
+        // Character Name Tag
+        ctx.fillStyle = actor.isPlayer ? '#0ABAB5' : '#64748b';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(actor.isPlayer ? `YOU (${actor.dude.name})` : actor.dude.name, actor.x, actor.y - 34);
       });
     };
 
@@ -727,7 +1138,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
     return () => {
       cancelAnimationFrame(animId);
     };
-  }, [playMode, physicsConfig]);
+  }, [playMode, playerDudeId, physicsConfig, selectedDude]);
 
   const handleManualJump = () => {
     triggerJumpRef.current = true;
@@ -735,6 +1146,10 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
 
   const handleManualFire = () => {
     triggerFireRef.current = true;
+  };
+
+  const handleManualAbility = () => {
+    triggerAbilityRef.current = true;
   };
 
   const handleResetMatch = () => {
@@ -745,7 +1160,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
 
   return (
     <div className="flex flex-col h-full subtle-depth rounded-2xl overflow-hidden border border-stone-200/80 font-sans">
-      {/* Jumpy Header Bar */}
+      {/* Jumpy Dudes Header Bar */}
       <div className="p-3.5 border-b border-stone-200/80 bg-white/80 backdrop-blur-xl flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
           <div className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5] animate-pulse" />
@@ -753,12 +1168,12 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
             <span>{gameTitle}</span>
             <span className="text-stone-300 font-light">·</span>
             <span className="text-[11px] font-normal text-stone-500">
-              Tactical 2D Bevy Brawler (Spicy Lobster)
+              Dudes Tactical Brawler with Unique Character Abilities
             </span>
           </div>
         </div>
 
-        {/* View Mode Switcher */}
+        {/* View Mode Switcher & Reset */}
         <div className="flex items-center space-x-2">
           <div className="bg-stone-100 p-0.5 rounded-lg border border-stone-200/80 flex items-center space-x-1 text-xs">
             <button
@@ -770,7 +1185,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              Avian2D Sim
+              Avian2D Dudes Sim
             </button>
             <button
               type="button"
@@ -782,7 +1197,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
               }`}
             >
               <ExternalLink className="w-3 h-3 text-[#FF5F1F]" />
-              <span>Official WASM Player</span>
+              <span>Official WASM</span>
             </button>
           </div>
 
@@ -797,6 +1212,48 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         </div>
       </div>
 
+      {/* Character / Dude Selection Strip */}
+      <div className="px-3.5 py-2 bg-stone-50/90 border-b border-stone-200/60 flex items-center justify-between text-xs">
+        <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none py-0.5">
+          <span className="text-[11px] font-semibold text-stone-700 whitespace-nowrap mr-1">
+            Choose Your Dude:
+          </span>
+          {DUDES_ROSTER.map((dude) => {
+            const isSelected = dude.id === playerDudeId;
+            return (
+              <button
+                key={dude.id}
+                type="button"
+                onClick={() => setPlayerDudeId(dude.id)}
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl whitespace-nowrap transition-all border text-[11px] ${
+                  isSelected
+                    ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
+                    : 'bg-white text-stone-700 hover:bg-stone-100 border-stone-200/80'
+                }`}
+              >
+                <img
+                  src={dude.svgPath}
+                  alt={dude.name}
+                  className="w-4 h-4 object-contain"
+                />
+                <span className="font-medium">{dude.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Selected Dude Ability Preview Badge */}
+        <div className="hidden lg:flex items-center space-x-2 pl-3 border-l border-stone-200/80 whitespace-nowrap">
+          <Zap className="w-3.5 h-3.5 text-[#FF5F1F]" />
+          <span className="text-[11px] font-semibold text-stone-900">
+            {selectedDude.abilityName}:
+          </span>
+          <span className="text-[11px] text-stone-500 font-normal">
+            {selectedDude.abilityDescription}
+          </span>
+        </div>
+      </div>
+
       {/* Main Viewport */}
       <div ref={containerRef} className="flex-1 relative bg-stone-100/50 overflow-hidden">
         {playMode === 'sim' ? (
@@ -808,8 +1265,8 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
               className="w-full h-full object-contain"
             />
 
-            {/* In-Game HUD: Score & Stocks */}
-            <div className="absolute top-3 left-3 flex items-center space-x-2">
+            {/* In-Game HUD: Score, Stocks, Weapon & Ability */}
+            <div className="absolute top-3 left-3 flex flex-wrap items-center gap-2">
               <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-stone-200/80 text-xs shadow-sm flex items-center space-x-2">
                 <span className="font-semibold text-stone-800">KO Score:</span>
                 <span className="text-[#FF5F1F] font-bold">{playerScore} / 5</span>
@@ -829,12 +1286,26 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                 </div>
               </div>
 
+              {/* Character Ability Readiness Bar */}
+              <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-stone-200/80 text-xs shadow-sm flex items-center space-x-2">
+                <Zap className={`w-3.5 h-3.5 ${abilityReady ? 'text-[#FF5F1F] animate-pulse' : 'text-stone-400'}`} />
+                <span className="font-medium text-stone-800">{selectedDude.abilityName} (Q):</span>
+                <div className="w-16 h-2 bg-stone-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-150 rounded-full ${
+                      abilityReady ? 'bg-[#FF5F1F]' : 'bg-[#0ABAB5]'
+                    }`}
+                    style={{ width: `${abilityCooldownPercent}%` }}
+                  />
+                </div>
+                <span className={`text-[10px] font-bold ${abilityReady ? 'text-emerald-600' : 'text-stone-500'}`}>
+                  {abilityReady ? 'READY' : `${Math.ceil((100 - abilityCooldownPercent) * selectedDude.abilityCooldown / 100)}s`}
+                </span>
+              </div>
+
               <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-stone-200/80 text-xs shadow-sm flex items-center space-x-1.5">
                 <span className="text-stone-500">Weapon:</span>
                 <span className="font-medium text-stone-900">{WEAPONS[currentWeapon].name}</span>
-                <span className="text-[10px] text-stone-400">
-                  (Recoil: {WEAPONS[currentWeapon].recoil})
-                </span>
               </div>
             </div>
 
@@ -846,10 +1317,10 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                     <>
                       <Trophy className="w-12 h-12 text-emerald-500 mx-auto mb-2 animate-bounce" />
                       <h3 className="text-base font-semibold text-stone-900 mb-1">
-                        Victory! Top Fish!
+                        Victory! Top Dude!
                       </h3>
                       <p className="text-xs text-stone-600 mb-4">
-                        You dominated the tactical brawler arena with 5 knockouts.
+                        You dominated the tactical arena with 5 knockouts using {selectedDude.name}'s {selectedDude.abilityName}.
                       </p>
                     </>
                   ) : (
@@ -859,7 +1330,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                         Defeated! Out of Stocks
                       </h3>
                       <p className="text-xs text-stone-600 mb-4">
-                        All 3 stock lives depleted. Jump back into the arena!
+                        All 3 stock lives depleted. Rematch and try another Dude ability!
                       </p>
                     </>
                   )}
@@ -878,6 +1349,19 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
             <div className="absolute bottom-3 right-3 flex items-center space-x-2">
               <button
                 type="button"
+                onClick={handleManualAbility}
+                className={`subtle-depth-interactive px-3.5 py-2 rounded-xl text-xs font-medium shadow-sm flex items-center space-x-1.5 ${
+                  abilityReady
+                    ? 'bg-[#FF5F1F] hover:bg-[#e05318] text-white border border-[#FF5F1F]'
+                    : 'bg-white/80 text-stone-400 border border-stone-200'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-white" />
+                <span>Ability (Q / Shift)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleManualJump}
                 className="subtle-depth-interactive px-3.5 py-2 rounded-xl bg-white/90 hover:bg-white text-stone-900 text-xs font-medium border border-stone-200/90 shadow-sm flex items-center space-x-1.5"
               >
@@ -890,7 +1374,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                 className="subtle-depth-interactive px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-medium border border-stone-900 shadow-sm flex items-center space-x-1.5"
               >
                 <Crosshair className="w-3.5 h-3.5 text-[#0ABAB5]" />
-                <span>Fire Weapon (J / F)</span>
+                <span>Fire (J / F)</span>
               </button>
             </div>
 
@@ -900,9 +1384,11 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
               <span>·</span>
               <span>Space Jump</span>
               <span>·</span>
-              <span>J Fire (Linear Recoil Kick)</span>
+              <span>Q Ability</span>
               <span>·</span>
-              <span>K Weapon Pickup</span>
+              <span>J Fire (Recoil Kick)</span>
+              <span>·</span>
+              <span>K Pickup</span>
             </div>
           </>
         ) : (
