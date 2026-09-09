@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wifi, Zap, Activity, GitGraph, Layers } from 'lucide-react';
+import { Wifi, Activity, GitGraph, Layers, Brain, Minus, X } from 'lucide-react';
 import { NodeSpec } from '../types';
 
 interface NodeMeshStatusProps {
@@ -22,14 +22,29 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   onOpenDwdModal,
 }) => {
   return (
-    <header className="bg-[#090909] border-b border-[#1c1c1c] px-4 py-2.5 flex items-center justify-between text-xs text-[#a3a3a3] select-none">
-      <div className="flex items-center space-x-4">
+    <header
+      data-tauri-drag-region
+      className="bg-[#090909] border-b border-[#1c1c1c] px-4 py-2.5 flex items-center justify-between text-xs text-[#a3a3a3] select-none"
+    >
+      <div className="flex items-center space-x-3.5">
         {/* Brand / Logo */}
-        <div className="flex items-center space-x-2 font-medium text-[#f5f5f5] tracking-wide">
-          <Zap className="w-3.5 h-3.5 text-[#8e8e8e]" />
-          <span className="text-xs font-mono tracking-tight text-[#e5e5e5]">
-            OpenEngine Mesh
-          </span>
+        <div className="flex items-center space-x-2.5 font-medium tracking-wide">
+          <Brain className="w-4 h-4 text-[#e5e5e5] animate-pulse" />
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-mono font-semibold tracking-tight text-[#f5f5f5]">
+              The Cognitive Core
+            </span>
+            <span className="hidden lg:inline text-[10px] font-mono text-[#737373]">
+              (Continuous, Evolving Intelligence)
+            </span>
+          </div>
+        </div>
+
+        {/* Cognitive Thread Status */}
+        <div className="hidden xl:flex items-center space-x-1.5 bg-[#0e0e0e] border border-[#1f1f1f] px-2 py-0.5 rounded text-[10px] font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[#525252]">RTX Thread:</span>
+          <span className="text-[#a3a3a3]">Self-Scheduling</span>
         </div>
 
         {/* Local Node Tag */}
@@ -77,12 +92,12 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           }`}
         >
           <GitGraph className="w-3.5 h-3.5" />
-          <span>Pipeline DAG</span>
+          <span>Cognitive Topology</span>
         </button>
       </div>
 
-      {/* Right Controls: Google DWD + Mesh Peers & Jobs */}
-      <div className="flex items-center space-x-2.5">
+      {/* Right Controls: Google DWD + Mesh Peers + Window Controls */}
+      <div className="flex items-center space-x-2">
         {/* Google Workspace DWD Trigger */}
         <button
           onClick={onOpenDwdModal}
@@ -108,6 +123,32 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           <Activity className="w-3.5 h-3.5 text-[#737373]" />
           <span className="text-[#525252]">Jobs:</span>
           <span className="text-[#e5e5e5] font-mono font-medium">{activeRunsCount}</span>
+        </div>
+
+        {/* Minimal Frameless Window Controls */}
+        <div className="hidden sm:flex items-center space-x-1 pl-1.5 border-l border-[#1f1f1f]">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+                import('@tauri-apps/api/window').then(({ getCurrentWindow }) => getCurrentWindow().minimize());
+              }
+            }}
+            className="p-1 text-[#737373] hover:text-[#f5f5f5] hover:bg-[#1a1a1a] rounded transition-colors"
+            title="Minimize"
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+                import('@tauri-apps/api/window').then(({ getCurrentWindow }) => getCurrentWindow().close());
+              }
+            }}
+            className="p-1 text-[#737373] hover:text-[#fca5a5] hover:bg-[#2b1818] rounded transition-colors"
+            title="Close"
+          >
+            <X className="w-3 h-3" />
+          </button>
         </div>
       </div>
     </header>

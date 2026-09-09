@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -10,7 +10,17 @@ import {
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Bot, CheckCircle2, XCircle, ShieldAlert, GitPullRequest, Loader2 } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  Cpu,
+  Sparkles,
+  Database,
+  Moon,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+} from 'lucide-react';
 import { GraphNodeState, NodeExecutionStatus } from '../types';
 import { SilkShaderBackground } from './SilkShaderBackground';
 
@@ -20,69 +30,68 @@ interface VisualGraphProps {
   onOpenApproval?: () => void;
 }
 
-// Custom Pipeline Node Component with refined glassmorphism
-const PipelineNode: React.FC<{
+// Custom Cognitive Core Pipeline Node with soft ink styling
+const CognitiveNode: React.FC<{
   data: {
     title: string;
-    role: string;
+    subtitle: string;
+    items: string[];
     status: NodeExecutionStatus;
     icon: React.ReactNode;
+    badge?: string;
     isGate?: boolean;
     onAction?: () => void;
   };
 }> = ({ data }) => {
-  const statusColors = {
-    idle: 'border-white/10 bg-gray-900/60 text-gray-400 backdrop-blur-md hover:border-white/20',
-    running: 'border-blue-500/70 bg-blue-950/50 text-blue-200 backdrop-blur-md shadow-[0_0_25px_rgba(59,130,246,0.35)]',
-    passed: 'border-emerald-500/60 bg-emerald-950/40 text-emerald-200 backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.25)]',
-    failed: 'border-rose-500/60 bg-rose-950/40 text-rose-200 backdrop-blur-md shadow-[0_0_20px_rgba(244,63,94,0.3)]',
-    gated: 'border-amber-500/80 bg-amber-950/50 text-amber-200 backdrop-blur-md animate-pulse shadow-[0_0_30px_rgba(245,158,11,0.5)]',
-  };
-
   return (
     <div
       onClick={data.onAction}
-      className={`px-4 py-3.5 rounded-xl border min-w-[210px] cursor-pointer transition-all duration-500 select-none shadow-xl hover:scale-[1.02] ${
-        statusColors[data.status]
+      className={`px-4 py-3 rounded-xl border min-w-[260px] max-w-[290px] cursor-pointer transition-all duration-300 select-none backdrop-blur-md ${
+        data.status === 'gated'
+          ? 'border-[#444] bg-[#141414]/90 text-[#f5f5f5] shadow-xl animate-pulse'
+          : data.status === 'running'
+          ? 'border-[#333] bg-[#121212]/90 text-[#e0e0e0] shadow-lg'
+          : 'border-[#1c1c1c] bg-[#0c0c0c]/90 text-[#a3a3a3] hover:border-[#2e2e2e] hover:bg-[#101010]/95'
       }`}
     >
-      <Handle type="target" position={Position.Left} className="!bg-gray-400 !w-2 !h-2" />
-      <div className="flex items-center justify-between space-x-2">
+      <Handle type="target" position={Position.Top} className="!bg-[#525252] !w-2 !h-2 !border-none" />
+      <Handle type="target" position={Position.Left} className="!bg-[#525252] !w-2 !h-2 !border-none" />
+
+      <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center space-x-2">
-          {data.icon}
+          <div className="p-1 rounded bg-[#171717] border border-[#222]">
+            {data.icon}
+          </div>
           <div>
-            <div className="text-sm font-semibold text-white tracking-wide">{data.title}</div>
-            <div className="text-[10px] text-gray-400 uppercase font-mono">{data.role}</div>
+            <div className="text-xs font-semibold text-[#f5f5f5] tracking-tight">{data.title}</div>
+            <div className="text-[9px] text-[#737373] font-mono">{data.subtitle}</div>
           </div>
         </div>
 
-        <div className="flex items-center">
-          {data.status === 'running' && <Loader2 className="w-4 h-4 animate-spin text-blue-400" />}
-          {data.status === 'passed' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-          {data.status === 'failed' && <XCircle className="w-4 h-4 text-rose-400" />}
-          {data.status === 'gated' && <ShieldAlert className="w-4 h-4 text-amber-400 animate-bounce" />}
-        </div>
+        {data.badge && (
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#171717] text-[#a3a3a3] border border-[#262626]">
+            {data.badge}
+          </span>
+        )}
       </div>
 
-      {data.isGate && data.status === 'gated' && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onAction?.();
-          }}
-          className="mt-2.5 w-full py-1 px-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded shadow-md transition-colors"
-        >
-          Review & Signoff
-        </button>
-      )}
+      <ul className="space-y-0.5 mt-2 pt-2 border-t border-[#171717] text-[10px] font-mono text-[#737373]">
+        {data.items.map((item, idx) => (
+          <li key={idx} className="flex items-center space-x-1.5">
+            <span className="w-1 h-1 rounded-full bg-[#525252]" />
+            <span className="truncate">{item}</span>
+          </li>
+        ))}
+      </ul>
 
-      <Handle type="source" position={Position.Right} className="!bg-gray-400 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-[#525252] !w-2 !h-2 !border-none" />
+      <Handle type="source" position={Position.Right} className="!bg-[#525252] !w-2 !h-2 !border-none" />
     </div>
   );
 };
 
 const nodeTypes = {
-  pipelineNode: PipelineNode,
+  cognitiveNode: CognitiveNode,
 };
 
 export const VisualGraph: React.FC<VisualGraphProps> = ({
@@ -90,168 +99,263 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
   onSelectNode,
   onOpenApproval,
 }) => {
-  const workerStatus = nodesState['worker']?.status || 'idle';
-  const acceptanceStatus = nodesState['acceptance']?.status || 'idle';
-  const codeStatus = nodesState['code']?.status || 'idle';
-  const gateStatus = nodesState['gate']?.status || 'idle';
-  const deliveryStatus = nodesState['deliver']?.status || 'idle';
+  const [activePillar, setActivePillar] = useState<'shadow' | 'arbitrator' | 'memory' | null>('shadow');
+  const [showPillarDetails, setShowPillarDetails] = useState(true);
+
+  const gateStatus = nodesState.gate?.status || 'gated';
+  const workerStatus = nodesState.worker?.status || 'passed';
 
   const nodes: Node[] = useMemo(
     () => [
       {
-        id: 'worker',
-        type: 'pipelineNode',
-        position: { x: 50, y: 150 },
+        id: 'sensory',
+        type: 'cognitiveNode',
+        position: { x: 380, y: 25 },
         data: {
-          title: 'Worker Agent',
-          role: 'Code Generator',
+          title: 'Continuous Sensory Feed',
+          subtitle: 'Real-Time Developer Telemetry',
+          badge: 'Continuous',
+          icon: <Activity className="w-4 h-4 text-[#a3a3a3]" />,
+          items: [
+            'Passive terminal output & compiler errors',
+            'Live AST modifications & file saves',
+            'Active GitHub issue & PR stream',
+          ],
+          status: 'running',
+          onAction: () => onSelectNode?.('sensory'),
+        },
+      },
+      {
+        id: 'arbitrator',
+        type: 'cognitiveNode',
+        position: { x: 380, y: 175 },
+        data: {
+          title: 'The Attention Arbitrator',
+          subtitle: 'Intervention Decision Engine',
+          badge: 'Evaluates Need',
+          icon: <Brain className="w-4 h-4 text-[#d4d4d4]" />,
+          items: [
+            'Evaluates: Does human need intervention?',
+            'Confusion latency & lingering focus analysis',
+            'Self-scheduling autonomous cognitive thread',
+          ],
+          status: 'running',
+          onAction: () => {
+            setActivePillar('arbitrator');
+            onSelectNode?.('arbitrator');
+          },
+        },
+      },
+      {
+        id: 'shadow',
+        type: 'cognitiveNode',
+        position: { x: 120, y: 335 },
+        data: {
+          title: 'Silent Shadow',
+          subtitle: 'Speculative RTX Containers',
+          badge: 'Autonomous RTX',
+          icon: <Cpu className="w-4 h-4 text-[#8e8e8e]" />,
+          items: [
+            'Speculative diffs & branch pre-computation',
+            'Isolated Docker target verification',
+            'Type integrity proof before git commit',
+          ],
           status: workerStatus,
-          icon: <Bot className="w-5 h-5 text-indigo-400" />,
-          onAction: () => onSelectNode?.('worker'),
+          onAction: () => {
+            setActivePillar('shadow');
+            onSelectNode?.('shadow');
+          },
         },
       },
       {
-        id: 'acceptance',
-        type: 'pipelineNode',
-        position: { x: 340, y: 60 },
+        id: 'emergence',
+        type: 'cognitiveNode',
+        position: { x: 640, y: 335 },
         data: {
-          title: 'Acceptance Verifier',
-          role: 'Behavioral Tests',
-          status: acceptanceStatus,
-          icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
-          onAction: () => onSelectNode?.('acceptance'),
-        },
-      },
-      {
-        id: 'code',
-        type: 'pipelineNode',
-        position: { x: 340, y: 240 },
-        data: {
-          title: 'Code Reviewer',
-          role: 'Safety & Quality',
-          status: codeStatus,
-          icon: <CheckCircle2 className="w-5 h-5 text-cyan-400" />,
-          onAction: () => onSelectNode?.('code'),
-        },
-      },
-      {
-        id: 'gate',
-        type: 'pipelineNode',
-        position: { x: 630, y: 150 },
-        data: {
-          title: 'Human Gate',
-          role: 'Signoff / Review',
+          title: 'Active Emergence',
+          subtitle: 'Human-Aligned Surface',
+          badge: '1-Tap Signoff',
+          icon: <Sparkles className="w-4 h-4 text-[#e5e5e5]" />,
+          items: [
+            'Ambient voice notes & dynamic HUD hints',
+            'Compiler error resolution proposals',
+            '1-Tap gate signoff & GitHub PR delivery',
+          ],
           status: gateStatus,
           isGate: true,
-          icon: <ShieldAlert className="w-5 h-5 text-amber-400" />,
           onAction: onOpenApproval,
         },
       },
       {
-        id: 'deliver',
-        type: 'pipelineNode',
-        position: { x: 920, y: 150 },
+        id: 'consolidation',
+        type: 'cognitiveNode',
+        position: { x: 380, y: 500 },
         data: {
-          title: 'Automated Delivery',
-          role: 'PR & CI Merge',
-          status: deliveryStatus,
-          icon: <GitPullRequest className="w-5 h-5 text-purple-400" />,
-          onAction: () => onSelectNode?.('deliver'),
+          title: 'Autonomous Memory Consolidation',
+          subtitle: 'Background Sleep / Dream Cycle',
+          badge: 'Episodic SQLite',
+          icon: <Database className="w-4 h-4 text-[#a3a3a3]" />,
+          items: [
+            'Durable episodic SQLite ledger record',
+            'Pruning of stale speculative hypotheses',
+            'Learned codebase heuristics into persistent RAG',
+          ],
+          status: 'idle',
+          onAction: () => {
+            setActivePillar('memory');
+            onSelectNode?.('consolidation');
+          },
         },
       },
     ],
-    [workerStatus, acceptanceStatus, codeStatus, gateStatus, deliveryStatus, onSelectNode, onOpenApproval]
+    [workerStatus, gateStatus, onSelectNode, onOpenApproval]
   );
 
   const edges: Edge[] = useMemo(
     () => [
       {
-        id: 'e-worker-acceptance',
-        source: 'worker',
-        target: 'acceptance',
-        animated: workerStatus === 'running' || acceptanceStatus === 'running',
+        id: 'e-sensory-arbitrator',
+        source: 'sensory',
+        target: 'arbitrator',
+        animated: true,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#4b5563', strokeWidth: 2 },
+        style: { stroke: '#525252', strokeWidth: 2 },
       },
       {
-        id: 'e-worker-code',
-        source: 'worker',
-        target: 'code',
-        animated: workerStatus === 'running' || codeStatus === 'running',
+        id: 'e-arbitrator-shadow',
+        source: 'arbitrator',
+        target: 'shadow',
+        animated: true,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#4b5563', strokeWidth: 2 },
+        style: { stroke: '#525252', strokeWidth: 2 },
       },
       {
-        id: 'e-acceptance-gate',
-        source: 'acceptance',
-        target: 'gate',
-        animated: acceptanceStatus === 'passed' && gateStatus === 'gated',
+        id: 'e-arbitrator-emergence',
+        source: 'arbitrator',
+        target: 'emergence',
+        animated: gateStatus === 'gated',
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#4b5563', strokeWidth: 2 },
+        style: { stroke: '#737373', strokeWidth: 2 },
       },
       {
-        id: 'e-code-gate',
-        source: 'code',
-        target: 'gate',
-        animated: codeStatus === 'passed' && gateStatus === 'gated',
+        id: 'e-shadow-consolidation',
+        source: 'shadow',
+        target: 'consolidation',
+        animated: false,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#4b5563', strokeWidth: 2 },
+        style: { stroke: '#333333', strokeWidth: 1.5 },
       },
       {
-        id: 'e-gate-deliver',
-        source: 'gate',
-        target: 'deliver',
-        animated: deliveryStatus === 'running',
+        id: 'e-emergence-consolidation',
+        source: 'emergence',
+        target: 'consolidation',
+        animated: false,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#4b5563', strokeWidth: 2 },
+        style: { stroke: '#333333', strokeWidth: 1.5 },
       },
     ],
-    [workerStatus, acceptanceStatus, codeStatus, gateStatus, deliveryStatus]
+    [gateStatus]
   );
 
-  const overallStatus = useMemo<'idle' | 'running' | 'passed' | 'failed' | 'gated' | 'delivered'>(() => {
-    if (deliveryStatus === 'passed') return 'delivered';
-    if (gateStatus === 'gated') return 'gated';
-    if (
-      workerStatus === 'running' ||
-      acceptanceStatus === 'running' ||
-      codeStatus === 'running' ||
-      deliveryStatus === 'running'
-    ) {
-      return 'running';
-    }
-    if (
-      workerStatus === 'failed' ||
-      acceptanceStatus === 'failed' ||
-      codeStatus === 'failed' ||
-      gateStatus === 'failed'
-    ) {
-      return 'failed';
-    }
-    if (acceptanceStatus === 'passed' && codeStatus === 'passed') {
-      return 'passed';
-    }
-    return 'idle';
-  }, [workerStatus, acceptanceStatus, codeStatus, gateStatus, deliveryStatus]);
-
   return (
-    <div className="w-full h-full bg-mesh-dark relative overflow-hidden">
-      {/* Super smooth flowing silk shader barely even noticeable */}
-      <SilkShaderBackground workflowStatus={overallStatus} />
+    <div className="w-full h-full bg-[#070707] relative overflow-hidden flex flex-col font-sans">
+      {/* Super smooth flowing silk shader in background */}
+      <SilkShaderBackground workflowStatus={gateStatus === 'gated' ? 'gated' : 'running'} />
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.3 }}
-        minZoom={0.4}
-        maxZoom={1.5}
-        className="!bg-transparent"
-      >
-        <Background color="#30363d" gap={20} size={1} className="!opacity-25" />
-        <Controls className="!bg-mesh-card/80 !backdrop-blur-md !border-white/10 !fill-gray-300 shadow-xl" />
-      </ReactFlow>
+      {/* Main Graph Flow Area */}
+      <div className="flex-1 relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.25 }}
+          minZoom={0.3}
+          maxZoom={1.5}
+          className="!bg-transparent"
+        >
+          <Background color="#1a1a1a" gap={20} size={1} className="!opacity-30" />
+          <Controls className="!bg-[#0c0c0c]/80 !backdrop-blur-md !border-[#1c1c1c] !fill-[#737373] shadow-xl" />
+        </ReactFlow>
+      </div>
+
+      {/* Pillars of Continuous Intelligence Bottom Drawer */}
+      <div className="border-t border-[#1c1c1c] bg-[#090909]/95 backdrop-blur-md p-3.5 z-20 transition-all">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2 text-xs font-mono text-[#f5f5f5]">
+            <Brain className="w-3.5 h-3.5 text-[#8e8e8e]" />
+            <span className="font-semibold">The Cognitive Core Architecture</span>
+            <span className="text-[#525252]">·</span>
+            <span className="text-[#737373]">Autonomous Cognitive Thread on RTX</span>
+          </div>
+
+          <button
+            onClick={() => setShowPillarDetails(!showPillarDetails)}
+            className="text-[11px] font-mono text-[#737373] hover:text-[#f5f5f5] flex items-center space-x-1 transition-colors"
+          >
+            <span>{showPillarDetails ? 'Collapse Insights' : 'Expand Insights'}</span>
+            {showPillarDetails ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {showPillarDetails && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            {/* Pillar 1: Shadow Graph Execution */}
+            <div
+              onClick={() => setActivePillar('shadow')}
+              className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                activePillar === 'shadow'
+                  ? 'border-[#333333] bg-[#121212]'
+                  : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
+              }`}
+            >
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+                <Cpu className="w-3 h-3 text-[#a3a3a3]" />
+                <span>Shadow Graph Execution</span>
+              </div>
+              <p className="text-[10px] text-[#737373] leading-relaxed">
+                While you write code or view issues, the RTX server spins up speculative test environments in isolated target containers. It anticipates test cases and verifies type integrity before you run <code className="text-[#a3a3a3]">cargo test</code>.
+              </p>
+            </div>
+
+            {/* Pillar 2: The Attention Arbitrator */}
+            <div
+              onClick={() => setActivePillar('arbitrator')}
+              className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                activePillar === 'arbitrator'
+                  ? 'border-[#333333] bg-[#121212]'
+                  : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
+              }`}
+            >
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+                <Zap className="w-3 h-3 text-[#a3a3a3]" />
+                <span>The Attention Arbitrator</span>
+              </div>
+              <p className="text-[10px] text-[#737373] leading-relaxed">
+                Decides whether to remain silent or surface insight. Observes compiler traces, prepares fixes in shadow memory, and only interrupts with an ambient voice note or HUD hint if your focus lingers in confusion.
+              </p>
+            </div>
+
+            {/* Pillar 3: Evolving Memory & Sleep Cycles */}
+            <div
+              onClick={() => setActivePillar('memory')}
+              className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                activePillar === 'memory'
+                  ? 'border-[#333333] bg-[#121212]'
+                  : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
+              }`}
+            >
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+                <Moon className="w-3 h-3 text-[#a3a3a3]" />
+                <span>Memory & Sleep Cycles</span>
+              </div>
+              <p className="text-[10px] text-[#737373] leading-relaxed">
+                Working context stays live in multimodal context. Durable episodic SQLite ledger records code evolution. When idle, night routines consolidate diffs, synthesize error heuristics, and optimize local embeddings.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
