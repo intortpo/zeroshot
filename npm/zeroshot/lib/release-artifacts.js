@@ -58,6 +58,13 @@ function parseTarSize(header) {
   return Number.parseInt(value, 8);
 }
 
+const TAR_TYPEFLAG_REGULAR = '0';
+const TAR_TYPEFLAG_REGULAR_LEGACY = '\0';
+
+function isRegularFileTypeflag(typeflag) {
+  return typeflag === TAR_TYPEFLAG_REGULAR || typeflag === TAR_TYPEFLAG_REGULAR_LEGACY;
+}
+
 function extractExecutable(archive, expectedName) {
   let tar;
   try {
@@ -76,11 +83,15 @@ function extractExecutable(archive, expectedName) {
       break;
     }
     const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+    const typeflag = String.fromCharCode(header[156]);
     const size = parseTarSize(header.subarray(124, 136));
     const start = offset + 512;
     const end = start + size;
     if (end > tar.length) throw new Error('ARCHIVE_INVALID: truncated tar entry');
     if (name === expectedName) {
+      if (!isRegularFileTypeflag(typeflag)) {
+        throw new Error(`ARCHIVE_INVALID: ${expectedName} is not a regular file`);
+      }
       if (executable) throw new Error(`ARCHIVE_INVALID: duplicate ${expectedName}`);
       executable = Buffer.from(tar.subarray(start, end));
     } else {
