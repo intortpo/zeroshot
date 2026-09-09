@@ -11,6 +11,9 @@ use crate::native_v2_delivery::DeliveryTarget;
 use crate::native_v2_delivery::git_auth::encode_basic_credential;
 use crate::native_v2_contract::ResolvedSource;
 
+#[cfg(all(test, unix))]
+mod tests;
+
 const GIT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const MAX_GIT_OUTPUT_BYTES: usize = 4_096;
 
@@ -157,6 +160,10 @@ impl GitProcess<'_> {
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
             .env("GIT_TERMINAL_PROMPT", "0")
+            // Checkout and the agent share a UID. Detached maintenance can leave an orphan
+            // under that UID after Git exits, preventing the agent's containment registration.
+            .arg("-c")
+            .arg("maintenance.autoDetach=false")
             .arg("-c")
             .arg("core.hooksPath=/dev/null");
         if let Some(token) = self.token {
