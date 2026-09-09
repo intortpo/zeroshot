@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react';
 import { NodeMeshStatus } from './components/NodeMeshStatus';
 import { PetriIntentBar } from './components/PetriIntentBar';
 import { PetriKanban } from './components/PetriKanban';
+import { SkillsCatalog } from './components/SkillsCatalog';
+import { MemoryExplorer } from './components/MemoryExplorer';
 import { SilkShaderBackground } from './components/SilkShaderBackground';
 import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { useMeshLedger } from './hooks/useMeshLedger';
-import { PetriItem, PetriItemKind, PetriStage, Workspace } from './types';
+import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory } from './types';
 
 export function App() {
   const {
@@ -19,6 +21,9 @@ export function App() {
     loadDwdCredentials,
     dispatchUseCase,
   } = useMeshLedger();
+
+  // Navigation View: 'board' | 'skills' | 'memory'
+  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory'>('board');
 
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
@@ -252,6 +257,21 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
     }
   };
 
+  // Dispatch Skill from Catalog directly into Board
+  const handleDispatchSkill = (prompt: string, category: SkillCategory) => {
+    let kind: PetriItemKind = 'feat';
+    if (category === 'github' && (prompt.toLowerCase().includes('bug') || prompt.toLowerCase().includes('conflict'))) {
+      kind = 'bug';
+    } else if (category === 'firebase' && prompt.toLowerCase().includes('audit')) {
+      kind = 'issue';
+    } else if (category === 'agy' && prompt.toLowerCase().includes('grill-me')) {
+      kind = 'mile';
+    }
+
+    handleCreateIntent(prompt, kind);
+    setCurrentView('board');
+  };
+
   // Fan out agents into parallel RTX subagents
   const handleFanOutAgents = (itemId: string) => {
     setItems((prev) =>
@@ -428,7 +448,7 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
-        {/* Top Header: Frameless Draggable Petri Bar with Workspace Switcher */}
+        {/* Top Header: Frameless Draggable Petri Bar with Nav & Workspace Switcher */}
         <NodeMeshStatus
           localNode={localNode}
           peers={peers}
@@ -437,26 +457,47 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
           onOpenDwdModal={() => setIsDwdModalOpen(true)}
           activeWorkspace={activeWorkspace}
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+          currentView={currentView}
+          onSelectView={setCurrentView}
         />
 
-        {/* Element 1: Soft Frost Intent Bar */}
-        <PetriIntentBar onSubmitIntent={handleCreateIntent} />
+        {/* View 1: Main Kanban Board & Intent Entry Bar */}
+        {currentView === 'board' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            {/* Element 1: Soft Frost Intent Bar */}
+            <PetriIntentBar onSubmitIntent={handleCreateIntent} />
 
-        {/* Element 2: Left-to-Right Flowing Kanban (Right Being Fully Merged) */}
-        <div className="flex-1 flex overflow-hidden">
-          <PetriKanban
-            items={visibleItems}
-            onOpenApproval={handleOpenApproval}
-            onSelectItem={(item) => {
-              if (item.stage === 'gated') {
-                handleOpenApproval(item);
-              }
-            }}
-            onFanOutAgents={handleFanOutAgents}
-            onAdvanceStage={handleAdvanceStage}
-            onRecurseAgent={handleRecurseAgent}
-          />
-        </div>
+            {/* Element 2: Left-to-Right Flowing Kanban (Right Being Fully Merged) */}
+            <div className="flex-1 flex overflow-hidden">
+              <PetriKanban
+                items={visibleItems}
+                onOpenApproval={handleOpenApproval}
+                onSelectItem={(item) => {
+                  if (item.stage === 'gated') {
+                    handleOpenApproval(item);
+                  }
+                }}
+                onFanOutAgents={handleFanOutAgents}
+                onAdvanceStage={handleAdvanceStage}
+                onRecurseAgent={handleRecurseAgent}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* View 2: Skills Registry Catalog (Firebase, GitHub, GCloud, AGY) */}
+        {currentView === 'skills' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <SkillsCatalog onDispatchSkill={handleDispatchSkill} />
+          </div>
+        )}
+
+        {/* View 3: Memory Explorer (Episodic, Semantic/ADRs, Rules, Vector Store) */}
+        {currentView === 'memory' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <MemoryExplorer activeWorkspace={activeWorkspace} />
+          </div>
+        )}
       </div>
 
       {/* Workspace Switcher Modal */}

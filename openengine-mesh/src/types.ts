@@ -161,3 +161,32 @@ export interface WorkspaceUseCaseResult {
   workspace_artifacts: WorkspaceArtifact[];
   execution_log: string[];
 }
+
+export type SkillCategory = 'firebase' | 'github' | 'gcloud' | 'agy';
+
+export interface PetriSkill {
+  id: string;
+  category: SkillCategory;
+  name: string;
+  title: string;
+  description: string;
+  version: string;
+  tags: string[];
+  isActive: boolean;
+  samplePrompts: string[];
+}
+
+export type MemoryType = 'episodic' | 'semantic' | 'rule' | 'vector' | 'config';
+
+export interface MemoryEntry {
+  id: string;
+  workspaceId: string;
+  type: MemoryType;
+  title: string;
+  content: string;
+  tags: string[];
+  timestamp: number;
+  tokens?: number;
+  importance: 'critical' | 'high' | 'medium' | 'low';
+  metadata?: Record<string, unknown>;
+}

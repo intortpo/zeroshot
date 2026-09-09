@@ -1,5 +1,15 @@
 import React from 'react';
-import { Wifi, Activity, Minus, X, FolderGit2, ChevronDown } from 'lucide-react';
+import {
+  Wifi,
+  Activity,
+  Minus,
+  X,
+  FolderGit2,
+  ChevronDown,
+  Kanban,
+  Sparkles,
+  Brain,
+} from 'lucide-react';
 import { NodeSpec, Workspace } from '../types';
 
 interface NodeMeshStatusProps {
@@ -10,6 +20,8 @@ interface NodeMeshStatusProps {
   onOpenDwdModal: () => void;
   activeWorkspace?: Workspace;
   onOpenWorkspaceModal: () => void;
+  currentView: 'board' | 'skills' | 'memory';
+  onSelectView: (view: 'board' | 'skills' | 'memory') => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -20,12 +32,15 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   onOpenDwdModal,
   activeWorkspace,
   onOpenWorkspaceModal,
+  currentView,
+  onSelectView,
 }) => {
   return (
     <header
       data-tauri-drag-region
-      className="bg-[#090909]/80 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs text-[#a3a3a3] select-none z-30"
+      className="bg-[#090909]/85 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs text-[#a3a3a3] select-none z-30"
     >
+      {/* Left: Logo, Workspace Switcher, Local Host Spec */}
       <div className="flex items-center space-x-3 sm:space-x-4">
         {/* Brand / Logo */}
         <div className="flex items-center space-x-2 font-medium tracking-wide">
@@ -49,7 +64,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </button>
 
         {/* Local Node Tag */}
-        <div className="hidden md:flex items-center space-x-2 bg-[#0e0e0e]/90 border border-white/5 px-2.5 py-1 rounded-md">
+        <div className="hidden lg:flex items-center space-x-2 bg-[#0e0e0e]/90 border border-white/5 px-2.5 py-1 rounded-md">
           <span className="text-[#525252] text-[10px] font-mono">HOST:</span>
           <span className="text-[#e5e5e5] font-mono font-medium text-[11px]">{localNode.deviceName}</span>
           <span
@@ -69,6 +84,45 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </div>
       </div>
 
+      {/* Center: Main View Navigation (Board / Skills / Memory) */}
+      <div className="flex items-center space-x-1 bg-[#121212]/90 p-1 rounded-xl border border-white/5">
+        <button
+          onClick={() => onSelectView('board')}
+          className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
+            currentView === 'board'
+              ? 'bg-[#222222] text-[#ffffff] shadow-sm border border-white/10'
+              : 'text-[#888888] hover:text-[#d4d4d4]'
+          }`}
+        >
+          <Kanban className="w-3.5 h-3.5" />
+          <span>Board</span>
+        </button>
+
+        <button
+          onClick={() => onSelectView('skills')}
+          className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
+            currentView === 'skills'
+              ? 'bg-[#222222] text-[#ffffff] shadow-sm border border-white/10'
+              : 'text-[#888888] hover:text-[#d4d4d4]'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Skills</span>
+        </button>
+
+        <button
+          onClick={() => onSelectView('memory')}
+          className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
+            currentView === 'memory'
+              ? 'bg-[#222222] text-[#ffffff] shadow-sm border border-white/10'
+              : 'text-[#888888] hover:text-[#d4d4d4]'
+          }`}
+        >
+          <Brain className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Memory</span>
+        </button>
+      </div>
+
       {/* Right Controls: Google DWD + Mesh Peers + Window Controls */}
       <div className="flex items-center space-x-2">
         {/* Google Workspace DWD Trigger */}
@@ -85,7 +139,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           <span className="text-[#a3a3a3]">Google DWD</span>
         </button>
 
-        <div className="flex items-center space-x-1.5 bg-[#0e0e0e]/90 border border-white/5 px-2.5 py-1 rounded-md text-[11px] font-mono">
+        <div className="hidden sm:flex items-center space-x-1.5 bg-[#0e0e0e]/90 border border-white/5 px-2.5 py-1 rounded-md text-[11px] font-mono">
           <Wifi className="w-3 h-3 text-[#737373]" />
           <span className="text-[#525252]">Peers:</span>
           <span className="text-[#e5e5e5] font-medium">{peers.length}</span>
