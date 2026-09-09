@@ -4,12 +4,14 @@ import { PetriIntentBar } from './components/PetriIntentBar';
 import { PetriKanban } from './components/PetriKanban';
 import { SkillsCatalog } from './components/SkillsCatalog';
 import { MemoryExplorer } from './components/MemoryExplorer';
+import { EnterpriseStats } from './components/EnterpriseStats';
+import { UserProfileModal } from './components/UserProfileModal';
 import { SilkShaderBackground } from './components/SilkShaderBackground';
 import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { useMeshLedger } from './hooks/useMeshLedger';
-import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory } from './types';
+import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile } from './types';
 
 export function App() {
   const {
@@ -22,8 +24,54 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Navigation View: 'board' | 'skills' | 'memory'
-  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory'>('board');
+  // Enterprise View: 'board' | 'skills' | 'memory' | 'stats'
+  const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats'>('board');
+
+  // Enterprise Users & Identity State
+  const [users, setUsers] = useState<UserProfile[]>([
+    {
+      id: 'usr-hideo',
+      name: 'Hideo (Lead Architect)',
+      email: 'hideo@the-open-engine.org',
+      role: 'owner',
+      organization: 'The Open Engine Co.',
+      canApproveGates: true,
+      canDeploy: true,
+      canEditRules: true,
+    },
+    {
+      id: 'usr-elena',
+      name: 'Elena Vance',
+      email: 'elena@petri-security.io',
+      role: 'security_auditor',
+      organization: 'Petri Invariants Lab',
+      canApproveGates: true,
+      canDeploy: false,
+      canEditRules: true,
+    },
+    {
+      id: 'usr-marcus',
+      name: 'Marcus Chen',
+      email: 'marcus@zero-petri.dev',
+      role: 'senior_dev',
+      organization: 'The Open Engine Co.',
+      canApproveGates: false,
+      canDeploy: true,
+      canEditRules: false,
+    },
+    {
+      id: 'usr-rtx-daemon',
+      name: 'RTX Cognitive Bot',
+      email: 'bot-rtx@mesh.internal',
+      role: 'viewer',
+      organization: 'Autonomous Mesh Daemon',
+      canApproveGates: false,
+      canDeploy: false,
+      canEditRules: false,
+    },
+  ]);
+  const [activeUserId, setActiveUserId] = useState<string>('usr-hideo');
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
@@ -55,6 +103,12 @@ export function App() {
     },
   ]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('ws-petri');
+
+  // Active User Profile
+  const activeUser = useMemo(
+    () => users.find((u) => u.id === activeUserId) || users[0],
+    [users, activeUserId]
+  );
 
   // Canonical Petri Items across workspaces
   const [items, setItems] = useState<PetriItem[]>([
@@ -97,29 +151,8 @@ export function App() {
       runId: 'run-8f921bc4-001',
       createdAt: Date.now() - 900000,
       updatedAt: Date.now() - 120000,
-      diff: `diff --git a/crates/speculative/src/runner.rs b/crates/speculative/src/runner.rs
-new file mode 100644
-index 0000000..9c4a112
---- /dev/null
-+++ b/crates/speculative/src/runner.rs
-@@ -0,0 +1,24 @@
-+pub struct SpeculativeRunner {
-+    pub target_image: String,
-+    pub vram_ceiling_mb: u64,
-+}
-+
-+impl SpeculativeRunner {
-+    pub fn execute_precomputation(&self) -> Result<(), String> {
-+        println!("Spun up speculative test environment on RTX 4090");
-+        Ok(())
-+    }
-+}`,
-      testLogs: `running 3 tests
-test runner::tests::test_vram_allocation ... ok
-test runner::tests::test_anticipatory_dependency_build ... ok
-test runner::tests::test_type_integrity_proof ... ok
-
-test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
+      diff: `diff --git a/crates/speculative/src/runner.rs b/crates/speculative/src/runner.rs\nnew file mode 100644\nindex 0000000..9c4a112\n--- /dev/null\n+++ b/crates/speculative/src/runner.rs\n@@ -0,0 +1,24 @@\n+pub struct SpeculativeRunner {\n+    pub target_image: String,\n+    pub vram_ceiling_mb: u64,\n+}\n+\n+impl SpeculativeRunner {\n+    pub fn execute_precomputation(&self) -> Result<(), String> {\n+        println!(\"Spun up speculative test environment on RTX 4090\");\n+        Ok(())\n+    }\n+}`,
+      testLogs: `running 3 tests\ntest runner::tests::test_vram_allocation ... ok\ntest runner::tests::test_anticipatory_dependency_build ... ok\ntest runner::tests::test_type_integrity_proof ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
     },
     {
       id: 'pt-005',
@@ -230,12 +263,12 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
       workspaceId: activeWorkspaceId,
       kind,
       title,
-      stage: 'in_flight', // Immediately transitions from intent to in_flight on RTX
+      stage: 'in_flight', // Transitions to in_flight on RTX
       createdAt: Date.now(),
       updatedAt: Date.now(),
       recursionDepth: 1,
       chainOfThought: [
-        `[turn 1 · cot] Ingesting intent: "${title}"`,
+        `[turn 1 · cot] Ingesting intent: "${title}" by ${activeUser.name}`,
         `[turn 1 · recurse] Initializing AST mapping in workspace: ${activeWorkspace?.name}`,
       ],
     };
@@ -448,7 +481,7 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
-        {/* Top Header: Frameless Draggable Petri Bar with Nav & Workspace Switcher */}
+        {/* Top Header: Frameless Draggable Petri Bar with Nav, User Switcher, & Workspace */}
         <NodeMeshStatus
           localNode={localNode}
           peers={peers}
@@ -457,6 +490,8 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
           onOpenDwdModal={() => setIsDwdModalOpen(true)}
           activeWorkspace={activeWorkspace}
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+          activeUser={activeUser}
+          onOpenUserModal={() => setIsUserModalOpen(true)}
           currentView={currentView}
           onSelectView={setCurrentView}
         />
@@ -498,7 +533,24 @@ test result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
             <MemoryExplorer activeWorkspace={activeWorkspace} />
           </div>
         )}
+
+        {/* View 4: Enterprise Telemetry & Cognitive Stats */}
+        {currentView === 'stats' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <EnterpriseStats activeWorkspace={activeWorkspace} activeUser={activeUser} />
+          </div>
+        )}
       </div>
+
+      {/* User Switcher & Identity Modal */}
+      <UserProfileModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        users={users}
+        activeUserId={activeUserId}
+        onSelectUser={(id) => setActiveUserId(id)}
+        onAddUser={(newUser) => setUsers((prev) => [...prev, newUser])}
+      />
 
       {/* Workspace Switcher Modal */}
       <WorkspaceModal

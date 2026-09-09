@@ -190,3 +190,35 @@ export interface MemoryEntry {
   importance: 'critical' | 'high' | 'medium' | 'low';
   metadata?: Record<string, unknown>;
 }
+
+export type UserRole = 'owner' | 'lead_architect' | 'senior_dev' | 'security_auditor' | 'viewer';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: UserRole;
+  organization: string;
+  canApproveGates: boolean;
+  canDeploy: boolean;
+  canEditRules: boolean;
+}
+
+export interface EnterpriseStats {
+  mttmMinutes: number;
+  gateApprovalTimeMinutes: number;
+  autonomousDeliveryRate: number;
+  totalMergedPRs: number;
+  activeWorkers: number;
+  gpuVramUsedGb: number;
+  gpuVramTotalGb: number;
+  gpuDutyCyclePercent: number;
+  gpuTempCelsius: number;
+  totalTokensMonth: number;
+  cacheHitRatio: number;
+  costSavingsEstimatedUsd: number;
+  selfLearningRulesLearned: number;
+  selfLearningConfidence: number;
+  invariantPassRate: number;
+}
