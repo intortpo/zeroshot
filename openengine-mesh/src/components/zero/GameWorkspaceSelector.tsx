@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   Plus,
-  Gamepad2,
   Sparkles,
   Layers,
   Send,
   X,
+  Play,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { GameWorkspace } from '../../types';
 
@@ -15,6 +17,9 @@ interface GameWorkspaceSelectorProps {
   onSelectWorkspace: (id: string) => void;
   onCreateWorkspace: (workspace: Partial<GameWorkspace>) => void;
   onPublishCurrent: (id: string) => void;
+  onPlayWorkspace?: (workspace: GameWorkspace) => void;
+  onEditWorkspace?: (workspace: GameWorkspace) => void;
+  onDeleteWorkspace?: (id: string) => void;
 }
 
 export const GameWorkspaceSelector: React.FC<GameWorkspaceSelectorProps> = ({
@@ -23,6 +28,9 @@ export const GameWorkspaceSelector: React.FC<GameWorkspaceSelectorProps> = ({
   onSelectWorkspace,
   onCreateWorkspace,
   onPublishCurrent,
+  onPlayWorkspace,
+  onEditWorkspace,
+  onDeleteWorkspace,
 }) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -103,17 +111,41 @@ export const GameWorkspaceSelector: React.FC<GameWorkspaceSelectorProps> = ({
         </div>
 
         {/* Workspace Quick Actions */}
-        <div className="flex items-center space-x-2.5">
-          <div className="hidden lg:flex items-center space-x-2 text-xs text-stone-500 font-sans">
-            <span className="flex items-center space-x-1">
-              <Gamepad2 className="w-3.5 h-3.5 text-stone-400" />
-              <span>Bevy {active?.bevyVersion || '0.15'}</span>
-            </span>
-            <span>·</span>
-            <span className="text-stone-700 font-medium">
-              {active?.dimension === '2d' ? 'avian2d' : 'avian3d'} {active?.avianVersion || '0.2'}
-            </span>
-          </div>
+        <div className="flex items-center space-x-2">
+          {onPlayWorkspace && active && (
+            <button
+              type="button"
+              onClick={() => onPlayWorkspace(active)}
+              className="subtle-depth-interactive flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold font-sans bg-stone-900 hover:bg-black text-white shadow-sm border border-stone-900 transition-all"
+              title="Play this game immediately"
+            >
+              <Play className="w-3.5 h-3.5 text-[#0ABAB5] fill-[#0ABAB5]" />
+              <span>Play Game</span>
+            </button>
+          )}
+
+          {onEditWorkspace && active && (
+            <button
+              type="button"
+              onClick={() => onEditWorkspace(active)}
+              className="subtle-depth-interactive flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-medium font-sans text-stone-700 hover:text-stone-950 bg-white/90 hover:bg-white border border-stone-200/90 hover:border-stone-400 transition-all"
+              title="Edit game parameters, physics, and loop"
+            >
+              <Pencil className="w-3.5 h-3.5 text-stone-500" />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
+          )}
+
+          {onDeleteWorkspace && active && (
+            <button
+              type="button"
+              onClick={() => onDeleteWorkspace(active.id)}
+              className="subtle-depth-interactive flex items-center space-x-1 px-2.5 py-2 rounded-xl text-xs font-medium font-sans text-stone-500 hover:text-rose-600 hover:bg-rose-50 border border-stone-200/90 hover:border-rose-200 transition-all"
+              title="Delete this game workspace"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           <button
             type="button"
@@ -122,11 +154,11 @@ export const GameWorkspaceSelector: React.FC<GameWorkspaceSelectorProps> = ({
             className={`subtle-depth-interactive flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-medium font-sans border transition-all ${
               active?.status === 'published'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 opacity-90'
-                : 'bg-stone-900 text-white hover:bg-stone-800 border-stone-900'
+                : 'bg-white/90 text-stone-700 hover:text-stone-900 border-stone-200 hover:border-stone-400'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-[#0ABAB5]" />
-            <span>{active?.status === 'published' ? 'Published' : 'Publish Game'}</span>
+            <span>{active?.status === 'published' ? 'Published' : 'Publish'}</span>
           </button>
         </div>
       </div>

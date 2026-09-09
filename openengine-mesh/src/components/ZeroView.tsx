@@ -14,6 +14,8 @@ import { BevyCodeInspector } from './zero/BevyCodeInspector';
 import { LightyearNetPanel } from './zero/LightyearNetPanel';
 import { PublishedGamesCatalog } from './zero/PublishedGamesCatalog';
 import { MultiplayerLobbyModal } from './zero/MultiplayerLobbyModal';
+import { EditGameModal } from './zero/EditGameModal';
+import { ActiveGameTheater } from './zero/ActiveGameTheater';
 
 interface ZeroViewProps {
   activeWorkspace?: Workspace;
@@ -36,6 +38,16 @@ export const ZeroView: React.FC<ZeroViewProps> = ({
   // Active Lobby Modal state
   const [activeLobby, setActiveLobby] = useState<MultiplayerLobby | null>(null);
   const [isLobbyOpen, setIsLobbyOpen] = useState(false);
+
+  // Active interactive play session (fullscreen / dedicated theater match)
+  const [activePlaySession, setActivePlaySession] = useState<{
+    gameId: string;
+    lobby?: MultiplayerLobby | null;
+  } | null>(null);
+
+  // Edit Game Workspace modal state
+  const [editingGame, setEditingGame] = useState<GameWorkspace | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
 
   // Initial Game Workspaces with distinct Avian physics settings and Bevy systems
   const [gameWorkspaces, setGameWorkspaces] = useState<GameWorkspace[]>([
@@ -1429,12 +1441,81 @@ fn main() {
     setIsLobbyOpen(true);
   };
 
+  const handlePlayGame = (game: GameWorkspace, lobby?: MultiplayerLobby) => {
+    setActiveWorkspaceId(game.id);
+    setActivePlaySession({ gameId: game.id, lobby: lobby || null });
+    onDispatchIntent?.(`Launch interactive game session: ${game.title}${lobby ? ` (${lobby.roomCode})` : ''}`, 'feat');
+  };
+
   const handleStartMatch = (lobby: MultiplayerLobby) => {
     setIsLobbyOpen(false);
-    setActiveSubTab('studio');
-    setStudioRightPane('preview');
-    // Dispatch notice or action
-    onDispatchIntent?.(`Launch multiplayer game match: ${lobby.gameTitle} (${lobby.roomCode})`, 'feat');
+    setActiveWorkspaceId(lobby.gameId);
+    const targetGame = gameWorkspaces.find((w) => w.id === lobby.gameId) || activeGame;
+    handlePlayGame(targetGame, lobby);
+  };
+
+  const handleOpenEdit = (game: GameWorkspace) => {
+    setEditingGame(game);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveWorkspace = (gameId: string, updates: Partial<GameWorkspace>) => {
+    setGameWorkspaces((prev) =>
+      prev.map((g) => (g.id === gameId ? { ...g, ...updates } : g))
+    );
+  };
+
+  const handleDeleteWorkspace = (gameId: string) => {
+    setGameWorkspaces((prev) => {
+      const remaining = prev.filter((g) => g.id !== gameId);
+      if (remaining.length === 0) {
+        const fallback: GameWorkspace = {
+          id: 'arcade-sandbox',
+          title: 'Arcade Physics Sandbox',
+          tagline: 'Custom Bevy 0.15 & Avian physics game',
+          dimension: '2d',
+          bevyVersion: '0.15',
+          avianVersion: '0.2',
+          status: 'drafting',
+          playCount: 0,
+          likes: 0,
+          thumbnailColor: '#0ABAB5',
+          physicsConfig: {
+            gravity: 9.81,
+            restitution: 0.8,
+            friction: 0.2,
+            linearDamping: 0.05,
+            substeps: 8,
+          },
+          gameLoop: {
+            modeName: 'Sandbox Battle',
+            cameraPerspective: '2d_topdown',
+            primaryInput: 'Keyboard & Mouse',
+            objective: 'Survive and knock opponents out',
+            scoringRule: 'Standard points',
+            failCondition: 'Health reaches 0',
+          },
+          bevyCode: `//! Bevy 0.15 + Avian2d Game\nuse bevy::prelude::*;\nuse avian2d::prelude::*;\n\nfn main() {\n    App::new().add_plugins((DefaultPlugins, PhysicsPlugins::default())).run();\n}`,
+          chatHistory: [
+            {
+              id: `m-init-${Date.now()}`,
+              sender: 'designer',
+              text: 'Created fresh arcade workspace. What mechanics would you like to build?',
+              timestamp: Date.now(),
+            },
+          ],
+        };
+        setActiveWorkspaceId(fallback.id);
+        return [fallback];
+      }
+      if (activeWorkspaceId === gameId) {
+        setActiveWorkspaceId(remaining[0].id);
+      }
+      return remaining;
+    });
+    if (activePlaySession?.gameId === gameId) {
+      setActivePlaySession(null);
+    }
   };
 
   return (
@@ -1498,149 +1579,179 @@ fn main() {
           </div>
 
           {/* Sub-Tab 1: Game Workspace Strip */}
-          {activeSubTab === 'studio' && (
+          {activeSubTab === 'studio' && !activePlaySession && (
             <GameWorkspaceSelector
               workspaces={gameWorkspaces}
               activeWorkspaceId={activeWorkspaceId}
               onSelectWorkspace={setActiveWorkspaceId}
               onCreateWorkspace={handleCreateWorkspace}
               onPublishCurrent={handlePublishCurrent}
+              onPlayWorkspace={(game) => handlePlayGame(game)}
+              onEditWorkspace={handleOpenEdit}
+              onDeleteWorkspace={handleDeleteWorkspace}
             />
           )}
         </div>
 
-        {/* View Content based on Sub-Tab */}
-        {activeSubTab === 'studio' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Left Column: Conversational Game Designer & Interactive Questions */}
-            <div className="lg:col-span-6 h-[640px] flex flex-col">
-              <ConversationalGameDesigner
-                chatHistory={activeGame.chatHistory}
-                pendingQuestion={activeGame.pendingQuestion}
-                onAnswerQuestion={handleAnswerQuestion}
-                onSendMessage={handleSendMessage}
-                onResetInterview={handleResetInterview}
-              />
-            </div>
-
-            {/* Right Column: Interactive Avian Physics Canvas OR Bevy Code Inspector */}
-            <div className="lg:col-span-6 h-[640px] flex flex-col space-y-3">
-              {/* Right Pane View Mode Switcher */}
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center space-x-1.5 p-1 rounded-xl bg-stone-100/70 border border-stone-200/80">
-                  <button
-                    type="button"
-                    onClick={() => setStudioRightPane('preview')}
-                    className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      studioRightPane === 'preview'
-                        ? 'bg-stone-900 text-white shadow-sm'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    Live Physics Canvas
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStudioRightPane('code')}
-                    className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      studioRightPane === 'code'
-                        ? 'bg-stone-900 text-white shadow-sm'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    Bevy ECS Code
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStudioRightPane('netcode')}
-                    className={`subtle-depth-interactive flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      studioRightPane === 'netcode'
-                        ? 'bg-stone-900 text-white shadow-sm'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    <Radio className="w-3.5 h-3.5 text-[#FF5F1F]" />
-                    <span>Lightyear Netcode</span>
-                  </button>
+        {/* View Content based on Sub-Tab OR Dedicated Play Mode Theater */}
+        {activePlaySession ? (
+          <ActiveGameTheater
+            game={gameWorkspaces.find((g) => g.id === activePlaySession.gameId) || activeGame}
+            lobby={activePlaySession.lobby}
+            onExit={() => setActivePlaySession(null)}
+            onOpenInspector={() => {
+              setActivePlaySession(null);
+              setActiveSubTab('studio');
+              setStudioRightPane('code');
+            }}
+          />
+        ) : (
+          <>
+            {activeSubTab === 'studio' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                {/* Left Column: Conversational Game Designer & Interactive Questions */}
+                <div className="lg:col-span-6 h-[640px] flex flex-col">
+                  <ConversationalGameDesigner
+                    chatHistory={activeGame.chatHistory}
+                    pendingQuestion={activeGame.pendingQuestion}
+                    onAnswerQuestion={handleAnswerQuestion}
+                    onSendMessage={handleSendMessage}
+                    onResetInterview={handleResetInterview}
+                  />
                 </div>
 
-                <span className="text-[11px] text-stone-500 font-sans">
-                  {studioRightPane === 'preview'
-                    ? '60Hz Avian Simulation'
-                    : studioRightPane === 'code'
-                    ? 'Idiomatic Rust Systems'
-                    : 'Lightyear 0.29 Netcode & Rollback'}
-                </span>
-              </div>
+                {/* Right Column: Interactive Avian Physics Canvas OR Bevy Code Inspector */}
+                <div className="lg:col-span-6 h-[640px] flex flex-col space-y-3">
+                  {/* Right Pane View Mode Switcher */}
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center space-x-1.5 p-1 rounded-xl bg-stone-100/70 border border-stone-200/80">
+                      <button
+                        type="button"
+                        onClick={() => setStudioRightPane('preview')}
+                        className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          studioRightPane === 'preview'
+                            ? 'bg-stone-900 text-white shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        Live Physics Canvas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStudioRightPane('code')}
+                        className={`subtle-depth-interactive px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          studioRightPane === 'code'
+                            ? 'bg-stone-900 text-white shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        Bevy ECS Code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStudioRightPane('netcode')}
+                        className={`subtle-depth-interactive flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          studioRightPane === 'netcode'
+                            ? 'bg-stone-900 text-white shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        <Radio className="w-3.5 h-3.5 text-[#FF5F1F]" />
+                        <span>Lightyear Netcode</span>
+                      </button>
+                    </div>
 
-              <div className="flex-1 overflow-hidden">
-                {studioRightPane === 'preview' ? (
-                  activeGame.id === 'stumble-blobs-3d' ? (
-                    <StumbleBlobsCanvas
-                      gameTitle={activeGame.title}
-                      physicsConfig={activeGame.physicsConfig}
-                    />
-                  ) : activeGame.id === 'jumpy' ? (
-                    <JumpyFishCanvas
-                      gameTitle={activeGame.title}
-                      physicsConfig={activeGame.physicsConfig}
-                    />
-                  ) : activeGame.dimension === '3d' ? (
-                    <StumbleBlobsCanvas
-                      gameTitle={activeGame.title}
-                      physicsConfig={activeGame.physicsConfig}
-                    />
-                  ) : (
-                    <AvianPhysicsCanvas
-                      gameTitle={activeGame.title}
-                      physicsConfig={activeGame.physicsConfig}
-                    />
-                  )
-                ) : studioRightPane === 'code' ? (
-                  <BevyCodeInspector
-                    gameTitle={activeGame.title}
-                    dimension={activeGame.dimension}
-                    bevyCode={activeGame.bevyCode}
-                    bevyVersion={activeGame.bevyVersion}
-                    avianVersion={activeGame.avianVersion}
-                  />
-                ) : (
-                  <LightyearNetPanel
-                    config={
-                      activeGame.lightyearConfig || {
-                        transport: 'webtransport',
-                        predictionMode: 'full_rollback',
-                        serverTickRate: 60,
-                        clientTickRate: 60,
-                        packetLossSimPercent: 0,
-                        latencySimMs: 24,
-                        enableAvianRollback: true,
-                        interestManagement: true,
-                      }
-                    }
-                    onUpdateConfig={handleUpdateLightyearConfig}
-                    showGhostEntity={showGhostEntity}
-                    onToggleGhostEntity={setShowGhostEntity}
-                  />
-                )}
+                    <span className="text-[11px] text-stone-500 font-sans">
+                      {studioRightPane === 'preview'
+                        ? '60Hz Avian Simulation'
+                        : studioRightPane === 'code'
+                        ? 'Idiomatic Rust Systems'
+                        : 'Lightyear 0.29 Netcode & Rollback'}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden">
+                    {studioRightPane === 'preview' ? (
+                      activeGame.id === 'stumble-blobs-3d' ? (
+                        <StumbleBlobsCanvas
+                          gameTitle={activeGame.title}
+                          physicsConfig={activeGame.physicsConfig}
+                        />
+                      ) : activeGame.id === 'jumpy' ? (
+                        <JumpyFishCanvas
+                          gameTitle={activeGame.title}
+                          physicsConfig={activeGame.physicsConfig}
+                        />
+                      ) : activeGame.dimension === '3d' ? (
+                        <StumbleBlobsCanvas
+                          gameTitle={activeGame.title}
+                          physicsConfig={activeGame.physicsConfig}
+                        />
+                      ) : (
+                        <AvianPhysicsCanvas
+                          gameTitle={activeGame.title}
+                          physicsConfig={activeGame.physicsConfig}
+                        />
+                      )
+                    ) : studioRightPane === 'code' ? (
+                      <BevyCodeInspector
+                        gameTitle={activeGame.title}
+                        dimension={activeGame.dimension}
+                        bevyCode={activeGame.bevyCode}
+                        bevyVersion={activeGame.bevyVersion}
+                        avianVersion={activeGame.avianVersion}
+                      />
+                    ) : (
+                      <LightyearNetPanel
+                        config={
+                          activeGame.lightyearConfig || {
+                            transport: 'webtransport',
+                            predictionMode: 'full_rollback',
+                            serverTickRate: 60,
+                            clientTickRate: 60,
+                            packetLossSimPercent: 0,
+                            latencySimMs: 24,
+                            enableAvianRollback: true,
+                            interestManagement: true,
+                          }
+                        }
+                        onUpdateConfig={handleUpdateLightyearConfig}
+                        showGhostEntity={showGhostEntity}
+                        onToggleGhostEntity={setShowGhostEntity}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+
+            {/* Sub-Tab 2: Published Games Catalog & Multiplayer Lobbies */}
+            {activeSubTab === 'published' && (
+              <div className="subtle-depth rounded-2xl p-6 sm:p-8">
+                <PublishedGamesCatalog
+                  games={gameWorkspaces}
+                  onPlayGame={(game) => handlePlayGame(game)}
+                  onLaunchLobby={handleLaunchLobby}
+                  onSelectStudioGame={(gameId) => {
+                    setActiveWorkspaceId(gameId);
+                    setActiveSubTab('studio');
+                  }}
+                  onEditGame={handleOpenEdit}
+                  onDeleteGame={handleDeleteWorkspace}
+                />
+              </div>
+            )}
+          </>
         )}
 
-        {/* Sub-Tab 2: Published Games Catalog & Multiplayer Lobbies */}
-        {activeSubTab === 'published' && (
-          <div className="subtle-depth rounded-2xl p-6 sm:p-8">
-            <PublishedGamesCatalog
-              games={gameWorkspaces}
-              onLaunchLobby={handleLaunchLobby}
-              onSelectStudioGame={(gameId) => {
-                setActiveWorkspaceId(gameId);
-                setActiveSubTab('studio');
-              }}
-            />
-          </div>
-        )}
+        {/* Edit Game Modal */}
+        <EditGameModal
+          game={editingGame}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveWorkspace}
+          onDelete={handleDeleteWorkspace}
+        />
 
         {/* Multiplayer Lobby Modal with Scannable QR Code */}
         <MultiplayerLobbyModal
