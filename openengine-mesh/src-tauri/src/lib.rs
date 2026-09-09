@@ -23,5 +23,5 @@ pub fn run() {
             dispatch_workspace_use_case,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running openengine mesh application");
+        .expect("error while running petri application");
 }

@@ -86,7 +86,7 @@ export const GoogleWorkspaceDwdModal: React.FC<GoogleWorkspaceDwdModalProps> = (
       icon: <Search className="w-4 h-4 text-[#e5e5e5]" />,
       desc: 'Conduct deep research, gather information, and generate insights from multiple sources automatically',
       workspaceTarget: 'Google Docs & Drive Synthesis Brief',
-      defaultPrompt: 'Conduct deep research on multi-agent mesh orchestration patterns and synthesize findings into Google Docs.',
+      defaultPrompt: 'Conduct deep research on multi-agent petri orchestration patterns and synthesize findings into Google Docs.',
     },
     {
       id: 'code',
@@ -102,7 +102,7 @@ export const GoogleWorkspaceDwdModal: React.FC<GoogleWorkspaceDwdModalProps> = (
       icon: <PenTool className="w-4 h-4 text-[#e5e5e5]" />,
       desc: 'Generate blog posts, documentation, marketing copy, and technical writing with multi-agent teams',
       workspaceTarget: 'Google Docs Collaborative Publisher',
-      defaultPrompt: 'Draft technical architecture release post for distributed Tauri v2 mesh app and export to Google Docs.',
+      defaultPrompt: 'Draft technical architecture release post for distributed Tauri v2 petri app and export to Google Docs.',
     },
     {
       id: 'data_pipelines',
@@ -194,7 +194,7 @@ export const GoogleWorkspaceDwdModal: React.FC<GoogleWorkspaceDwdModalProps> = (
           {activeTab === 'use_cases' ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-[#737373] font-mono">
-                <span>Select a use case to dispatch into the mesh:</span>
+                <span>Select a use case to dispatch into petri:</span>
                 <span>Active DWD User: {status.delegated_user || delegatedEmail}</span>
               </div>
 
@@ -288,7 +288,7 @@ export const GoogleWorkspaceDwdModal: React.FC<GoogleWorkspaceDwdModalProps> = (
                 <textarea
                   value={jsonInput}
                   onChange={(e) => setJsonInput(e.target.value)}
-                  placeholder={`{\n  "type": "service_account",\n  "project_id": "your-gcp-project",\n  "private_key_id": "...",\n  "private_key": "-----BEGIN PRIVATE KEY-----\\n...",\n  "client_email": "mesh-sa@project.iam.gserviceaccount.com"\n}`}
+                  placeholder={`{\n  "type": "service_account",\n  "project_id": "your-gcp-project",\n  "private_key_id": "...",\n  "private_key": "-----BEGIN PRIVATE KEY-----\\n...",\n  "client_email": "petri-sa@project.iam.gserviceaccount.com"\n}`}
                   rows={7}
                   className="w-full bg-[#080808] border border-[#1c1c1c] rounded-lg p-3 text-xs font-mono text-[#e0e0e0] placeholder-[#404040] focus:outline-none focus:border-[#333333] transition-colors"
                 />

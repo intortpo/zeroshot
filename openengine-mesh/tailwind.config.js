@@ -4,11 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        petri: {
+          dark: '#070707',
+          card: '#0a0a0a',
+          border: '#1c1c1c',
+          accent: '#8e8e8e',
+          success: '#238636',
+          warning: '#d29922',
+          danger: '#da3633',
+        },
         mesh: {
-          dark: '#0d1117',
-          card: '#161b22',
-          border: '#30363d',
-          accent: '#58a6ff',
+          dark: '#070707',
+          card: '#0a0a0a',
+          border: '#1c1c1c',
+          accent: '#8e8e8e',
           success: '#238636',
           warning: '#d29922',
           danger: '#da3633',

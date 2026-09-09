@@ -47,11 +47,11 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-mesh-card border border-mesh-border rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-gray-200">
+      <div className="bg-[#0b0b0b] border border-[#222] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-gray-200">
         {/* Header */}
-        <div className="p-4 border-b border-mesh-border flex items-center justify-between bg-gray-900/60">
+        <div className="p-4 border-b border-[#1c1c1c] flex items-center justify-between bg-[#0e0e0e]">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            <div className="p-2 rounded-lg bg-[#1a1a1a] text-[#f5f5f5] border border-[#262626]">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
@@ -79,12 +79,12 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center space-x-2 border-b border-mesh-border px-4 py-2 bg-gray-900/40 text-xs">
+        <div className="flex items-center space-x-2 border-b border-[#1c1c1c] px-4 py-2 bg-[#0a0a0a] text-xs">
           <button
             onClick={() => setActiveTab('diff')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md font-medium transition-colors ${
               activeTab === 'diff'
-                ? 'bg-mesh-border text-white'
+                ? 'bg-[#1c1c1c] text-white border border-[#2e2e2e]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -95,7 +95,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
             onClick={() => setActiveTab('logs')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md font-medium transition-colors ${
               activeTab === 'logs'
-                ? 'bg-mesh-border text-white'
+                ? 'bg-[#1c1c1c] text-white border border-[#2e2e2e]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -105,7 +105,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-auto p-4 font-mono text-xs bg-mesh-dark">
+        <div className="flex-1 overflow-auto p-4 font-mono text-xs bg-[#070707]">
           {activeTab === 'diff' ? (
             <pre className="whitespace-pre-wrap text-gray-300 select-text leading-relaxed">
               {request.diff || 'No diff content available.'}
@@ -135,7 +135,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         )}
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-mesh-border flex items-center justify-between bg-gray-900/80">
+        <div className="p-4 border-t border-[#1c1c1c] flex items-center justify-between bg-[#0a0a0a]">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"

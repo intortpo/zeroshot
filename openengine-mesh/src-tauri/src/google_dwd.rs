@@ -276,7 +276,7 @@ pub async fn dispatch_workspace_use_case(
                 WorkspaceArtifact {
                     artifact_type: "Google Drive".to_string(),
                     title: "Executive Synthesis & Citations Archive".to_string(),
-                    uri_or_id: "drive.google.com/drive/folders/openengine_research".to_string(),
+                    uri_or_id: "drive.google.com/drive/folders/petri_research".to_string(),
                     status: "synced".to_string(),
                 },
             ],
@@ -293,8 +293,8 @@ pub async fn dispatch_workspace_use_case(
             workspace_artifacts: vec![
                 WorkspaceArtifact {
                     artifact_type: "Git Commit & Branch".to_string(),
-                    title: "feat(mesh): candidate implementation".to_string(),
-                    uri_or_id: "refs/heads/candidate-mesh-dwd".to_string(),
+                    title: "feat(petri): candidate implementation".to_string(),
+                    uri_or_id: "refs/heads/candidate-petri-dwd".to_string(),
                     status: "gated_for_signoff".to_string(),
                 },
             ],
@@ -330,7 +330,7 @@ pub async fn dispatch_workspace_use_case(
                 WorkspaceArtifact {
                     artifact_type: "Google Sheets".to_string(),
                     title: "Telemetry & Pipeline Data Extraction".to_string(),
-                    uri_or_id: "docs.google.com/spreadsheets/d/openengine_feed".to_string(),
+                    uri_or_id: "docs.google.com/spreadsheets/d/petri_feed".to_string(),
                     status: "synced".to_string(),
                 },
             ],

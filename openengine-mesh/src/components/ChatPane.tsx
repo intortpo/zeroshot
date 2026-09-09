@@ -29,7 +29,7 @@ export const ChatPane: React.FC<ChatPaneProps> = ({
       id: 'research',
       name: 'Research',
       icon: <Search className="w-3 h-3 text-[#a3a3a3]" />,
-      prompt: 'Conduct deep research on multi-agent mesh orchestration and compile findings in Google Docs.',
+      prompt: 'Conduct deep research on multi-agent petri orchestration and compile findings in Google Docs.',
     },
     {
       id: 'code',
@@ -41,7 +41,7 @@ export const ChatPane: React.FC<ChatPaneProps> = ({
       id: 'content',
       name: 'Content',
       icon: <PenTool className="w-3 h-3 text-[#a3a3a3]" />,
-      prompt: 'Generate technical documentation and release post for distributed Tauri mesh architecture.',
+      prompt: 'Generate technical documentation and release post for distributed Tauri petri architecture.',
     },
     {
       id: 'data_pipelines',
@@ -133,7 +133,7 @@ export const ChatPane: React.FC<ChatPaneProps> = ({
 
         {runs.length === 0 ? (
           <div className="text-center py-8 text-xs text-[#525252] font-mono">
-            No active runs on mesh. Pick a use case or submit a goal below.
+            No active runs on petri. Pick a use case or submit a goal below.
           </div>
         ) : (
           runs.map((run) => {
