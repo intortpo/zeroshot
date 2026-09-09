@@ -151,6 +151,7 @@ with `npm i -g @the-open-engine-company/zeroshot` or build `zeroshot` with Cargo
 - Preserve bounded values, explicit overflow, cancellation safety, and exact source provenance at
   every public boundary.
 - Add focused tests beside the owning crate/module.
+- Commit often with focused Conventional Commit messages as each logical increment or bug fix is verified.
 - Update this file whenever architecture, ownership, release identity, or conventions change.
 
 ## Validation
