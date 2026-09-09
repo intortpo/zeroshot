@@ -64,18 +64,18 @@ const CognitiveNode: React.FC<{
           </div>
           <div>
             <div className="text-xs font-semibold text-[#f5f5f5] tracking-tight">{data.title}</div>
-            <div className="text-[9px] text-[#737373] font-mono">{data.subtitle}</div>
+            <div className="text-[9px] text-[#737373] font-sans">{data.subtitle}</div>
           </div>
         </div>
 
         {data.badge && (
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#171717] text-[#a3a3a3] border border-[#262626]">
+          <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-[#171717] text-[#a3a3a3] border border-[#262626]">
             {data.badge}
           </span>
         )}
       </div>
 
-      <ul className="space-y-0.5 mt-2 pt-2 border-t border-[#171717] text-[10px] font-mono text-[#737373]">
+      <ul className="space-y-0.5 mt-2 pt-2 border-t border-[#171717] text-[10px] font-sans text-[#737373]">
         {data.items.map((item, idx) => (
           <li key={idx} className="flex items-center space-x-1.5">
             <span className="w-1 h-1 rounded-full bg-[#525252]" />
@@ -282,7 +282,7 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
       {/* Pillars of Continuous Intelligence Bottom Drawer */}
       <div className="border-t border-[#1c1c1c] bg-[#090909]/95 backdrop-blur-md p-3.5 z-20 transition-all">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2 text-xs font-mono text-[#f5f5f5]">
+          <div className="flex items-center space-x-2 text-xs font-sans text-[#f5f5f5]">
             <Brain className="w-3.5 h-3.5 text-[#8e8e8e]" />
             <span className="font-semibold">The Cognitive Core Architecture</span>
             <span className="text-[#525252]">·</span>
@@ -291,7 +291,7 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
 
           <button
             onClick={() => setShowPillarDetails(!showPillarDetails)}
-            className="text-[11px] font-mono text-[#737373] hover:text-[#f5f5f5] flex items-center space-x-1 transition-colors"
+            className="text-[11px] font-sans text-[#737373] hover:text-[#f5f5f5] flex items-center space-x-1 transition-colors"
           >
             <span>{showPillarDetails ? 'Collapse Insights' : 'Expand Insights'}</span>
             {showPillarDetails ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
@@ -309,7 +309,7 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
                   : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
               }`}
             >
-              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-sans text-[11px]">
                 <Cpu className="w-3 h-3 text-[#a3a3a3]" />
                 <span>Shadow Graph Execution</span>
               </div>
@@ -327,7 +327,7 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
                   : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
               }`}
             >
-              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-sans text-[11px]">
                 <Zap className="w-3 h-3 text-[#a3a3a3]" />
                 <span>The Attention Arbitrator</span>
               </div>
@@ -345,7 +345,7 @@ export const VisualGraph: React.FC<VisualGraphProps> = ({
                   : 'border-[#171717] bg-[#0c0c0c] hover:border-[#222]'
               }`}
             >
-              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-mono text-[11px]">
+              <div className="flex items-center space-x-1.5 font-medium text-[#f5f5f5] mb-1 font-sans text-[11px]">
                 <Moon className="w-3 h-3 text-[#a3a3a3]" />
                 <span>Memory & Sleep Cycles</span>
               </div>

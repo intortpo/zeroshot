@@ -58,7 +58,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
               <h2 className="text-base font-semibold text-stone-900">
                 Gated Signoff: Run #{request.runId.slice(0, 8)}
               </h2>
-              <p className="text-xs text-stone-500 font-mono mt-0.5">
+              <p className="text-xs text-stone-500 font-sans mt-0.5">
                 Target Repo: <span className="text-stone-800 font-medium">{request.repoPath}</span>
               </p>
             </div>

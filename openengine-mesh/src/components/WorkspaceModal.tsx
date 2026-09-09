@@ -61,7 +61,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               <h2 className="text-sm font-semibold tracking-tight text-stone-900">
                 Switch Workspace
               </h2>
-              <p className="text-xs text-stone-400 font-mono mt-0.5">
+              <p className="text-xs text-stone-400 font-sans mt-0.5">
                 Isolate repositories, agent memory, and kanban boards
               </p>
             </div>
@@ -116,7 +116,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-xs font-mono text-stone-500 mt-0.5">
+                          <div className="text-xs font-sans text-stone-500 mt-0.5">
                             {ws.repo} · {ws.path}
                           </div>
                         </div>
@@ -140,7 +140,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               {/* Add New Workspace Action */}
               <button
                 onClick={() => setIsCreating(true)}
-                className="w-full py-3 rounded-xl border border-dashed border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-xs font-mono text-stone-600 hover:text-stone-900 transition-all flex items-center justify-center space-x-2"
+                className="w-full py-3 rounded-xl border border-dashed border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-xs font-sans text-stone-600 hover:text-stone-900 transition-all flex items-center justify-center space-x-2 font-medium"
               >
                 <Plus className="w-4 h-4" />
                 <span>Initialize New Workspace</span>
@@ -155,7 +155,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Zeroshot Core, Motion Graph, Mobile App"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-400"
                 />
               </div>
 
@@ -165,7 +165,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   value={repo}
                   onChange={(e) => setRepo(e.target.value)}
                   placeholder="e.g. foxlight/zero-petri"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-400"
                 />
               </div>
 
@@ -179,7 +179,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     value={path}
                     onChange={(e) => setPath(e.target.value)}
                     placeholder="/home/hideo/Documents/GitHub/zero-petri"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-400"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-400"
                   />
                 </div>
               </div>

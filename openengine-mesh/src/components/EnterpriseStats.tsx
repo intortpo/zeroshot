@@ -106,7 +106,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-5">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
+          <div className="flex items-center space-x-2 text-xs text-stone-500 mb-1">
             <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
             <span className="uppercase tracking-wider">Runtime Telemetry</span>
           </div>
@@ -135,10 +135,10 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             <span>MERGED COMMITS</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-sans tracking-tight">
             {mergedCount}
           </div>
-          <div className="text-xs text-stone-400 font-mono">
+          <div className="text-xs text-stone-400 font-sans">
             main
           </div>
         </div>
@@ -149,10 +149,10 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             <span>IN-FLIGHT</span>
             <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-pulse" />
           </div>
-          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-sans tracking-tight">
             {inFlightCount}
           </div>
-          <div className="text-xs text-stone-400 font-mono">
+          <div className="text-xs text-stone-400 font-sans">
             active
           </div>
         </div>
@@ -163,10 +163,10 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             <span>GATED</span>
             <span className="w-2 h-2 rounded-full bg-[#FF5F1F]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-sans tracking-tight">
             {gatedCount}
           </div>
-          <div className="text-xs text-stone-400 font-mono">
+          <div className="text-xs text-stone-400 font-sans">
             signoff required
           </div>
         </div>
@@ -177,10 +177,10 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             <span>TOTAL TASKS</span>
             <GitCommit className="w-4 h-4 text-stone-400" />
           </div>
-          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-semibold text-stone-900 font-sans tracking-tight">
             {totalTasks}
           </div>
-          <div className="text-xs text-stone-400 font-mono">
+          <div className="text-xs text-stone-400 font-sans">
             {backlogCount} backlog
           </div>
         </div>
@@ -195,7 +195,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
               <Cpu className="w-4 h-4 text-stone-700" />
               <h3 className="text-sm font-semibold text-stone-900">Host Hardware & Environment</h3>
             </div>
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200">
+            <span className="text-xs font-sans px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200">
               verified
             </span>
           </div>
@@ -203,25 +203,25 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
           <div className="space-y-2.5 text-xs font-sans">
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Host Name</span>
-              <span className="font-mono text-stone-800 font-medium">po</span>
+              <span className="font-sans text-stone-800 font-medium">po</span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Operating System</span>
-              <span className="font-mono text-stone-700">Linux 7.1.9-arch1-2 (x86_64)</span>
+              <span className="font-sans text-stone-700">Linux 7.1.9-arch1-2 (x86_64)</span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Active Workspace</span>
-              <span className="font-mono text-stone-700">{activeWorkspace?.name || 'zero-petri'}</span>
+              <span className="font-sans text-stone-700">{activeWorkspace?.name || 'zero-petri'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Repository Path</span>
-              <span className="font-mono text-stone-700 truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
+              <span className="font-sans text-stone-700 truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
                 .../GitHub/zero-petri
               </span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Execution Hardware</span>
-              <span className="font-mono text-stone-700">{localNode?.deviceName || 'Generic Linux Client'}</span>
+              <span className="font-sans text-stone-700">{localNode?.deviceName || 'Generic Linux Client'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-stone-100">
               <span className="text-stone-500">Active Operator</span>
@@ -229,7 +229,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
             </div>
             <div className="flex justify-between py-1">
               <span className="text-stone-500">Git Remote</span>
-              <span className="font-mono text-stone-700">github.com:foxlight/zero-petri</span>
+              <span className="font-sans text-stone-700">github.com:foxlight/zero-petri</span>
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
                 Architectural Invariants & Heuristics ({rules.length})
               </h3>
             </div>
-            <span className="text-xs font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
+            <span className="text-xs font-sans text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
               active
             </span>
           </div>
@@ -273,7 +273,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
               >
                 <div className="flex items-center justify-between text-xs font-sans mb-1">
                   <span className="text-stone-800 font-medium">{rule.category}</span>
-                  <span className="text-stone-400 font-mono">{rule.source}</span>
+                  <span className="text-stone-400 font-sans">{rule.source}</span>
                 </div>
                 <div className="text-stone-700 leading-relaxed font-sans font-normal">
                   {rule.title}

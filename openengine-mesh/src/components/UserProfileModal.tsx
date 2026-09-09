@@ -89,7 +89,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div>
                 <div className="text-sm font-semibold text-stone-900 flex items-center space-x-2">
                   <span>{activeUser.name}</span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
+                  <span className="text-xs font-sans px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
                     ACTIVE OPERATOR
                   </span>
                 </div>

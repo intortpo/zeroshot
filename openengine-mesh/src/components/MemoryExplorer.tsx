@@ -295,10 +295,10 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
       {/* Top Header & Telemetry */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
-          <h1 className="text-xl font-bold font-mono text-stone-900 flex items-center space-x-2.5">
+          <h1 className="text-xl font-semibold font-sans text-stone-900 flex items-center space-x-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
             <span>Memory Explorer</span>
-            <span className="text-xs font-mono font-normal text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
+            <span className="text-xs font-sans font-medium text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
               {filteredMemories.length} Nodes
             </span>
           </h1>
@@ -308,7 +308,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsAddingMemory(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-mono font-bold transition-all border border-stone-900"
+            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-sans font-semibold transition-all border border-stone-900"
           >
             <Plus className="w-4 h-4 text-white" />
             <span>Add Memory Node</span>
@@ -324,7 +324,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
           </div>
           <div>
             <div className="text-xs text-stone-400 font-sans">Indexed Tokens</div>
-            <div className="text-base sm:text-lg font-semibold font-mono text-stone-900">
+            <div className="text-base sm:text-lg font-semibold font-sans text-stone-900">
               {totalTokens.toLocaleString()}
             </div>
           </div>
@@ -336,7 +336,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
           </div>
           <div>
             <div className="text-xs text-stone-400 font-sans">Cache Hit Rate</div>
-            <div className="text-base sm:text-lg font-semibold font-mono text-stone-900">89.4%</div>
+            <div className="text-base sm:text-lg font-semibold font-sans text-stone-900">89.4%</div>
           </div>
         </div>
 
@@ -346,7 +346,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
           </div>
           <div>
             <div className="text-xs text-stone-400 font-sans">Vector Model</div>
-            <div className="text-xs font-mono font-medium text-stone-800 truncate max-w-[150px]">
+            <div className="text-xs font-sans font-medium text-stone-800 truncate max-w-[150px]">
               text-emb-3-small
             </div>
           </div>
@@ -380,7 +380,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               }`}
             >
               <span>{tab.label}</span>
-              <span className="text-xs text-stone-400 font-mono">({tab.count})</span>
+              <span className="text-xs text-stone-400 font-sans">({tab.count})</span>
             </button>
           ))}
         </div>
@@ -438,7 +438,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                       </span>
 
                       <span
-                        className={`px-2 py-0.5 rounded text-xs font-mono uppercase font-normal ${
+                        className={`px-2 py-0.5 rounded text-xs font-sans uppercase font-medium ${
                           mem.importance === 'critical'
                             ? 'bg-rose-50 text-rose-700 border border-rose-200'
                             : mem.importance === 'high'
@@ -450,7 +450,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 text-xs font-mono text-stone-400">
+                    <div className="flex items-center space-x-1.5 text-xs font-sans text-stone-400">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(mem.timestamp).toLocaleDateString()}</span>
                     </div>
@@ -471,7 +471,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                     {mem.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded bg-white border border-stone-200 text-xs font-mono text-stone-500 font-normal"
+                        className="px-2 py-0.5 rounded bg-white border border-stone-200 text-xs font-sans text-stone-500 font-normal"
                       >
                         #{tag}
                       </span>
@@ -480,7 +480,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 </div>
 
                 {/* Footer: Tokens & Actions */}
-                <div className="pt-3.5 border-t border-stone-200 flex items-center justify-between text-xs font-mono text-stone-400">
+                <div className="pt-3.5 border-t border-stone-200 flex items-center justify-between text-xs font-sans text-stone-400">
                   <div className="flex items-center space-x-2">
                     <span>{mem.tokens} tokens</span>
                     <span>·</span>
@@ -529,14 +529,14 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-mono uppercase text-stone-400">
+                    <span className="text-xs font-sans uppercase text-stone-400">
                       {selectedMemory.type}
                     </span>
-                    <span className="text-xs font-mono text-stone-400">
+                    <span className="text-xs font-sans text-stone-400">
                       #{selectedMemory.id}
                     </span>
                   </div>
-                  <h2 className="text-sm font-bold text-stone-900 mt-0.5">
+                  <h2 className="text-sm font-semibold text-stone-900 mt-0.5">
                     {selectedMemory.title}
                   </h2>
                 </div>
@@ -553,34 +553,34 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
             {/* Modal Body */}
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
               <div>
-                <h4 className="text-xs font-mono text-stone-400 uppercase mb-2">
+                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
                   Memory Payload & Knowledge Content
                 </h4>
-                <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs font-mono text-stone-700 leading-relaxed whitespace-pre-wrap">
+                <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs font-sans text-stone-700 leading-relaxed whitespace-pre-wrap">
                   {selectedMemory.content}
                 </div>
               </div>
 
               {selectedMemory.metadata && (
                 <div>
-                  <h4 className="text-xs font-mono text-stone-400 uppercase mb-2">
+                  <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
                     Provenance & Structured Metadata
                   </h4>
-                  <pre className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-[11px] font-mono text-cyan-800 overflow-x-auto">
+                  <pre className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs font-mono text-cyan-800 overflow-x-auto">
                     {JSON.stringify(selectedMemory.metadata, null, 2)}
                   </pre>
                 </div>
               )}
 
               <div>
-                <h4 className="text-xs font-mono text-stone-400 uppercase mb-2">
+                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
                   Indexed Tags
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedMemory.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600"
+                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-sans text-stone-600"
                     >
                       #{tag}
                     </span>
@@ -591,13 +591,13 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
 
             {/* Modal Footer */}
             <div className="p-5 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
-              <span className="text-xs font-mono text-stone-400">
+              <span className="text-xs font-sans text-stone-400">
                 Created {new Date(selectedMemory.timestamp).toLocaleString()}
               </span>
 
               <button
                 onClick={() => setSelectedMemory(null)}
-                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-[#252525] border border-stone-200 text-xs font-mono text-stone-900 transition-colors"
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-[#252525] border border-stone-200 text-xs font-sans font-medium text-stone-900 transition-colors"
               >
                 Close
               </button>
@@ -627,11 +627,11 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
 
             <form onSubmit={handleAddMemorySubmit} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-stone-400">Memory Type</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Memory Type</label>
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as MemoryType)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
                 >
                   <option value="semantic">Semantic (ADR / Concept)</option>
                   <option value="rule">Rule & Invariant Guard</option>
@@ -642,35 +642,35 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-stone-400">Title</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Title</label>
                 <input
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. ADR 0004: Eventarc Concurrency Guard"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-stone-400">Knowledge Content</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Knowledge Content</label>
                 <textarea
                   required
                   rows={4}
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Describe the decision, heuristic, or learned constraint..."
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-stone-400">Tags (comma-separated)</label>
+                <label className="text-xs font-sans font-medium text-stone-600">Tags (comma-separated)</label>
                 <input
                   value={newTags}
                   onChange={(e) => setNewTags(e.target.value)}
                   placeholder="e.g. adr, eventarc, concurrency, fail-closed"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
                 />
               </div>
 
@@ -678,13 +678,13 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 <button
                   type="button"
                   onClick={() => setIsAddingMemory(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-mono text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-sans font-medium text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-mono font-bold transition-all border border-stone-900"
+                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-semibold transition-all border border-stone-900"
                 >
                   Save to Memory
                 </button>

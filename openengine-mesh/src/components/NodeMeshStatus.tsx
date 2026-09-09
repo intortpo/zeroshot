@@ -76,12 +76,12 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           title="Switch active workspace"
         >
           <span className="font-medium text-stone-900">{activeWorkspace?.name || 'zero-petri'}</span>
-          <span className="text-stone-400 font-mono">@main</span>
+          <span className="text-stone-400 font-sans">@main</span>
           <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
         </button>
 
         {/* Host Spec (Subtle Text, No Box) */}
-        <div className="hidden xl:flex items-center space-x-2 text-stone-400 text-xs font-mono pl-2">
+        <div className="hidden xl:flex items-center space-x-2 text-stone-400 text-xs font-sans pl-2">
           <span>·</span>
           <span>{localNode.deviceName}</span>
         </div>
@@ -179,13 +179,13 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </button>
 
         {/* Peers Count */}
-        <div className="hidden md:flex items-center space-x-1.5 text-stone-500">
+        <div className="hidden md:flex items-center space-x-1.5 text-stone-500 font-sans">
           <span>Peers:</span>
           <span className="text-stone-800 font-semibold">{peers.length}</span>
         </div>
 
         {/* Active Jobs */}
-        <div className="flex items-center space-x-1.5 text-stone-500">
+        <div className="flex items-center space-x-1.5 text-stone-500 font-sans">
           {activeRunsCount > 0 && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF5F1F] animate-pulse" />
           )}

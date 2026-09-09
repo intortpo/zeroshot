@@ -464,7 +464,7 @@ export function App() {
           </div>
         )}
 
-        {/* View 6: 1979 Avionics Technical Settings Panel */}
+        {/* View 6: Connection & System Settings Panel */}
         {currentView === 'settings' && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <PetriSettings
