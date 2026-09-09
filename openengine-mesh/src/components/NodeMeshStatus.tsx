@@ -8,6 +8,8 @@ interface NodeMeshStatusProps {
   activeRunsCount: number;
   activeView: 'graph' | 'tracker';
   onViewChange: (view: 'graph' | 'tracker') => void;
+  isDwdConfigured: boolean;
+  onOpenDwdModal: () => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -16,6 +18,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   activeRunsCount,
   activeView,
   onViewChange,
+  isDwdConfigured,
+  onOpenDwdModal,
 }) => {
   return (
     <header className="bg-[#090909] border-b border-[#1c1c1c] px-4 py-2.5 flex items-center justify-between text-xs text-[#a3a3a3] select-none">
@@ -77,8 +81,22 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </button>
       </div>
 
-      {/* Mesh Peer Discovery Bar */}
-      <div className="flex items-center space-x-3">
+      {/* Right Controls: Google DWD + Mesh Peers & Jobs */}
+      <div className="flex items-center space-x-2.5">
+        {/* Google Workspace DWD Trigger */}
+        <button
+          onClick={onOpenDwdModal}
+          className="flex items-center space-x-1.5 bg-[#0e0e0e] hover:bg-[#141414] border border-[#1f1f1f] hover:border-[#2e2e2e] px-2.5 py-1 rounded-md transition-colors font-mono text-[11px]"
+          title="Configure Google Workspace Domain-Wide Delegation (DWD) & 6 Use Cases"
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              isDwdConfigured ? 'bg-emerald-500' : 'bg-[#737373]'
+            }`}
+          />
+          <span className="text-[#a3a3a3]">Google DWD</span>
+        </button>
+
         <div className="flex items-center space-x-1.5 bg-[#0e0e0e] border border-[#1f1f1f] px-2.5 py-1 rounded-md">
           <Wifi className="w-3.5 h-3.5 text-[#737373]" />
           <span className="text-[#525252]">Peers:</span>

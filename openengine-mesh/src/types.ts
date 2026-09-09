@@ -88,3 +88,38 @@ export interface ProjectOverview {
     testPassRate: number;
   };
 }
+
+export interface UseCaseDescriptor {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  workspace_target: string;
+  scopes_required: string[];
+}
+
+export interface GoogleDwdStatus {
+  is_configured: boolean;
+  project_id?: string;
+  client_email?: string;
+  delegated_user?: string;
+  key_id_suffix?: string;
+  scopes: string[];
+  supported_use_cases: UseCaseDescriptor[];
+  last_validated_at?: number;
+}
+
+export interface WorkspaceArtifact {
+  artifact_type: string;
+  title: string;
+  uri_or_id: string;
+  status: string;
+}
+
+export interface WorkspaceUseCaseResult {
+  use_case_id: string;
+  status: string;
+  summary: string;
+  workspace_artifacts: WorkspaceArtifact[];
+  execution_log: string[];
+}

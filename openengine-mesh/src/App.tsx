@@ -4,6 +4,7 @@ import { ChatPane } from './components/ChatPane';
 import { VisualGraph } from './components/VisualGraph';
 import { ProjectTracker } from './components/ProjectTracker';
 import { ApprovalModal } from './components/ApprovalModal';
+import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { MessageSquare, GitGraph, ShieldAlert, Layers } from 'lucide-react';
 
@@ -17,11 +18,15 @@ export function App() {
     nodesState,
     submitGoal,
     submitDeliveryGate,
+    googleDwdStatus,
+    loadDwdCredentials,
+    dispatchUseCase,
   } = useMeshLedger();
 
   const [activeWorkspaceView, setActiveWorkspaceView] = useState<'graph' | 'tracker'>('tracker');
   const [mobileTab, setMobileTab] = useState<'chat' | 'graph' | 'tracker'>('tracker');
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
+  const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
 
   const activeRun = runs.find((r) => r.runId === activeRunId);
 
@@ -38,7 +43,7 @@ export function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070707] font-sans">
-      {/* Top Bar: Mesh Discovery & Hardware Status with View Toggle */}
+      {/* Top Bar: Mesh Discovery & Hardware Status with View Toggle & Google DWD */}
       <NodeMeshStatus
         localNode={localNode}
         peers={peers}
@@ -48,6 +53,8 @@ export function App() {
           setActiveWorkspaceView(view);
           setMobileTab(view);
         }}
+        isDwdConfigured={googleDwdStatus.is_configured}
+        onOpenDwdModal={() => setIsDwdModalOpen(true)}
       />
 
       {/* Main Workspace */}
@@ -67,6 +74,7 @@ export function App() {
             }}
             onSubmitGoal={submitGoal}
             onOpenApprovalModal={() => setIsApprovalOpen(true)}
+            onOpenDwdModal={() => setIsDwdModalOpen(true)}
           />
         </div>
 
@@ -157,6 +165,18 @@ export function App() {
         }}
         onReject={async (runId, feedback) => {
           await submitDeliveryGate(runId, false, feedback);
+        }}
+      />
+
+      {/* Google Workspace & DWD Key Manager Modal */}
+      <GoogleWorkspaceDwdModal
+        isOpen={isDwdModalOpen}
+        onClose={() => setIsDwdModalOpen(false)}
+        status={googleDwdStatus}
+        onLoadCredentials={loadDwdCredentials}
+        onSelectUseCase={(useCaseId, prompt) => {
+          submitGoal(prompt, 'foxlight/zero-petri');
+          dispatchUseCase(useCaseId, prompt);
         }}
       />
     </div>

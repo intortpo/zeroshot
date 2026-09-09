@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NodeSpec, RunSummary, GraphNodeState } from '../types';
+import { NodeSpec, RunSummary, GraphNodeState, GoogleDwdStatus, WorkspaceUseCaseResult } from '../types';
 
 // Detect if running inside Tauri v2 runtime
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export function useMeshLedger() {
+  const [googleDwdStatus, setGoogleDwdStatus] = useState<GoogleDwdStatus>({
+    is_configured: false,
+    delegated_user: 'intortpo@gmail.com',
+    scopes: [
+      'https://www.googleapis.com/auth/drive',
+      'https://www.googleapis.com/auth/documents',
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/gmail.modify',
+    ],
+    supported_use_cases: [],
+  });
+
   const [localNode, setLocalNode] = useState<NodeSpec>({
     nodeId: 'node-local',
     role: 'thin_client',
@@ -106,20 +118,67 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
     },
   });
 
-  // Load hardware spec on mount
+  // Load hardware spec & Google DWD status on mount
   useEffect(() => {
-    async function loadHardware() {
+    async function loadInitialState() {
       if (isTauri) {
         try {
           const { invoke } = await import('@tauri-apps/api/core');
           const spec = await invoke<NodeSpec>('detect_hardware');
           if (spec) setLocalNode(spec);
+          const dwd = await invoke<GoogleDwdStatus>('get_google_dwd_status');
+          if (dwd) setGoogleDwdStatus(dwd);
         } catch (e) {
-          console.warn('Failed to invoke detect_hardware via Tauri:', e);
+          console.warn('Failed to invoke initial state via Tauri:', e);
         }
       }
     }
-    loadHardware();
+    loadInitialState();
+  }, []);
+
+  const loadDwdCredentials = useCallback(async (jsonContent: string, delegatedUser?: string) => {
+    if (isTauri) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const updated = await invoke<GoogleDwdStatus>('load_google_dwd_credentials', {
+        jsonContent,
+        delegatedUser,
+      });
+      setGoogleDwdStatus(updated);
+      return updated;
+    } else {
+      const parsed = JSON.parse(jsonContent);
+      const mockStatus: GoogleDwdStatus = {
+        is_configured: true,
+        project_id: parsed.project_id || 'zero-petri-mesh',
+        client_email: parsed.client_email || 'service-account@iam.gserviceaccount.com',
+        delegated_user: delegatedUser || 'intortpo@gmail.com',
+        scopes: [
+          'https://www.googleapis.com/auth/drive',
+          'https://www.googleapis.com/auth/documents',
+          'https://www.googleapis.com/auth/spreadsheets',
+          'https://www.googleapis.com/auth/gmail.modify',
+        ],
+        supported_use_cases: [],
+        last_validated_at: Date.now() / 1000,
+      };
+      setGoogleDwdStatus(mockStatus);
+      return mockStatus;
+    }
+  }, []);
+
+  const dispatchUseCase = useCallback(async (useCaseId: string, prompt: string) => {
+    if (isTauri) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        return await invoke<WorkspaceUseCaseResult>('dispatch_workspace_use_case', {
+          useCaseId,
+          prompt,
+        });
+      } catch (e) {
+        console.warn('dispatch_workspace_use_case failed:', e);
+      }
+    }
+    return null;
   }, []);
 
   const submitGoal = useCallback(async (goal: string, repo: string) => {
@@ -238,5 +297,8 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
     nodesState,
     submitGoal,
     submitDeliveryGate,
+    googleDwdStatus,
+    loadDwdCredentials,
+    dispatchUseCase,
   };
 }
