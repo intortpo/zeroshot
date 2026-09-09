@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { GamePhysicsConfig } from '../../types';
+import { EslPresentContinuousModal } from './EslPresentContinuousModal';
 
 interface JumpyFishCanvasProps {
   gameTitle: string;
@@ -394,6 +395,13 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
   const screenShakeRef = useRef<number>(0);
   const selectedDude = DUDES_ROSTER.find((d) => d.id === playerDudeId) || DUDES_ROSTER[0];
 
+  // Grade 4 ESL Present Continuous Challenge upon being pushed off / void fall
+  const [isEslModalOpen, setIsEslModalOpen] = useState<boolean>(false);
+  const isEslModalOpenRef = useRef<boolean>(false);
+  isEslModalOpenRef.current = isEslModalOpen;
+  const pendingEslRespawnActorRef = useRef<DudeActor | null>(null);
+  const respawnDudeRef = useRef<((actor: DudeActor) => void) | null>(null);
+
   // Preload all 20 Dude SVGs into HTMLImageElement cache
   useEffect(() => {
     DUDES_ROSTER.forEach((d) => {
@@ -667,7 +675,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
       dudeActor.x = Math.random() * (width - 240) + 120;
       dudeActor.y = 80;
       dudeActor.frozenTimer = 0;
-      dudeActor.abilityActiveDuration = 0;
+      dudeActor.abilityActiveDuration = 3.5;
       dudeActor.isCloaked = false;
       spawnParticles(dudeActor.x, dudeActor.y, dudeActor.dude.color, 24, 180);
       addFloatingText(dudeActor.x, dudeActor.y, 'RESPAWNED', dudeActor.dude.color);
@@ -679,6 +687,7 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         }
       }
     };
+    respawnDudeRef.current = respawnDude;
 
     // Execute character ability
     const executeAbility = (actor: DudeActor) => {
@@ -1051,7 +1060,15 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
         }
 
         if (dudeActor.isPlayer) {
-          // Update HUD ability states
+          if (isEslModalOpenRef.current) {
+            dudeActor.vx = 0;
+            dudeActor.vy = 0;
+            dudeActor.y = height + 100;
+            return;
+          }
+
+          // Update HUD state
+          setCurrentWeapon(dudeActor.weapon);
           const cdRatio = Math.max(0, 1 - dudeActor.abilityCooldownRemaining / dudeActor.dude.abilityCooldown);
           setAbilityCooldownPercent(Math.round(cdRatio * 100));
           setAbilityReady(dudeActor.abilityCooldownRemaining <= 0);
@@ -1280,9 +1297,28 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
           dudeActor.vx = 0;
         }
 
-        // Void Falling
+        // Void Falling (Pushed off the arena!)
         if (dudeActor.y > height + 60) {
-          respawnDude(dudeActor);
+          if (dudeActor.isPlayer) {
+            if (!isEslModalOpenRef.current) {
+              isEslModalOpenRef.current = true;
+              pendingEslRespawnActorRef.current = dudeActor;
+              dudeActor.vx = 0;
+              dudeActor.vy = 0;
+              dudeActor.y = height + 100;
+              triggerScreenShake(12);
+              addFloatingText(width / 2, height / 2 - 50, 'PUSHED OFF! ANSWER ESL QUESTION', '#FF5F1F');
+              setIsEslModalOpen(true);
+            }
+          } else {
+            setPlayerScore((s) => {
+              const ns = s + 1;
+              if (ns >= 5) setMatchStatus('victory');
+              return ns;
+            });
+            addFloatingText(dudeActor.x, height - 80, 'RING OUT! +1', '#0ABAB5');
+            respawnDude(dudeActor);
+          }
         }
       });
 
@@ -1392,7 +1428,20 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
                 });
                 addFloatingText(actor.x, actor.y - 30, 'KO! +1', '#FF5F1F');
               }
-              respawnDude(actor);
+              if (actor.isPlayer) {
+                if (!isEslModalOpenRef.current) {
+                  isEslModalOpenRef.current = true;
+                  pendingEslRespawnActorRef.current = actor;
+                  actor.vx = 0;
+                  actor.vy = 0;
+                  actor.y = height + 100;
+                  triggerScreenShake(14);
+                  addFloatingText(width / 2, height / 2 - 50, 'KNOCKED OUT! ANSWER ESL QUESTION', '#FF5F1F');
+                  setIsEslModalOpen(true);
+                }
+              } else {
+                respawnDude(actor);
+              }
             }
           }
         });
@@ -1664,6 +1713,17 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
     setMatchStatus('battling');
     setAbilityCooldownPercent(100);
     setAbilityReady(true);
+    setIsEslModalOpen(false);
+    isEslModalOpenRef.current = false;
+  };
+
+  const handleEslRespawn = () => {
+    setIsEslModalOpen(false);
+    isEslModalOpenRef.current = false;
+    const actor = pendingEslRespawnActorRef.current;
+    if (actor && respawnDudeRef.current) {
+      respawnDudeRef.current(actor);
+    }
   };
 
   return (
@@ -1989,6 +2049,14 @@ export const JumpyFishCanvas: React.FC<JumpyFishCanvasProps> = ({
           </div>
         )}
       </div>
+
+      {/* Grade 4 ESL Present Continuous Challenge on Void Fall / Pushed Off */}
+      <EslPresentContinuousModal
+        isOpen={isEslModalOpen}
+        onRespawn={handleEslRespawn}
+        characterName={selectedDude.name}
+        gameModeTitle={`Dudes Tactical Arena (${arenaMap.replace('_', ' ')})`}
+      />
     </div>
   );
 };

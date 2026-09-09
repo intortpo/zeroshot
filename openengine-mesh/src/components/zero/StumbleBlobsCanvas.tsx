@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { GamePhysicsConfig } from '../../types';
+import { EslPresentContinuousModal } from './EslPresentContinuousModal';
 
 interface StumbleBlobsCanvasProps {
   gameTitle: string;
@@ -28,10 +29,10 @@ const CHECKPOINTS: Checkpoint[] = [
   { z: -87, name: '4. Tilting See-Saw' },
   { z: -110, name: '5. Rolling Logs' },
   { z: -132, name: '6. Puncher Wall' },
-  { z: -157, name: '7. Turntables' },
-  { z: -178, name: '8. Sliding Gates' },
-  { z: -200, name: '9. Pinball Bumpers' },
-  { z: -222, name: '10. Victory Slide' },
+  { z: -156, name: '7. Spinning Discs' },
+  { z: -180, name: '8. Barrier Catwalk' },
+  { z: -205, name: '9. Pinball Bumpers' },
+  { z: -228, name: '10. Grand Finish Slide' },
 ];
 
 export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
@@ -44,6 +45,13 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
   const [hazardSpeed, setHazardSpeed] = useState<number>(1.0);
   const [currentStageName, setCurrentStageName] = useState<string>('Start Gate');
   const [progressPercent, setProgressPercent] = useState<number>(0);
+
+  // Grade 4 ESL Present Continuous Challenge upon being pushed off / void fall
+  const [isEslModalOpen, setIsEslModalOpen] = useState<boolean>(false);
+  const isEslModalOpenRef = useRef<boolean>(false);
+  isEslModalOpenRef.current = isEslModalOpen;
+  const pendingEslBlobRef = useRef<any | null>(null);
+  const respawnBlobRef = useRef<((b: any) => void) | null>(null);
 
   // Key controls state ref
   const keysRef = useRef<{ forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean; dive: boolean }>({
@@ -492,6 +500,7 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
       b.isDiving = false;
       b.isGrounded = false;
     };
+    respawnBlobRef.current = respawnBlob;
 
     // 5. Physics & Animation Tick Loop
     let animationFrameId: number;
@@ -556,6 +565,15 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
       blobs.forEach((blob) => {
         // Player Input
         if (!blob.isAi) {
+          if (isEslModalOpenRef.current) {
+            blob.vx = 0;
+            blob.vy = 0;
+            blob.vz = 0;
+            blob.y = -35;
+            blob.mesh.position.set(blob.x, blob.y, blob.z);
+            return;
+          }
+
           const speed = 13.0;
           let moveX = 0;
           let moveZ = 0;
@@ -776,11 +794,21 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
           }
         }
 
-        // Void Fall Respawn
+        // Void Fall Respawn (Pushed off the obstacle course!)
         if (blob.y < -12) {
-          respawnBlob(blob);
           if (!blob.isAi) {
-            setQualifyStatus('racing');
+            if (!isEslModalOpenRef.current) {
+              isEslModalOpenRef.current = true;
+              pendingEslBlobRef.current = blob;
+              blob.vx = 0;
+              blob.vy = 0;
+              blob.vz = 0;
+              blob.y = -35;
+              blob.mesh.position.set(blob.x, blob.y, blob.z);
+              setIsEslModalOpen(true);
+            }
+          } else {
+            respawnBlob(blob);
           }
         }
 
@@ -893,6 +921,16 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
     diveTriggerRef.current = true;
   };
 
+  const handleEslRespawn = () => {
+    setIsEslModalOpen(false);
+    isEslModalOpenRef.current = false;
+    const blob = pendingEslBlobRef.current;
+    if (blob && respawnBlobRef.current) {
+      respawnBlobRef.current(blob);
+      setQualifyStatus('racing');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full subtle-depth rounded-2xl overflow-hidden border border-stone-200/80 font-sans">
       {/* 3D Arena Header */}
@@ -995,6 +1033,14 @@ export const StumbleBlobsCanvas: React.FC<StumbleBlobsCanvasProps> = ({
           <span>10 Physics Obstacles & Checkpoints</span>
         </div>
       </div>
+
+      {/* Grade 4 ESL Present Continuous Challenge on Void Fall / Pushed Off */}
+      <EslPresentContinuousModal
+        isOpen={isEslModalOpen}
+        onRespawn={handleEslRespawn}
+        characterName="Lumpy Blob"
+        gameModeTitle="Stumble Blobs 3D"
+      />
     </div>
   );
 };
