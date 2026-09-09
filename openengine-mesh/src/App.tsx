@@ -28,47 +28,17 @@ export function App() {
   // Enterprise View: 'board' | 'skills' | 'memory' | 'stats' | 'tui'
   const [currentView, setCurrentView] = useState<'board' | 'skills' | 'memory' | 'stats' | 'tui'>('board');
 
-  // Enterprise Users & Identity State
+  // Enterprise Users & Identity State (Authentic User)
   const [users, setUsers] = useState<UserProfile[]>([
     {
       id: 'usr-hideo',
-      name: 'Hideo (Lead Architect)',
-      email: 'hideo@the-open-engine.org',
+      name: 'Hideo (intortpo)',
+      email: '82773932+intortpo@users.noreply.github.com',
       role: 'owner',
-      organization: 'The Open Engine Co.',
+      organization: 'The Open Engine Co. · zero-petri',
       canApproveGates: true,
       canDeploy: true,
       canEditRules: true,
-    },
-    {
-      id: 'usr-elena',
-      name: 'Elena Vance',
-      email: 'elena@petri-security.io',
-      role: 'security_auditor',
-      organization: 'Petri Invariants Lab',
-      canApproveGates: true,
-      canDeploy: false,
-      canEditRules: true,
-    },
-    {
-      id: 'usr-marcus',
-      name: 'Marcus Chen',
-      email: 'marcus@zero-petri.dev',
-      role: 'senior_dev',
-      organization: 'The Open Engine Co.',
-      canApproveGates: false,
-      canDeploy: true,
-      canEditRules: false,
-    },
-    {
-      id: 'usr-rtx-daemon',
-      name: 'RTX Cognitive Bot',
-      email: 'bot-rtx@mesh.internal',
-      role: 'viewer',
-      organization: 'Autonomous Mesh Daemon',
-      canApproveGates: false,
-      canDeploy: false,
-      canEditRules: false,
     },
   ]);
   const [activeUserId, setActiveUserId] = useState<string>('usr-hideo');
@@ -79,7 +49,7 @@ export function App() {
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PetriItem | null>(null);
 
-  // Workspaces State
+  // Workspaces State (Authentic Local Repository)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
     {
       id: 'ws-petri',
@@ -87,20 +57,6 @@ export function App() {
       repo: 'foxlight/zero-petri',
       path: '/home/hideo/Documents/GitHub/zero-petri',
       itemCount: 7,
-    },
-    {
-      id: 'ws-omarchy',
-      name: 'omarchy-desktop',
-      repo: 'foxlight/omarchy-desktop',
-      path: '/home/hideo/Documents/GitHub/omarchy-desktop',
-      itemCount: 3,
-    },
-    {
-      id: 'ws-cloud',
-      name: 'cloud-cluster',
-      repo: 'the-open-engine/cluster-runners',
-      path: '/home/hideo/workspaces/cluster-runners',
-      itemCount: 2,
     },
   ]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('ws-petri');
@@ -111,136 +67,81 @@ export function App() {
     [users, activeUserId]
   );
 
-  // Canonical Petri Items across workspaces
+  // Canonical Petri Items across workspaces (Built directly from real repository git history)
   const [items, setItems] = useState<PetriItem[]>([
     {
-      id: 'pt-001',
+      id: 'pt-active-01',
       workspaceId: 'ws-petri',
       kind: 'feat',
-      title: 'Implement live Tailscale WireGuard peer heartbeat & routing',
-      stage: 'merged',
-      commitHash: '4b4b23b8',
-      createdAt: Date.now() - 7200000,
-      updatedAt: Date.now() - 3600000,
-    },
-    {
-      id: 'pt-002',
-      workspaceId: 'ws-petri',
-      kind: 'mile',
-      title: 'Multiplatform Tauri v2 coordinator for Linux Omarchy & Android',
-      stage: 'merged',
-      commitHash: 'ae11b729',
-      createdAt: Date.now() - 6000000,
-      updatedAt: Date.now() - 3000000,
-    },
-    {
-      id: 'pt-003',
-      workspaceId: 'ws-petri',
-      kind: 'feat',
-      title: 'Google Workspace Domain-Wide Delegation (DWD) with .json key',
-      stage: 'merged',
-      commitHash: '71dc16f1',
-      createdAt: Date.now() - 3600000,
-      updatedAt: Date.now() - 1800000,
-    },
-    {
-      id: 'pt-004',
-      workspaceId: 'ws-petri',
-      kind: 'feat',
-      title: 'Speculative test runner anticipating test cases inside target container',
-      stage: 'gated',
-      runId: 'run-8f921bc4-001',
-      createdAt: Date.now() - 900000,
-      updatedAt: Date.now() - 120000,
-      diff: `diff --git a/crates/speculative/src/runner.rs b/crates/speculative/src/runner.rs\nnew file mode 100644\nindex 0000000..9c4a112\n--- /dev/null\n+++ b/crates/speculative/src/runner.rs\n@@ -0,0 +1,24 @@\n+pub struct SpeculativeRunner {\n+    pub target_image: String,\n+    pub vram_ceiling_mb: u64,\n+}\n+\n+impl SpeculativeRunner {\n+    pub fn execute_precomputation(&self) -> Result<(), String> {\n+        println!("Spun up speculative test environment on RTX 4090");\n+        Ok(())\n+    }\n+}`,
-      testLogs: `running 3 tests\ntest runner::tests::test_vram_allocation ... ok\ntest runner::tests::test_anticipatory_dependency_build ... ok\ntest runner::tests::test_type_integrity_proof ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; finished in 0.28s`,
-    },
-    {
-      id: 'pt-005',
-      workspaceId: 'ws-petri',
-      kind: 'bug',
-      title: 'Handle unexpected SIGPIPE on bounded streaming stdin during container cancellation',
-      stage: 'verifying',
-      createdAt: Date.now() - 450000,
-      updatedAt: Date.now() - 60000,
+      title: 'Eliminate cyberpunk styling and mock data; enforce genuine runtime telemetry',
+      stage: 'in_flight',
       recursionDepth: 2,
       chainOfThought: [
-        '[turn 1 · cot] Ingesting bounded streaming I/O cancellation failure',
-        '[turn 2 · recurse] Applying non-blocking pipe drain before container teardown',
+        '[turn 1 · cot] Purged artificial mock metrics and cyberpunk neon shaders',
+        '[turn 2 · cot] Synchronized live Tauri IPC hardware detection and real git commit history',
       ],
+      createdAt: Date.now() - 300000,
+      updatedAt: Date.now(),
     },
     {
-      id: 'pt-006',
+      id: 'pt-commit-97a09659',
       workspaceId: 'ws-petri',
       kind: 'feat',
-      title: 'Dynamic hardware negotiation: query nvidia-smi VRAM for role classification',
-      stage: 'in_flight',
-      createdAt: Date.now() - 240000,
-      updatedAt: Date.now() - 30000,
-      recursionDepth: 1,
-      chainOfThought: [
-        '[turn 1 · cot] Probing nvidia-smi memory stats via NVML bindings',
-        '[turn 2 · recurse] Evaluating VRAM ceiling >= 16GB for rtx_host promotion',
-      ],
+      title: 'transform UI to soft Tiffany pastel light enterprise aesthetic with TUI view',
+      stage: 'merged',
+      commitHash: '97a09659',
+      createdAt: 1788972517000,
+      updatedAt: 1788972517000,
     },
     {
-      id: 'pt-007',
+      id: 'pt-commit-36fbb1ee',
       workspaceId: 'ws-petri',
-      kind: 'issue',
-      title: 'Investigate peer discovery latency when roaming across mobile hotspots',
-      stage: 'backlog',
-      createdAt: Date.now() - 180000,
-      updatedAt: Date.now() - 180000,
-    },
-    // Omarchy workspace items
-    {
-      id: 'pt-om-001',
-      workspaceId: 'ws-omarchy',
       kind: 'feat',
-      title: 'Wayland Hyprland native gesture IPC binding for seamless workspace split',
-      stage: 'in_flight',
-      createdAt: Date.now() - 1200000,
-      updatedAt: Date.now() - 300000,
-      recursionDepth: 1,
-    },
-    {
-      id: 'pt-om-002',
-      workspaceId: 'ws-omarchy',
-      kind: 'bug',
-      title: 'Eliminate XWayland fallback flickering during multi-monitor hotplug',
-      stage: 'verifying',
-      createdAt: Date.now() - 900000,
-      updatedAt: Date.now() - 200000,
-    },
-    {
-      id: 'pt-om-003',
-      workspaceId: 'ws-omarchy',
-      kind: 'mile',
-      title: 'Omarchy Linux desktop frameless shell with hardware acceleration',
+      title: 'add enterprise telemetry stats, self-learning engine, and user identity switcher',
       stage: 'merged',
-      commitHash: '8e19c43a',
-      createdAt: Date.now() - 3600000,
-      updatedAt: Date.now() - 1800000,
+      commitHash: '36fbb1ee',
+      createdAt: 1788972218000,
+      updatedAt: 1788972218000,
     },
-    // Cloud cluster items
     {
-      id: 'pt-cl-001',
-      workspaceId: 'ws-cloud',
+      id: 'pt-commit-2f8f303f',
+      workspaceId: 'ws-petri',
       kind: 'feat',
-      title: 'Ephemeral target container sandbox pooling on GCP Cloud Run',
+      title: 'add wide array of skills for firebase, github, gcloud, agy and memory explorer',
       stage: 'merged',
-      commitHash: '2c90f841',
-      createdAt: Date.now() - 5000000,
-      updatedAt: Date.now() - 2400000,
+      commitHash: '2f8f303f',
+      createdAt: 1788971968000,
+      updatedAt: 1788971968000,
     },
     {
-      id: 'pt-cl-002',
-      workspaceId: 'ws-cloud',
-      kind: 'mile',
-      title: 'Multi-region WireGuard mesh gateway with automated healthchecks',
-      stage: 'in_flight',
-      createdAt: Date.now() - 1800000,
-      updatedAt: Date.now() - 600000,
+      id: 'pt-commit-fcc2c077',
+      workspaceId: 'ws-petri',
+      kind: 'feat',
+      title: 'add spacious kanban with recursive chain of thought, agent fan-out, and workspace switcher',
+      stage: 'merged',
+      commitHash: 'fcc2c077',
+      createdAt: 1788971750000,
+      updatedAt: 1788971750000,
+    },
+    {
+      id: 'pt-commit-ac226920',
+      workspaceId: 'ws-petri',
+      kind: 'feat',
+      title: 'streamline UI to soft frost intent bar and left-to-right kanban',
+      stage: 'merged',
+      commitHash: 'ac226920',
+      createdAt: 1788971570000,
+      updatedAt: 1788971570000,
+    },
+    {
+      id: 'pt-commit-71dc16f1',
+      workspaceId: 'ws-petri',
+      kind: 'feat',
+      title: 'add Google Workspace DWD json credentials and 6 core autonomous use cases',
+      stage: 'merged',
+      commitHash: '71dc16f1',
+      createdAt: 1788970292000,
+      updatedAt: 1788970292000,
     },
   ]);
 
@@ -538,7 +439,12 @@ export function App() {
         {/* View 4: Enterprise Telemetry & Cognitive Stats */}
         {currentView === 'stats' && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <EnterpriseStats activeWorkspace={activeWorkspace} activeUser={activeUser} />
+            <EnterpriseStats
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              items={items}
+              localNode={localNode}
+            />
           </div>
         )}
 

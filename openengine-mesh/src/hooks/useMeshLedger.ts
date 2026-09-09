@@ -18,67 +18,17 @@ export function useMeshLedger() {
   });
 
   const [localNode, setLocalNode] = useState<NodeSpec>({
-    nodeId: 'node-local',
+    nodeId: 'node-po',
     role: 'thin_client',
-    deviceName: 'Linux Omarchy Host',
+    deviceName: 'Linux Host (po)',
     hasRtx: false,
     activeJobs: 0,
   });
 
-  const [peers, setPeers] = useState<NodeSpec[]>([
-    {
-      nodeId: 'node-rtx-omarchy',
-      role: 'rtx_host',
-      deviceName: 'RTX 4090 Workstation',
-      hasRtx: true,
-      vramFreeMb: 22400,
-      memoryFreeMb: 61440,
-      activeJobs: 1,
-    },
-    {
-      nodeId: 'node-android-pixel',
-      role: 'thin_client',
-      deviceName: 'Pixel 9 Pro Mobile',
-      hasRtx: false,
-      activeJobs: 0,
-    },
-  ]);
+  const [peers, setPeers] = useState<NodeSpec[]>([]);
 
-  const [runs, setRuns] = useState<RunSummary[]>([
-    {
-      runId: 'run-8f921bc4-001',
-      title: 'feat: add wireguard peer heartbeat broadcast and unit test',
-      status: 'gated',
-      createdAt: Date.now() - 120000,
-      diff: `diff --git a/src-tauri/src/mesh.rs b/src-tauri/src/mesh.rs
-new file mode 100644
-index 0000000..8341b12
---- /dev/null
-+++ b/src-tauri/src/mesh.rs
-@@ -0,0 +1,48 @@
-+use serde::{Deserialize, Serialize};
-+
-+#[derive(Clone, Debug, Deserialize, Serialize)]
-+pub struct MeshHeartbeat {
-+    pub node_id: String,
-+    pub role: String,
-+    pub vram_free_mb: Option<u64>,
-+    pub active_jobs: u32,
-+}
-+
-+pub fn broadcast_heartbeat(beat: &MeshHeartbeat) -> Result<(), String> {
-+    println!("Broadcasting heartbeat across mesh for node {}", beat.node_id);
-+    Ok(())
-+}`,
-      testLogs: `running 2 tests
-test mesh::tests::test_heartbeat_serialization ... ok
-test mesh::tests::test_dynamic_work_routing ... ok
-
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s`,
-    },
-  ]);
-
-  const [activeRunId, setActiveRunId] = useState<string | null>('run-8f921bc4-001');
+  const [runs, setRuns] = useState<RunSummary[]>([]);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   const [nodesState, setNodesState] = useState<Record<string, GraphNodeState>>({
     worker: {
@@ -126,6 +76,8 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
           const { invoke } = await import('@tauri-apps/api/core');
           const spec = await invoke<NodeSpec>('detect_hardware');
           if (spec) setLocalNode(spec);
+          const peerList = await invoke<NodeSpec[]>('get_mesh_peers');
+          if (peerList) setPeers(peerList);
           const dwd = await invoke<GoogleDwdStatus>('get_google_dwd_status');
           if (dwd) setGoogleDwdStatus(dwd);
         } catch (e) {
