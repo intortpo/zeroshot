@@ -41,18 +41,29 @@ export interface DesignProjectArtifact {
   updatedAt: number;
 }
 
+export interface PetriWorkdeskDimensions {
+  width: number;
+  height: number;
+  label: string; // e.g. "Desktop (1920x1080)", "Mobile (375x812)", "Slide (16:9)"
+}
+
 export interface OpenDesignProject {
   id: string;
   name: string;
   description: string;
-  category: 'landing_page' | 'dashboard' | 'prototype' | 'slides' | 'component';
+  category: 'landing_page' | 'dashboard' | 'prototype' | 'slides' | 'component' | 'mobile_app' | 'blank_canvas';
+  dimensions?: PetriWorkdeskDimensions;
   tokens: DesignTokenSystem;
   artifacts: DesignProjectArtifact[];
   activeArtifactId: string;
   exportFormats: Array<'html' | 'pdf' | 'pptx' | 'mp4'>;
+  syncStatus?: 'synced' | 'local_only' | 'syncing';
+  lastSyncedRemote?: string;
   createdAt: number;
   updatedAt: number;
 }
+
+export type PetriWorkdesk = OpenDesignProject;
 
 export interface McpToolSchema {
   name: string;
@@ -422,10 +433,39 @@ export const REGISTERED_MCP_SERVERS: McpServerDefinition[] = [
 ];
 
 class OpenDesignService {
-  private projects: OpenDesignProject[] = [...INITIAL_OPEN_DESIGN_PROJECTS];
+  private projects: OpenDesignProject[] = [];
   private mcpServers: McpServerDefinition[] = [...REGISTERED_MCP_SERVERS];
 
+  constructor() {
+    this.loadProjects();
+  }
+
+  private loadProjects() {
+    try {
+      const stored = localStorage.getItem('petri_design_workdesks_v1');
+      if (stored) {
+        this.projects = JSON.parse(stored);
+      } else {
+        this.projects = [...INITIAL_OPEN_DESIGN_PROJECTS];
+      }
+    } catch {
+      this.projects = [...INITIAL_OPEN_DESIGN_PROJECTS];
+    }
+  }
+
+  private saveProjects() {
+    try {
+      localStorage.setItem('petri_design_workdesks_v1', JSON.stringify(this.projects));
+    } catch (e) {
+      console.warn('Failed to save Petri Design workdesks to localStorage', e);
+    }
+  }
+
   public getProjects(): OpenDesignProject[] {
+    return this.projects;
+  }
+
+  public getWorkdesks(): PetriWorkdesk[] {
     return this.projects;
   }
 
@@ -433,50 +473,213 @@ class OpenDesignService {
     return this.projects.find((p) => p.id === id);
   }
 
+  public getWorkdesk(id: string): PetriWorkdesk | undefined {
+    return this.getProject(id);
+  }
+
+  public createWorkdesk(params: {
+    name: string;
+    category?: OpenDesignProject['category'];
+    description?: string;
+    template?: 'landing' | 'dashboard' | 'slides' | 'mobile' | 'blank';
+    dimensions?: PetriWorkdeskDimensions;
+  }): PetriWorkdesk {
+    const category = params.category || (params.template === 'mobile' ? 'mobile_app' : params.template === 'slides' ? 'slides' : params.template === 'dashboard' ? 'dashboard' : 'landing_page');
+    const description = params.description || `Petri Design Workdesk: ${params.name}`;
+    const id = `workdesk-${Date.now().toString(36)}`;
+
+    let starterHtml = '';
+    let defaultDimensions: PetriWorkdeskDimensions = params.dimensions || {
+      width: 1280,
+      height: 800,
+      label: 'Desktop (1280x800)',
+    };
+
+    if (params.template === 'mobile') {
+      defaultDimensions = params.dimensions || { width: 375, height: 812, label: 'Mobile (375x812 iPhone / Pixel)' };
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+</head>
+<body class="bg-stone-900 text-stone-100 min-h-screen flex flex-col justify-between p-4">
+  <div class="space-y-4 pt-6">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-mono text-teal-400 font-semibold tracking-wider">BBS MOMENTUM MOBILE</span>
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    </div>
+    <h2 class="text-2xl font-bold tracking-tight">${params.name}</h2>
+    <div class="p-4 bg-stone-800/80 rounded-2xl border border-stone-700/60 space-y-2">
+      <div class="text-xs text-stone-400">Active Academic Term</div>
+      <div class="text-lg font-bold text-white">AY2026 · Sem 1</div>
+      <div class="text-xs text-emerald-400 font-medium">94.2% Attendance Velocity</div>
+    </div>
+  </div>
+  <button class="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-stone-950 font-bold text-sm rounded-2xl transition-all shadow-lg">
+    Open Student Portfolio
+  </button>
+</body>
+</html>`;
+    } else if (params.template === 'slides') {
+      defaultDimensions = params.dimensions || { width: 1920, height: 1080, label: 'Slide Deck (16:9 Widescreen)' };
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="w-full h-screen bg-[#0F172A] text-white flex flex-col justify-between p-16 font-sans">
+  <div class="flex items-center justify-between border-b border-slate-700/60 pb-6">
+    <span class="text-sm font-mono tracking-widest text-teal-400 font-bold uppercase">BANGKOK BILINGUAL SCHOOL · CURRICULUM BLUEPRINT</span>
+    <span class="text-xs font-mono text-slate-400">SLIDE 01 / 12</span>
+  </div>
+  <div class="space-y-6 max-w-4xl">
+    <h1 class="text-6xl font-black tracking-tight leading-tight">${params.name}</h1>
+    <p class="text-xl text-slate-300 leading-relaxed font-light">${description}</p>
+  </div>
+  <div class="flex items-center justify-between text-xs font-mono text-slate-500">
+    <span>Superadmin Authority: j.sadol@bbs.ac.th</span>
+    <span>Powered by Petri Design & AGY CLI</span>
+  </div>
+</body>
+</html>`;
+    } else if (params.template === 'blank') {
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#FAFBFB] text-stone-900 flex items-center justify-center p-8 font-sans">
+  <div class="max-w-md w-full p-8 bg-white border border-stone-200 rounded-3xl shadow-sm text-center space-y-4">
+    <h2 class="text-2xl font-bold tracking-tight">${params.name}</h2>
+    <p class="text-stone-500 text-xs">${description}</p>
+    <div class="p-3 bg-teal-50 border border-teal-200 rounded-2xl text-[11px] text-teal-800 font-mono">
+      Ready for AGY CLI autonomous UI synthesis
+    </div>
+  </div>
+</body>
+</html>`;
+    } else {
+      // Default modern landing
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>${params.name}</title>
+</head>
+<body class="min-h-screen bg-stone-50 flex items-center justify-center p-6 text-stone-900 font-sans">
+  <div class="max-w-2xl w-full bg-white p-10 rounded-3xl border border-stone-200/80 shadow-xs space-y-6 text-center">
+    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-semibold">
+      <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+      <span>Petri Design Workdesk</span>
+    </div>
+    <h1 class="text-4xl font-extrabold tracking-tight">${params.name}</h1>
+    <p class="text-stone-600 text-sm leading-relaxed max-w-lg mx-auto">${description}</p>
+    <div class="flex items-center justify-center gap-3 pt-2">
+      <button class="px-6 py-2.5 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-stone-800 transition-all">
+        Get Started
+      </button>
+      <button class="px-6 py-2.5 bg-stone-100 text-stone-700 text-xs font-semibold rounded-xl hover:bg-stone-200 transition-all">
+        Explore Features
+      </button>
+    </div>
+  </div>
+</body>
+</html>`;
+    }
+
+    const newWorkdesk: PetriWorkdesk = {
+      id,
+      name: params.name,
+      category,
+      description,
+      dimensions: defaultDimensions,
+      tokens: { ...DEFAULT_DESIGN_TOKENS },
+      activeArtifactId: 'art-main-html',
+      exportFormats: ['html', 'pdf', 'pptx', 'mp4'],
+      syncStatus: 'local_only',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      artifacts: [
+        {
+          id: 'art-main-html',
+          name: 'index.html',
+          type: 'html',
+          updatedAt: Date.now(),
+          code: starterHtml,
+        },
+        {
+          id: 'art-main-notes',
+          name: 'DESIGN.md',
+          type: 'json',
+          updatedAt: Date.now(),
+          code: `# ${params.name} Design Guide\n- Primary Accent: #0ABAB5\n- Typography: Inter, system-ui\n- Grid System: 12-column responsive layout`,
+        },
+      ],
+    };
+
+    this.projects = [newWorkdesk, ...this.projects];
+    this.saveProjects();
+    return newWorkdesk;
+  }
+
   public createProject(
     name: string,
     category: OpenDesignProject['category'],
     description: string
   ): OpenDesignProject {
-    const newProj: OpenDesignProject = {
-      id: `proj-${Date.now().toString(36)}`,
-      name,
-      category,
-      description,
-      tokens: { ...DEFAULT_DESIGN_TOKENS },
-      activeArtifactId: 'art-index',
-      exportFormats: ['html', 'pdf', 'pptx', 'mp4'],
+    return this.createWorkdesk({ name, category, description });
+  }
+
+  public duplicateWorkdesk(id: string): PetriWorkdesk | undefined {
+    const original = this.getProject(id);
+    if (!original) return undefined;
+
+    const duplicated: PetriWorkdesk = {
+      ...original,
+      id: `workdesk-${Date.now().toString(36)}`,
+      name: `${original.name} (Copy)`,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      artifacts: [
-        {
-          id: 'art-index',
-          name: 'index.html',
-          type: 'html',
-          updatedAt: Date.now(),
-          code: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <title>${name}</title>
-</head>
-<body class="min-h-screen bg-stone-50 flex items-center justify-center p-6 text-stone-900 font-sans">
-  <div class="max-w-xl text-center space-y-4">
-    <h1 class="text-3xl font-bold">${name}</h1>
-    <p class="text-stone-600 text-sm">${description}</p>
-    <div class="p-4 bg-white rounded-2xl border border-stone-200 text-xs text-stone-500">
-      Generated via Open Design & AGY CLI
-    </div>
-  </div>
-</body>
-</html>`,
-        },
-      ],
+      syncStatus: 'local_only',
+      lastSyncedRemote: undefined,
+      artifacts: original.artifacts.map((a) => ({
+        ...a,
+        id: `art-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+      })),
     };
 
-    this.projects = [newProj, ...this.projects];
-    return newProj;
+    this.projects = [duplicated, ...this.projects];
+    this.saveProjects();
+    return duplicated;
+  }
+
+  public deleteWorkdesk(id: string): void {
+    this.projects = this.projects.filter((p) => p.id !== id);
+    this.saveProjects();
+  }
+
+  public renameWorkdesk(id: string, newName: string): PetriWorkdesk | undefined {
+    const proj = this.getProject(id);
+    if (!proj) return undefined;
+    proj.name = newName;
+    proj.updatedAt = Date.now();
+    this.saveProjects();
+    return proj;
+  }
+
+  public markWorkdeskSynced(id: string, remoteName: string): void {
+    const proj = this.getProject(id);
+    if (!proj) return;
+    proj.syncStatus = 'synced';
+    proj.lastSyncedRemote = remoteName;
+    proj.updatedAt = Date.now();
+    this.saveProjects();
   }
 
   public updateArtifactCode(projectId: string, artifactId: string, newCode: string): void {
@@ -487,6 +690,7 @@ class OpenDesignService {
     art.code = newCode;
     art.updatedAt = Date.now();
     proj.updatedAt = Date.now();
+    this.saveProjects();
   }
 
   public getMcpServers(): McpServerDefinition[] {

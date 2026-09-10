@@ -231,10 +231,10 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <span>Design Studio</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-amber-100 text-amber-800">Open-Design</span>
+                    <span>Petri Design</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Workdesks</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">AGY CLI + MCP Multi-Device Studio</div>
+                  <div className="text-[11px] text-stone-500">AGY CLI + MCP Workdesk Studio</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />

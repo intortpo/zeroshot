@@ -33,7 +33,7 @@ export const GoogleWorkspaceDwdModal: React.FC<GoogleWorkspaceDwdModalProps> = (
   onSelectUseCase,
 }) => {
   const [jsonInput, setJsonInput] = useState('');
-  const [delegatedEmail, setDelegatedEmail] = useState(status.delegated_user || 'intortpo@gmail.com');
+  const [delegatedEmail, setDelegatedEmail] = useState(status.delegated_user || 'j.sadol@bbs.ac.th');
   const [activeTab, setActiveTab] = useState<'use_cases' | 'credentials'>('use_cases');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

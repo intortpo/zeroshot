@@ -60,8 +60,14 @@ pub struct WorkspaceArtifact {
 pub fn get_default_scopes() -> Vec<String> {
     vec![
         "https://www.googleapis.com/auth/drive".to_string(),
+        "https://www.googleapis.com/auth/drive.readonly".to_string(),
+        "https://www.googleapis.com/auth/drive.file".to_string(),
         "https://www.googleapis.com/auth/documents".to_string(),
         "https://www.googleapis.com/auth/spreadsheets".to_string(),
+        "https://www.googleapis.com/auth/classroom.courses.readonly".to_string(),
+        "https://www.googleapis.com/auth/classroom.coursework.students.readonly".to_string(),
+        "https://www.googleapis.com/auth/classroom.rosters.readonly".to_string(),
+        "https://www.googleapis.com/auth/classroom.student-submissions.students.readonly".to_string(),
         "https://www.googleapis.com/auth/gmail.modify".to_string(),
     ]
 }
@@ -155,8 +161,7 @@ pub fn parse_and_validate_key(json_content: &str, delegated_user: Option<String>
 
     let resolved_delegated_user = delegated_user
         .filter(|u| !u.trim().is_empty())
-        .or_else(get_active_gemini_account)
-        .unwrap_or_else(|| "intortpo@gmail.com".to_string());
+        .unwrap_or_else(|| "j.sadol@bbs.ac.th".to_string());
 
     let key_id_suffix = if key.private_key_id.len() > 8 {
         format!("...{}", &key.private_key_id[key.private_key_id.len() - 8..])
@@ -198,6 +203,7 @@ pub async fn load_google_dwd_credentials(
     } else {
         let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
         let default_paths = [
+            PathBuf::from("/home/hideo/Documents/GitHub/bbs-momentum-ino/bbs-momentum-e0d7efc9c9e5.json"),
             Path::new(&home).join(".gemini").join("google_dwd_service_account.json"),
             Path::new(&home).join(".config").join("gcloud").join("application_default_credentials.json"),
         ];
@@ -213,27 +219,38 @@ pub async fn load_google_dwd_credentials(
         match found_content {
             Some(c) => c,
             None => {
-                return Err("No service account JSON provided or found in default locations (~/.gemini/google_dwd_service_account.json)".to_string());
+                return Err("No service account JSON provided or found in default locations (/home/hideo/Documents/GitHub/bbs-momentum-ino/bbs-momentum-e0d7efc9c9e5.json)".to_string());
             }
         }
     };
 
-    parse_and_validate_key(&content, delegated_user)
+    let target_delegated = delegated_user.or_else(|| Some("j.sadol@bbs.ac.th".to_string()));
+    parse_and_validate_key(&content, target_delegated)
 }
 
 #[tauri::command]
 pub async fn get_google_dwd_status() -> Result<GoogleDwdStatus, String> {
-    let lock = DWD_STATE.lock().unwrap();
-    if let Some(status) = lock.as_ref() {
-        return Ok(status.clone());
+    {
+        let lock = DWD_STATE.lock().unwrap();
+        if let Some(status) = lock.as_ref() {
+            return Ok(status.clone());
+        }
     }
 
-    let default_delegated = get_active_gemini_account();
+    let default_path = PathBuf::from("/home/hideo/Documents/GitHub/bbs-momentum-ino/bbs-momentum-e0d7efc9c9e5.json");
+    if default_path.exists() {
+        if let Ok(content) = fs::read_to_string(&default_path) {
+            if let Ok(status) = parse_and_validate_key(&content, Some("j.sadol@bbs.ac.th".to_string())) {
+                return Ok(status);
+            }
+        }
+    }
+
     Ok(GoogleDwdStatus {
         is_configured: false,
         project_id: None,
         client_email: None,
-        delegated_user: default_delegated,
+        delegated_user: Some("j.sadol@bbs.ac.th".to_string()),
         key_id_suffix: None,
         scopes: get_default_scopes(),
         supported_use_cases: get_supported_use_cases(),
@@ -252,14 +269,14 @@ pub async fn dispatch_workspace_use_case(
         is_configured: false,
         project_id: None,
         client_email: None,
-        delegated_user: get_active_gemini_account(),
+        delegated_user: Some("j.sadol@bbs.ac.th".to_string()),
         key_id_suffix: None,
         scopes: get_default_scopes(),
         supported_use_cases: get_supported_use_cases(),
         last_validated_at: None,
     });
 
-    let delegated = status.delegated_user.as_deref().unwrap_or("intortpo@gmail.com");
+    let delegated = status.delegated_user.as_deref().unwrap_or("j.sadol@bbs.ac.th");
 
     let result = match use_case_id.as_str() {
         "research" => WorkspaceUseCaseResult {

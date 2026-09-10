@@ -6,12 +6,14 @@ pub mod google_dwd;
 pub mod hardware;
 pub mod mesh;
 pub mod petri_server;
+pub mod rclone;
 pub mod workspace;
 
 use github_delivery::{submit_delivery_gate, submit_goal};
 use google_dwd::{dispatch_workspace_use_case, get_google_dwd_status, load_google_dwd_credentials};
 use hardware::detect_hardware;
 use mesh::get_mesh_peers;
+use rclone::{get_rclone_status, list_rclone_remotes, execute_rclone_sync};
 use ecc::{run_ecc_command, save_ecc_memory_entry, query_ecc_memory_vault, run_ecc_memory_doctor};
 use agy::{check_agy_status, get_agy_models, run_agy_prompt, test_provider_connection};
 use devcontainer::{check_devcontainer_status, start_devcontainer, stop_devcontainer, exec_in_devcontainer, get_devcontainer_logs};
@@ -65,6 +67,9 @@ pub fn run() {
             tailscale_disconnect,
             tailscale_set_exit_node,
             tailscale_set_advertise_exit_node,
+            get_rclone_status,
+            list_rclone_remotes,
+            execute_rclone_sync,
         ])
         .run(tauri::generate_context!())
         .expect("error while running petri application");

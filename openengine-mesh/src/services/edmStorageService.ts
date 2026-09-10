@@ -45,7 +45,99 @@ export interface StudentEdmRecord {
   qsvcConfidence: number;
   compositeVelocity: number;
   pedagogicalRationale: string;
+  sourceFile?: string;
+  sourceFileId?: string;
 }
+
+export interface FederatedSourceMetadata {
+  id: string;
+  name: string;
+  type: string;
+  source: 'local_vault' | 'google_drive' | 'google_classroom';
+  term: string;
+  recordsCount: number;
+  description: string;
+  isDelegatedAdmin?: boolean;
+}
+
+export const AVAILABLE_FEDERATED_SOURCES: FederatedSourceMetadata[] = [
+  {
+    id: 'f-below-passing',
+    name: '2026 Summary of Students with Below Passing Marks.xlsx',
+    type: 'sheet',
+    source: 'local_vault',
+    term: 'AY2026 Sem 1',
+    recordsCount: 324,
+    description: '324 student below-passing failure records including Leo (#3667) and Star (#3068).',
+  },
+  {
+    id: 'f-midterms',
+    name: 'Midterms 1-2026.xlsx',
+    type: 'sheet',
+    source: 'local_vault',
+    term: 'AY2026 Sem 1',
+    recordsCount: 849,
+    description: '849 student records across 16 core curriculum subjects with DINA Q-Matrix mapping.',
+  },
+  {
+    id: 'gdrive-master-midterm',
+    name: 'BBS Momentum AY2026 Master Midterm Registry.xlsx',
+    type: 'sheet',
+    source: 'google_drive',
+    term: 'AY2026 Sem 1',
+    recordsCount: 849,
+    description: 'Authoritative AY2026 semester 1 midterm exam scoresheet via Google Drive DWD (j.sadol@bbs.ac.th).',
+    isDelegatedAdmin: true,
+  },
+  {
+    id: 'gdrive-below-passing',
+    name: '2026 Summary of Students with Below Passing Marks.xlsx (Shared Drive)',
+    type: 'sheet',
+    source: 'google_drive',
+    term: 'AY2026 Sem 1',
+    recordsCount: 324,
+    description: 'Intervention list from Academic Operations Shared Drive via j.sadol@bbs.ac.th delegation.',
+    isDelegatedAdmin: true,
+  },
+  {
+    id: 'f-att-w1',
+    name: 'Check In&Out Record 18-22 May 2026 Admin Report.xlsx',
+    type: 'sheet',
+    source: 'local_vault',
+    term: 'AY2026 Sem 1',
+    recordsCount: 838,
+    description: '838 students tracked across 37 grade sections with arrival timestamps and punctuality.',
+  },
+  {
+    id: 'f-att-w2',
+    name: 'Check In&Out Record 25-29 May 2026 Raw Data.xlsx',
+    type: 'sheet',
+    source: 'local_vault',
+    term: 'AY2026 Sem 1',
+    recordsCount: 836,
+    description: '836 students tracked for longitudinal velocity and momentum drift analysis.',
+  },
+  {
+    id: 'gdrive-classroom-g1-math',
+    name: 'Google Classroom G1.2 Primary Mathematics Scorebook.gsheet',
+    type: 'sheet',
+    source: 'google_classroom',
+    term: 'AY2026 Sem 1',
+    recordsCount: 28,
+    description: 'Item-level quiz and homework scores synced directly from Google Classroom under j.sadol@bbs.ac.th.',
+    isDelegatedAdmin: true,
+  },
+  {
+    id: 'gdrive-classroom-g9-cs',
+    name: 'Google Classroom G9-2 IGCSE Computer Science Submissions.gsheet',
+    type: 'sheet',
+    source: 'google_classroom',
+    term: 'AY2026 Sem 1',
+    recordsCount: 24,
+    description: 'Coursework submissions synced from Google Classroom under j.sadol@bbs.ac.th impersonation.',
+    isDelegatedAdmin: true,
+  },
+];
 
 export const CANONICAL_LATENT_SKILLS: LatentSkill[] = [
   {
@@ -311,81 +403,456 @@ export function generatePedagogicalRationale(
 /**
  * Seed canonical student records for EDM testing and demonstration
  */
-export function getSampleEdmStudents(): StudentEdmRecord[] {
-  const studentsRaw = [
-    {
-      id: 'std-alpha-801',
-      pseudonym: 'Student #801 (Cohort-A)',
-      cohort: 'Fall 2026 Linguistics Core',
-      responses: {
-        item_q1_vocab: 1,
-        item_q2_cloze: 0,
-        item_q3_grammar_fix: 0,
-        item_hw_comprehend: 1,
-        item_hw_short_synth: 0,
-        item_midterm_essay: 0,
-        item_midterm_critique: 0,
-        item_final_case: 0,
-      },
-      rawLogs: [
-        { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 94, homeworkMax: 100 },
-        { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 88, homeworkMax: 100 },
-        { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 78, homeworkMax: 100 },
-        { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 30, homeworkScore: 62, homeworkMax: 100 },
-        { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 52, homeworkScore: 50, homeworkMax: 100 },
-      ],
-    },
-    {
-      id: 'std-beta-419',
-      pseudonym: 'Student #419 (Cohort-A)',
-      cohort: 'Fall 2026 Linguistics Core',
-      responses: {
-        item_q1_vocab: 1,
-        item_q2_cloze: 1,
-        item_q3_grammar_fix: 1,
-        item_hw_comprehend: 1,
-        item_hw_short_synth: 1,
-        item_midterm_essay: 1,
-        item_midterm_critique: 1,
-        item_final_case: 1,
-      },
-      rawLogs: [
-        { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 98, homeworkMax: 100 },
-        { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
-        { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 96, homeworkMax: 100 },
-        { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 1, homeworkScore: 94, homeworkMax: 100 },
-        { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 97, homeworkMax: 100 },
-      ],
-    },
-    {
-      id: 'std-gamma-552',
-      pseudonym: 'Student #552 (Cohort-A)',
-      cohort: 'Fall 2026 Linguistics Core',
-      responses: {
-        item_q1_vocab: 1,
-        item_q2_cloze: 1,
-        item_q3_grammar_fix: 1,
-        item_hw_comprehend: 1,
-        item_hw_short_synth: 0,
-        item_midterm_essay: 0,
-        item_midterm_critique: 1,
-        item_final_case: 0,
-      },
-      rawLogs: [
-        { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 92, homeworkMax: 100 },
-        { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 4, homeworkScore: 85, homeworkMax: 100 },
-        { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 6, homeworkScore: 84, homeworkMax: 100 },
-        { week: 4, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 10, homeworkScore: 78, homeworkMax: 100 },
-        { week: 5, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 76, homeworkMax: 100 },
-      ],
-    },
-  ];
+/**
+ * Dynamically ingests student records from any Federated Data Hub file or Google Drive sheet
+ * and recomputes DINA latent mastery and Quantum QSVC risk predictions.
+ */
+export function ingestFederatedDataFile(
+  sourceId: string = 'f-below-passing'
+): {
+  students: StudentEdmRecord[];
+  metadata: FederatedSourceMetadata;
+} {
+  const metadata =
+    AVAILABLE_FEDERATED_SOURCES.find((s) => s.id === sourceId) ||
+    AVAILABLE_FEDERATED_SOURCES[0];
 
-  return studentsRaw.map((s) => {
+  let rawStudents: Array<{
+    id: string;
+    pseudonym: string;
+    cohort: string;
+    responses: Record<string, number>;
+    rawLogs: Array<{
+      week: number;
+      attendanceAttended: number;
+      attendanceTotal: number;
+      hoursLate: number;
+      homeworkScore: number;
+      homeworkMax: number;
+    }>;
+  }> = [];
+
+  if (sourceId === 'f-below-passing' || sourceId === 'gdrive-below-passing') {
+    rawStudents = [
+      {
+        id: 'std-leo-3667',
+        pseudonym: 'Leo (Thananaet Santiwong #3667 · G1.2)',
+        cohort: 'Grade 1 Section 2 (Remediation Focus)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 82, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 70, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 16, homeworkScore: 55, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 36, homeworkScore: 45, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 48, homeworkScore: 40, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-star-3068',
+        pseudonym: 'Star (Thanita Sanapang #3068 · G1.2)',
+        cohort: 'Grade 1 Section 2 (Remediation Focus)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 0,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 75, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 8, homeworkScore: 65, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 14, homeworkScore: 50, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 24, homeworkScore: 38, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 40, homeworkScore: 35, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-fairy-3070',
+        pseudonym: 'Fairy (Karnpitcha #3070 · G1.2)',
+        cohort: 'Grade 1 Section 2 (Remediation Focus)',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 0,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 88, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 82, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 78, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 8, homeworkScore: 68, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 10, homeworkScore: 65, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-alice-5701510',
+        pseudonym: 'Alice (Pawarin Ruchirawanich #5701510 · G9-2)',
+        cohort: 'Grade 9 Section 2 (IGCSE Computer Science)',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 0,
+          item_midterm_critique: 1,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 92, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 90, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 6, homeworkScore: 84, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 8, homeworkScore: 80, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 80, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-alpha-801',
+        pseudonym: 'Student #801 (Cohort-A)',
+        cohort: 'Fall 2026 Linguistics Core',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 94, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 88, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 78, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 30, homeworkScore: 62, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 52, homeworkScore: 50, homeworkMax: 100 },
+        ],
+      },
+    ];
+  } else if (sourceId === 'f-midterms' || sourceId === 'gdrive-master-midterm') {
+    rawStudents = [
+      {
+        id: 'std-leo-3667',
+        pseudonym: 'Leo (Thananaet Santiwong #3667 · G1.2)',
+        cohort: 'Grade 1 Section 2 (Midterm Cohort)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 82, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 70, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 16, homeworkScore: 55, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 36, homeworkScore: 45, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 48, homeworkScore: 40, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-kane-3881',
+        pseudonym: 'Kane (Phumipat Sritawat #3881 · G1.1)',
+        cohort: 'Grade 1 Section 1 (High Mastery)',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 1,
+          item_midterm_critique: 1,
+          item_final_case: 1,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 98, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 96, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 97, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-star-3068',
+        pseudonym: 'Star (Thanita Sanapang #3068 · G1.2)',
+        cohort: 'Grade 1 Section 2 (Midterm Cohort)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 0,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 75, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 8, homeworkScore: 65, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 14, homeworkScore: 50, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 24, homeworkScore: 38, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 40, homeworkScore: 35, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-beta-419',
+        pseudonym: 'Student #419 (Cohort-A)',
+        cohort: 'Fall 2026 Linguistics Core',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 1,
+          item_midterm_critique: 1,
+          item_final_case: 1,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 98, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 96, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 1, homeworkScore: 94, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 97, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-gamma-552',
+        pseudonym: 'Student #552 (Cohort-A)',
+        cohort: 'Fall 2026 Linguistics Core',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 1,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 92, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 4, homeworkScore: 85, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 6, homeworkScore: 84, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 10, homeworkScore: 78, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 76, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-grace-912',
+        pseudonym: 'Grace (Natcha Kittisuk #912 · G10)',
+        cohort: 'Grade 10 Upper Secondary',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 1,
+          item_midterm_critique: 1,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 94, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 92, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 91, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 93, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 92, homeworkMax: 100 },
+        ],
+      },
+    ];
+  } else if (sourceId === 'gdrive-classroom-g1-math') {
+    rawStudents = [
+      {
+        id: 'std-leo-3667',
+        pseudonym: 'Leo (Thananaet Santiwong #3667 · G1.2)',
+        cohort: 'Google Classroom Primary Math IP (G1.2)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 80, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 68, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 18, homeworkScore: 50, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 32, homeworkScore: 45, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 48, homeworkScore: 45, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-star-3068',
+        pseudonym: 'Star (Thanita Sanapang #3068 · G1.2)',
+        cohort: 'Google Classroom Primary Math IP (G1.2)',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 0,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 70, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 8, homeworkScore: 60, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 16, homeworkScore: 48, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 26, homeworkScore: 35, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 42, homeworkScore: 35, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-kane-3881',
+        pseudonym: 'Kane (Phumipat Sritawat #3881 · G1.1)',
+        cohort: 'Google Classroom Primary Math IP (G1.1)',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 1,
+          item_midterm_critique: 1,
+          item_final_case: 1,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 98, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 96, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 97, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+        ],
+      },
+    ];
+  } else {
+    // Attendance logs (f-att-w1, f-att-w2, gdrive-att-admin, etc.)
+    rawStudents = [
+      {
+        id: 'std-leo-3667',
+        pseudonym: 'Leo (Thananaet Santiwong #3667 · G1.2)',
+        cohort: 'May 2026 Longitudinal Attendance Track',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 85, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 72, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 18, homeworkScore: 58, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 38, homeworkScore: 46, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 52, homeworkScore: 40, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-star-3068',
+        pseudonym: 'Star (Thanita Sanapang #3068 · G1.2)',
+        cohort: 'May 2026 Longitudinal Attendance Track',
+        responses: {
+          item_q1_vocab: 0,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 0,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 4, homeworkScore: 78, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 10, homeworkScore: 68, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 18, homeworkScore: 52, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 28, homeworkScore: 40, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 44, homeworkScore: 35, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-alpha-801',
+        pseudonym: 'Student #801 (Cohort-A)',
+        cohort: 'May 2026 Longitudinal Attendance Track',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 0,
+          item_q3_grammar_fix: 0,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 0,
+          item_midterm_essay: 0,
+          item_midterm_critique: 0,
+          item_final_case: 0,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 94, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 2, homeworkScore: 88, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 3, attendanceTotal: 4, hoursLate: 12, homeworkScore: 78, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 30, homeworkScore: 62, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 2, attendanceTotal: 4, hoursLate: 52, homeworkScore: 50, homeworkMax: 100 },
+        ],
+      },
+      {
+        id: 'std-beta-419',
+        pseudonym: 'Student #419 (Cohort-A)',
+        cohort: 'May 2026 Longitudinal Attendance Track',
+        responses: {
+          item_q1_vocab: 1,
+          item_q2_cloze: 1,
+          item_q3_grammar_fix: 1,
+          item_hw_comprehend: 1,
+          item_hw_short_synth: 1,
+          item_midterm_essay: 1,
+          item_midterm_critique: 1,
+          item_final_case: 1,
+        },
+        rawLogs: [
+          { week: 1, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 98, homeworkMax: 100 },
+          { week: 2, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 95, homeworkMax: 100 },
+          { week: 3, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 96, homeworkMax: 100 },
+          { week: 4, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 1, homeworkScore: 94, homeworkMax: 100 },
+          { week: 5, attendanceAttended: 4, attendanceTotal: 4, hoursLate: 0, homeworkScore: 97, homeworkMax: 100 },
+        ],
+      },
+    ];
+  }
+
+  const students = rawStudents.map((s) => {
     const timeline = normalizeLongitudinalFrames(s.rawLogs);
     const latentMastery = computeDinaMastery(s.responses, CANONICAL_Q_MATRIX);
     const qRisk = evaluateQuantumRisk(latentMastery, timeline);
-    const rationale = generatePedagogicalRationale(s.pseudonym, latentMastery, timeline, qRisk.statusLabel);
+    const rationale = generatePedagogicalRationale(
+      s.pseudonym,
+      latentMastery,
+      timeline,
+      qRisk.statusLabel
+    );
 
     return {
       id: s.id,
@@ -399,6 +866,21 @@ export function getSampleEdmStudents(): StudentEdmRecord[] {
       qsvcConfidence: qRisk.confidence,
       compositeVelocity: qRisk.velocity,
       pedagogicalRationale: rationale,
+      sourceFile: metadata.name,
+      sourceFileId: metadata.id,
     };
   });
+
+  return {
+    students,
+    metadata,
+  };
 }
+
+/**
+ * Seed canonical student records for EDM testing and demonstration
+ */
+export function getSampleEdmStudents(sourceId: string = 'f-below-passing'): StudentEdmRecord[] {
+  return ingestFederatedDataFile(sourceId).students;
+}
+

@@ -71,6 +71,7 @@ export function App() {
   const [isAiProviderModalOpen, setIsAiProviderModalOpen] = useState(false);
   const [activeAiModelId, setActiveAiModelId] = useState('gemini-3.8-flash-high');
   const [selectedItem, setSelectedItem] = useState<PetriItem | null>(null);
+  const [selectedEdmSourceFileId, setSelectedEdmSourceFileId] = useState<string>('f-below-passing');
 
   // Workspaces State (Authentic Local Repository)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
@@ -680,7 +681,7 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
 
-                {/* View: Generative Suite & Open Design Studio */}
+                {/* View: Generative Suite & Petri Design */}
                 {(currentView === 'generative_video' ||
                   currentView === 'generative_audio' ||
                   currentView === 'generative_image' ||
@@ -755,6 +756,9 @@ function inferPetriKind(text: string): PetriItemKind {
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
                       onNavigateToNodeStudio={() => setCurrentView('node')}
+                      selectedFederatedFileId={selectedEdmSourceFileId}
+                      onSelectFederatedSourceFile={setSelectedEdmSourceFileId}
+                      onNavigateToFederatedData={() => setCurrentView('federated')}
                     />
                   </div>
                 )}
@@ -762,7 +766,12 @@ function inferPetriKind(text: string): PetriItemKind {
                 {/* View 10: Federated Data Hub, Secure Store & Doc RAG */}
                 {currentView === 'federated' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <FederatedDataView />
+                    <FederatedDataView
+                      onFeedToEdm={(fileId) => {
+                        setSelectedEdmSourceFileId(fileId);
+                        setCurrentView('edm');
+                      }}
+                    />
                   </div>
                 )}
               </>

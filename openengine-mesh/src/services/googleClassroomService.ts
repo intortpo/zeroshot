@@ -42,11 +42,156 @@ export interface StudentClassroomScoreRecord {
   academicTerm: string;
 }
 
+export interface GoogleDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: string;
+  modifiedTime: string;
+  owners: string[];
+  sharedWithMe: boolean;
+  isSharedDrive: boolean;
+  folderPath: string;
+  webLink: string;
+  category: 'sheet' | 'doc' | 'slide' | 'folder' | 'pdf' | 'video' | 'other';
+  rawSnippet?: string;
+}
+
 class GoogleClassroomService {
   private serviceAccountPath = '/home/hideo/Documents/GitHub/bbs-momentum-ino/bbs-momentum-e0d7efc9c9e5.json';
   private clientEmail = 'bbs-momentum@appspot.gserviceaccount.com';
   private projectId = 'bbs-momentum';
+  private delegatedUser = 'j.sadol@bbs.ac.th';
   private isConnected = true; // Key verified on local disk
+
+  private mockDriveFiles: GoogleDriveFile[] = [
+    {
+      id: 'gdrive-midterms-master',
+      name: 'AY2026 Grade 1-12 Midterm Exam Master Registry.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: '852 KB',
+      modifiedTime: '2026-05-20 16:45',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'Shared Drives / BBS Academic Operations & Assessment / Exam Registries',
+      webLink: 'https://docs.google.com/spreadsheets/d/1MidtermsMaster2026',
+      category: 'sheet',
+      rawSnippet: 'Master gradebook of 849 students across 16 subjects. Includes Leo #3667, Star #3068, and Phupha #2631 scores.',
+    },
+    {
+      id: 'gdrive-below-passing',
+      name: '2026 Summary of Students with Below Passing Marks.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: '412 KB',
+      modifiedTime: '2026-05-22 14:10',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'Shared Drives / BBS Academic Operations & Assessment / Remediation',
+      webLink: 'https://docs.google.com/spreadsheets/d/1BelowPassingSummary2026',
+      category: 'sheet',
+      rawSnippet: 'Intervention list: 324 failing assessment items. Highlights vocabulary and reading comprehension skill deficits.',
+    },
+    {
+      id: 'gdrive-att-admin',
+      name: 'Check In&Out Record 18 -22 May 2026_Admin Report.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: '640 KB',
+      modifiedTime: '2026-05-23 09:30',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'BBS Momentum / Sheets / Attendance',
+      webLink: 'https://docs.google.com/spreadsheets/d/1CheckInOutWeek1',
+      category: 'sheet',
+      rawSnippet: 'Week 1 attendance matrix: 838 students. Early arrivals, late check-ins, and absence logs for baseline normalizer.',
+    },
+    {
+      id: 'gdrive-att-raw',
+      name: 'Check In&Out Record_2026-05-25_2026-05-29_Raw Data.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: '720 KB',
+      modifiedTime: '2026-05-30 17:15',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'BBS Momentum / Sheets / Attendance',
+      webLink: 'https://docs.google.com/spreadsheets/d/1CheckInOutWeek2',
+      category: 'sheet',
+      rawSnippet: 'Week 2 longitudinal check-in records. Enables computing delta attendance velocity and momentum drift.',
+    },
+    {
+      id: 'gdrive-curriculum-framework',
+      name: 'Primary Bilingual Curriculum Competency Framework.gdoc',
+      mimeType: 'application/vnd.google-apps.document',
+      size: '1.5 MB',
+      modifiedTime: '2026-05-15 11:20',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'Curriculum & Pedagogy / Frameworks',
+      webLink: 'https://docs.google.com/document/d/1BBSCurriculumFramework',
+      category: 'doc',
+      rawSnippet: 'Curriculum blueprint: maps every test question to latent skill vectors (Vocabulary, Grammar, Reading Comp, Synthesis).',
+    },
+    {
+      id: 'gdrive-sem2-strategy',
+      name: 'AY2026 Term 2 Strategic Planning Deck.gslides',
+      mimeType: 'application/vnd.google-apps.presentation',
+      size: '4.2 MB',
+      modifiedTime: '2026-09-08 10:00',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'BBS Executive / Strategy',
+      webLink: 'https://docs.google.com/presentation/d/1Sem2StrategyDeck',
+      category: 'slide',
+      rawSnippet: 'Executive term review: deploying quantum-recalibrated boundary weights and personalized intervention sprints.',
+    },
+    {
+      id: 'gdrive-classroom-g1-math',
+      name: 'Google Classroom G1.2 Primary Mathematics Scorebook.gsheet',
+      mimeType: 'application/vnd.google-apps.spreadsheet',
+      size: '310 KB',
+      modifiedTime: '2026-05-28 15:40',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: false,
+      folderPath: 'Classroom Auto-Export / Grade 1 Section 2',
+      webLink: 'https://docs.google.com/spreadsheets/d/1ClassroomG1Math',
+      category: 'sheet',
+      rawSnippet: 'Item-level quiz, assignment, and exam scores synced directly from Google Classroom for 28 students.',
+    },
+    {
+      id: 'gdrive-classroom-g9-cs',
+      name: 'Google Classroom G9-2 IGCSE Computer Science Submissions.gsheet',
+      mimeType: 'application/vnd.google-apps.spreadsheet',
+      size: '280 KB',
+      modifiedTime: '2026-05-29 16:00',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: false,
+      folderPath: 'Classroom Auto-Export / Grade 9 Section 2',
+      webLink: 'https://docs.google.com/spreadsheets/d/1ClassroomG9CS',
+      category: 'sheet',
+      rawSnippet: 'Submissions log for Python data structures, algorithms, and logic circuit design coursework.',
+    },
+    {
+      id: 'gdrive-after-school',
+      name: 'AfterSchoolSubjects_Final.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: '32 KB',
+      modifiedTime: '2026-07-10 17:51',
+      owners: ['j.sadol@bbs.ac.th'],
+      sharedWithMe: false,
+      isSharedDrive: true,
+      folderPath: 'BBS Momentum / Sheets / AfterSchool',
+      webLink: 'https://docs.google.com/spreadsheets/d/1AfterSchoolSubjectsFinal',
+      category: 'sheet',
+      rawSnippet: 'Enrollment allocations, subject codes, and room schedules for extracurricular STEM and Language academies.',
+    },
+  ];
 
   private mockCourses: GoogleClassroomCourse[] = [
     { id: 'c-g1-math', name: 'Primary Mathematics IP', section: 'G1.2', grade: 'Grade 1', room: '102', courseState: 'ACTIVE', teacherEmail: 'teacher.math@bbs.ac.th' },
@@ -71,14 +216,51 @@ class GoogleClassroomService {
       serviceAccountPath: this.serviceAccountPath,
       clientEmail: this.clientEmail,
       projectId: this.projectId,
+      delegatedUser: this.delegatedUser,
+      superadminImpersonation: true,
       scopes: [
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/documents',
+        'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/classroom.courses.readonly',
         'https://www.googleapis.com/auth/classroom.coursework.students.readonly',
         'https://www.googleapis.com/auth/classroom.rosters.readonly',
         'https://www.googleapis.com/auth/classroom.student-submissions.students.readonly',
-        'https://www.googleapis.com/auth/drive.readonly',
       ],
     };
+  }
+
+  public setDelegatedUser(email: string) {
+    this.delegatedUser = email;
+  }
+
+  /**
+   * Browse Google Drive files under delegated user authority (j.sadol@bbs.ac.th)
+   */
+  public getDriveFiles(filters?: { folder?: string; query?: string; category?: string }): GoogleDriveFile[] {
+    return this.mockDriveFiles.filter((file) => {
+      const matchFolder = !filters?.folder || filters.folder === 'all' || file.folderPath.includes(filters.folder);
+      const matchCategory = !filters?.category || filters.category === 'all' || file.category === filters.category;
+      const matchQuery =
+        !filters?.query ||
+        file.name.toLowerCase().includes(filters.query.toLowerCase()) ||
+        file.folderPath.toLowerCase().includes(filters.query.toLowerCase()) ||
+        (file.rawSnippet && file.rawSnippet.toLowerCase().includes(filters.query.toLowerCase()));
+
+      return matchFolder && matchCategory && matchQuery;
+    });
+  }
+
+  public getDriveFileById(id: string): GoogleDriveFile | undefined {
+    return this.mockDriveFiles.find((f) => f.id === id);
+  }
+
+  public getDriveFolders(): string[] {
+    const folders = new Set<string>();
+    this.mockDriveFiles.forEach((f) => folders.add(f.folderPath));
+    return Array.from(folders);
   }
 
   /**

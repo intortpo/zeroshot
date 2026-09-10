@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   GraduationCap,
   Database,
@@ -11,11 +11,15 @@ import {
   AlertCircle,
   FileSpreadsheet,
   ChevronRight,
+  Cloud,
+  FolderOpen,
 } from 'lucide-react';
 import {
   CANONICAL_LATENT_SKILLS,
   CANONICAL_Q_MATRIX,
-  getSampleEdmStudents,
+  ingestFederatedDataFile,
+  AVAILABLE_FEDERATED_SOURCES,
+  FederatedSourceMetadata,
   StudentEdmRecord,
   QMatrixItem,
   computeDinaMastery,
@@ -31,18 +35,57 @@ interface EdmDashboardViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
   onNavigateToNodeStudio?: () => void;
+  selectedFederatedFileId?: string;
+  onSelectFederatedSourceFile?: (fileId: string) => void;
+  onNavigateToFederatedData?: () => void;
 }
 
 export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   onNavigateToNodeStudio,
+  selectedFederatedFileId,
+  onSelectFederatedSourceFile,
+  onNavigateToFederatedData,
 }) => {
-  const [students, setStudents] = useState<StudentEdmRecord[]>(() => getSampleEdmStudents());
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('std-alpha-801');
+  const initialSourceId = selectedFederatedFileId || 'f-below-passing';
+  const [activeSourceId, setActiveSourceId] = useState<string>(initialSourceId);
+  const [activeSourceMeta, setActiveSourceMeta] = useState<FederatedSourceMetadata>(() => {
+    return AVAILABLE_FEDERATED_SOURCES.find((s) => s.id === initialSourceId) || AVAILABLE_FEDERATED_SOURCES[0];
+  });
+  const [students, setStudents] = useState<StudentEdmRecord[]>(() => {
+    return ingestFederatedDataFile(initialSourceId).students;
+  });
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
+    const initialStudents = ingestFederatedDataFile(initialSourceId).students;
+    return initialStudents[0]?.id || 'std-leo-3667';
+  });
   const [qMatrix, setQMatrix] = useState<QMatrixItem[]>(() => CANONICAL_Q_MATRIX);
   const [isExecutingPipeline, setIsExecutingPipeline] = useState(false);
   const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'diagnostics' | 'qmatrix' | 'ingestion'>('diagnostics');
   const [interventionNotice, setInterventionNotice] = useState<string | null>(null);
+
+  // Ingest source when selectedFederatedFileId changes from parent
+  useEffect(() => {
+    if (selectedFederatedFileId && selectedFederatedFileId !== activeSourceId) {
+      handleSwitchSource(selectedFederatedFileId);
+    }
+  }, [selectedFederatedFileId]);
+
+  const handleSwitchSource = (sourceId: string) => {
+    const ingested = ingestFederatedDataFile(sourceId);
+    setActiveSourceId(sourceId);
+    setActiveSourceMeta(ingested.metadata);
+    setStudents(ingested.students);
+    if (ingested.students.length > 0) {
+      setSelectedStudentId(ingested.students[0].id);
+    }
+    setInterventionNotice(
+      `Ingested from Federated Data Hub: "${ingested.metadata.name}" (${ingested.students.length} student records loaded into DINA & QSVC pipeline).`
+    );
+    if (onSelectFederatedSourceFile) {
+      onSelectFederatedSourceFile(sourceId);
+    }
+  };
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId) || students[0];
 
@@ -161,6 +204,62 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
             >
               <Cpu className="w-3.5 h-3.5 text-teal-600" />
               Open in Node Studio
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Federated Data Source Ingestion & Impersonation Bar */}
+      <div className="bg-slate-100/90 border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
+          <div className="flex items-center space-x-2 font-mono font-semibold text-slate-700">
+            <Database className="w-3.5 h-3.5 text-teal-600" />
+            <span>Active Federated Data Source:</span>
+          </div>
+
+          <div className="relative">
+            <select
+              value={activeSourceId}
+              onChange={(e) => handleSwitchSource(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs pr-8 cursor-pointer"
+            >
+              {AVAILABLE_FEDERATED_SOURCES.map((src) => (
+                <option key={src.id} value={src.id}>
+                  {src.name} ({src.recordsCount} records · {src.source === 'google_drive' ? 'Google Drive DWD' : src.source === 'google_classroom' ? 'Classroom DWD' : 'Local Vault'})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {activeSourceMeta.isDelegatedAdmin ? (
+            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-sky-50 text-sky-700 border border-sky-200 font-medium">
+              <Cloud className="w-3 h-3 text-sky-600" />
+              <span>DWD Impersonating <strong>j.sadol@bbs.ac.th</strong></span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+              <Lock className="w-3 h-3 text-emerald-600" />
+              <span>Local AES-256 Vault Encrypted</span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleSwitchSource(activeSourceId)}
+            className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer shadow-2xs"
+            title="Re-read raw file from Federated Data Hub and recompute psychometrics"
+          >
+            <RefreshCw className="w-3 h-3 text-slate-500" />
+            <span>Sync Source</span>
+          </button>
+          {onNavigateToFederatedData && (
+            <button
+              onClick={onNavigateToFederatedData}
+              className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+            >
+              <FolderOpen className="w-3 h-3 text-teal-600" />
+              <span>Explore Federated Hub</span>
             </button>
           )}
         </div>
@@ -306,6 +405,13 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                           {st.qsvcRiskLevel}
                         </span>
                       </div>
+
+                      {st.sourceFile && (
+                        <div className="mt-1 text-[10px] text-teal-700 font-mono flex items-center space-x-1 truncate">
+                          <Database className="w-2.5 h-2.5 text-teal-600 shrink-0" />
+                          <span className="truncate">{st.sourceFile}</span>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between mt-2 text-[11px] text-slate-500 font-mono">
                         <span>
@@ -500,33 +606,59 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50/50">
-                  <FileSpreadsheet className="w-8 h-8 text-teal-600 mx-auto mb-2" />
-                  <h4 className="font-semibold text-xs text-slate-800">Grades_Midterms.xlsx</h4>
-                  <p className="text-[11px] text-slate-400 font-mono mt-1">Item responses & essay scores</p>
-                  <span className="inline-block mt-3 text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    Encrypted In Vault
-                  </span>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {AVAILABLE_FEDERATED_SOURCES.map((source) => {
+                  const isCurrentlyActive = source.id === activeSourceId;
+                  return (
+                    <div
+                      key={source.id}
+                      className={`border rounded-xl p-4 flex flex-col justify-between transition-all ${
+                        isCurrentlyActive
+                          ? 'border-teal-600 bg-teal-50/50 shadow-xs ring-1 ring-teal-600'
+                          : 'border-slate-200 bg-white hover:border-teal-400'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <FileSpreadsheet className="w-6 h-6 text-teal-600" />
+                          {source.isDelegatedAdmin ? (
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 flex items-center gap-1">
+                              <Cloud className="w-2.5 h-2.5" />
+                              DWD
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" />
+                              VAULT
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-xs text-slate-800 line-clamp-2">
+                          {source.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-1.5 leading-relaxed">
+                          {source.description}
+                        </p>
+                      </div>
 
-                <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50/50">
-                  <FileSpreadsheet className="w-8 h-8 text-teal-600 mx-auto mb-2" />
-                  <h4 className="font-semibold text-xs text-slate-800">Homework_Submissions.xlsx</h4>
-                  <p className="text-[11px] text-slate-400 font-mono mt-1">Weekly timeliness & accuracy</p>
-                  <span className="inline-block mt-3 text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    Encrypted In Vault
-                  </span>
-                </div>
-
-                <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50/50">
-                  <FileSpreadsheet className="w-8 h-8 text-teal-600 mx-auto mb-2" />
-                  <h4 className="font-semibold text-xs text-slate-800">Attendance_Weekly_Logs.xlsx</h4>
-                  <p className="text-[11px] text-slate-400 font-mono mt-1">Discretized longitudinal frames</p>
-                  <span className="inline-block mt-3 text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    Encrypted In Vault
-                  </span>
-                </div>
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {source.recordsCount} records
+                        </span>
+                        <button
+                          onClick={() => handleSwitchSource(source.id)}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                            isCurrentlyActive
+                              ? 'bg-teal-600 text-white'
+                              : 'bg-slate-100 hover:bg-teal-600 hover:text-white text-slate-700'
+                          }`}
+                        >
+                          {isCurrentlyActive ? 'Active In EDM' : 'Ingest to EDM'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* RAG Knowledge Base Integration */}
