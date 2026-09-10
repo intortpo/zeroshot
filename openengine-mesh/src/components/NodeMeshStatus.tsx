@@ -31,6 +31,7 @@ import {
   Image as ImageIcon,
   FolderGit2,
   Clock,
+  Clapperboard,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -105,10 +106,12 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'plan' ||
     currentView === 'board' ||
     currentView === 'node' ||
-    currentView === 'projects';
+    currentView === 'projects' ||
+    currentView === 'companion';
 
   const isGenActive =
     currentView === 'generative_video' ||
+    currentView === 'video_flow' ||
     currentView === 'generative_audio' ||
     currentView === 'generative_image' ||
     currentView === 'generative_multimodal' ||
@@ -415,6 +418,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                       <div className="text-[10px] text-stone-400 font-normal">Multi-Account GitHub & Repos</div>
                     </div>
                   </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('companion');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'companion'
+                        ? 'bg-teal-50 text-teal-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Brain className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Thought Companion</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Gemini</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Open Chat & Infinite Forking</div>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -492,6 +516,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     <div>
                       <div className="text-xs font-semibold">Video</div>
                       <div className="text-[10px] text-stone-400 font-normal">Motion Synthesis & Text-to-Video</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('video_flow');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'video_flow'
+                        ? 'bg-rose-50 text-rose-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Clapperboard className="w-4 h-4 text-rose-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Video Flow</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-rose-100 text-rose-800">NLE</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">AI Scene Graph & Multi-Track Editor</div>
                     </div>
                   </button>
 

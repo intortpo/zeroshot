@@ -271,11 +271,88 @@ export type PetriViewMode =
   | 'midterm_clockin_demo'
   | 'federated'
   | 'generative_video'
+  | 'video_flow'
+  | 'companion'
   | 'generative_audio'
   | 'generative_image'
   | 'generative_multimodal'
   | 'generative_design'
   | 'projects';
+
+export type VideoFlowTransitionType =
+  | 'cut'
+  | 'cross_dissolve'
+  | 'optical_flow_morph'
+  | 'whip_pan'
+  | 'hyperzoom_in'
+  | 'glitch';
+
+export interface FlowSceneNode {
+  id: string;
+  title: string;
+  prompt: string;
+  negativePrompt?: string;
+  durationSeconds: number;
+  aspectRatio: '16:9' | '9:16' | '1:1' | '2.39:1';
+  cameraFlight: 'orbit' | 'push_in' | 'crane' | 'tilt_up' | 'pan_right' | 'submersion_dive';
+  modelId: 'petri-veo-2' | 'sora-2-turbo' | 'gen3-alpha' | 'hyperframe-neural';
+  colorLut: string;
+  status: 'draft' | 'synthesizing' | 'ready';
+  thumbnailUrl?: string;
+  videoBlobUrl?: string;
+  x: number;
+  y: number;
+  branchOfSceneId?: string;
+  motionStrength: number;
+}
+
+export interface FlowTransitionNode {
+  id: string;
+  sourceSceneId: string;
+  targetSceneId: string;
+  type: VideoFlowTransitionType;
+  durationMs: number;
+}
+
+export interface TimelineClip {
+  id: string;
+  sceneId: string;
+  track: 'v1' | 'v2' | 'a1' | 'a2';
+  title: string;
+  startTime: number;
+  duration: number;
+  color: string;
+  waveform?: number[];
+}
+
+export interface ThoughtTrace {
+  reasoningTokens: number;
+  thinkingDurationMs: number;
+  internalHypotheses: string[];
+  reflectionSummary: string;
+  confidenceScore: number;
+}
+
+export interface CompanionMessage {
+  id: string;
+  branchId: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  thoughtTrace?: ThoughtTrace;
+  injectedScenePrompt?: string;
+  forkedFromMessageId?: string;
+}
+
+export interface ConversationBranch {
+  id: string;
+  name: string;
+  parentBranchId: string | null;
+  divergedAtMessageId: string | null;
+  createdAt: string;
+  messages: CompanionMessage[];
+  color: string;
+}
 
 export interface SteerableConceptWord {
   id: string;

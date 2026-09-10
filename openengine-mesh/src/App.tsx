@@ -25,6 +25,9 @@ import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { MidtermClockInDemoView } from './components/edm/MidtermClockInDemoView';
+import { PetriVideoFlowEditor } from './components/generative/flow/PetriVideoFlowEditor';
+import { GeminiThoughtCompanionView } from './components/companion/GeminiThoughtCompanionView';
+import { GeminiThoughtDrawer } from './components/companion/GeminiThoughtDrawer';
 import { FederatedDataView } from './components/federated/FederatedDataView';
 import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
 import { McpServerManagerView } from './components/mcp/McpServerManagerView';
@@ -62,6 +65,7 @@ export function App() {
   const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
   const isMobile = useIsMobile(768);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isCompanionDrawerOpen, setIsCompanionDrawerOpen] = useState(false);
 
   // 3-Tier Enterprise Users & Identity State (SuperAdmin, Control, Consumer Personas)
   const [users, setUsers] = useState<UserProfile[]>(STANDARD_TIER_PERSONAS);
@@ -799,6 +803,24 @@ function inferPetriKind(text: string): PetriItemKind {
                     />
                   </div>
                 )}
+
+                {/* View 11: Petri Video Flow (Real AI Video Editor & Scene Generator) */}
+                {currentView === 'video_flow' && (
+                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-slate-950">
+                    <PetriVideoFlowEditor
+                      onOpenCompanion={() => setIsCompanionDrawerOpen(true)}
+                    />
+                  </div>
+                )}
+
+                {/* View 12: Gemini Thought Companion (Infinite Forking Open-Ended AI) */}
+                {currentView === 'companion' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200 bg-slate-950">
+                    <GeminiThoughtCompanionView
+                      onNavigateToVideoFlow={() => setCurrentView('video_flow')}
+                    />
+                  </div>
+                )}
               </>
             )}
           </MotionContainer>
@@ -900,6 +922,13 @@ function inferPetriKind(text: string): PetriItemKind {
         mode="drawer"
         isOpen={isCognitionOpen}
         onClose={() => setIsCognitionOpen(false)}
+      />
+
+      {/* Global Gemini Thought Companion Slide-Over Drawer */}
+      <GeminiThoughtDrawer
+        isOpen={isCompanionDrawerOpen}
+        onClose={() => setIsCompanionDrawerOpen(false)}
+        onNavigateToVideoFlow={() => setCurrentView('video_flow')}
       />
 
       {/* Global Custom Right-Click Context Menu & Text Selection Copy */}

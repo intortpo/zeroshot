@@ -10,6 +10,7 @@ import {
   RefreshCw,
   CheckCircle2,
   Volume2,
+  Clapperboard,
 } from 'lucide-react';
 import { PetriDesignStudioView } from './PetriDesignStudioView';
 import { HyperframeVideoSuite } from './HyperframeVideoSuite';
@@ -237,9 +238,38 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
       </div>
 
       {/* View Content Body */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 1. Full Hyperframe Video Design Suite */}
-        {activeTab === 'video' && <HyperframeVideoSuite />}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* 1. Full Hyperframe Video Design Suite & Video Flow NLE */}
+        {activeTab === 'video' && (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {onSelectView && (
+              <div className="m-4 mb-0 p-4 bg-gradient-to-r from-slate-900 via-teal-950/80 to-slate-900 border border-teal-500/40 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-100">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                      NEW: FLOW IN PETRI
+                    </span>
+                    <span className="text-xs text-teal-400 font-mono">FULL AI VIDEO EDITOR</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-100">
+                    Petri Video Flow Studio (Scene Graph & Multi-Track NLE)
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-2xl">
+                    Generate interconnected scenes, connect optical transitions, trim clips on a synchronized multi-track timeline, and export master movies.
+                  </p>
+                </div>
+                <button
+                  onClick={() => onSelectView('video_flow')}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-lg shadow-teal-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Clapperboard className="w-4 h-4" />
+                  <span>Launch Video Flow Studio →</span>
+                </button>
+              </div>
+            )}
+            <HyperframeVideoSuite />
+          </div>
+        )}
 
         {/* 2. Audio Studio */}
         {activeTab === 'audio' && (
