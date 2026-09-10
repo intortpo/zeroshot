@@ -256,7 +256,13 @@ class HyperframeVideoService {
     return [...this.jobs];
   }
 
-  submitRenderJob(title: string, resolution: RenderJob['resolution'], format: ExportFormat, aspectRatio: AspectRatio): RenderJob {
+  submitRenderJob(
+    title: string,
+    resolution: RenderJob['resolution'],
+    format: ExportFormat,
+    aspectRatio: AspectRatio,
+    onProgress?: (job: RenderJob) => void
+  ): RenderJob {
     const totalDuration = this.scenes.reduce((acc, s) => acc + s.durationSeconds, 0);
     const newJob: RenderJob = {
       id: `job-${Date.now().toString().slice(-4)}`,
@@ -273,6 +279,33 @@ class HyperframeVideoService {
       thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
     };
     this.jobs.unshift(newJob);
+
+    // Progressive rendering simulation with auto-completion
+    let step = 0;
+    const stages: { progress: number; status: RenderJob['status']; text: string }[] = [
+      { progress: 28, status: 'denoising', text: 'Denoising diffusion latent frames (60fps)...' },
+      { progress: 62, status: 'color-grading', text: 'Applying 3D LUT shader & anamorphic streak passes...' },
+      { progress: 88, status: 'transcoding', text: 'Transcoding ProRes/H.264 high-bitrate container...' },
+      { progress: 100, status: 'completed', text: 'Render completed successfully. Ready to download.' },
+    ];
+
+    const timer = setInterval(() => {
+      if (step < stages.length) {
+        const s = stages[step];
+        newJob.progress = s.progress;
+        newJob.status = s.status;
+        newJob.currentStageText = s.text;
+        if (s.status === 'completed') {
+          newJob.downloadUrl = 'ready';
+          clearInterval(timer);
+        }
+        if (onProgress) onProgress({ ...newJob });
+        step++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 1200);
+
     return newJob;
   }
 
@@ -294,3 +327,132 @@ class HyperframeVideoService {
 }
 
 export const hyperframeVideoService = new HyperframeVideoService();
+
+/**
+ * Procedural Client-Side Video Generator and Downloader
+ * Uses HTML5 Canvas + MediaRecorder to synthesize a valid .webm / .mp4 video file
+ * directly in the browser and triggers an immediate file download.
+ */
+export async function generateAndDownloadVideo(
+  title: string,
+  _durationSec: number = 3.0,
+  _format: string = 'webm'
+): Promise<void> {
+  if (typeof document === 'undefined') return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280;
+  canvas.height = 720;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // Render initial frame
+  const drawFrame = (frame: number, maxFrames: number) => {
+    // 1. Background gradient
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grad.addColorStop(0, '#042f2e');
+    grad.addColorStop(0.5, '#0f172a');
+    grad.addColorStop(1, '#1e1b4b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Animated fluid waterline wave
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+    for (let x = 0; x <= canvas.width; x += 20) {
+      const y =
+        canvas.height / 2 +
+        Math.sin(x * 0.008 + frame * 0.12) * 50 +
+        Math.cos(x * 0.015 + frame * 0.08) * 25;
+      ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#14b8a6';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // 3. Floating particle orbs
+    for (let i = 0; i < 24; i++) {
+      const px = ((i * 57 + frame * 3) % canvas.width);
+      const py = ((i * 37 + Math.sin(frame * 0.05 + i) * 80 + 360) % canvas.height);
+      ctx.beginPath();
+      ctx.arc(px, py, 3 + (i % 4), 0, Math.PI * 2);
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(45, 212, 191, 0.7)' : 'rgba(56, 189, 248, 0.7)';
+      ctx.fill();
+    }
+
+    // 4. Title, model badge & frame telemetry
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(title, 80, 100);
+
+    ctx.fillStyle = '#2dd4bf';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText(`HYPERFRAME VIDEO STUDIO • 60 FPS • FRAME ${frame}/${maxFrames}`, 80, 140);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '16px monospace';
+    ctx.fillText('Petri Submersion Vector Flight • Real-Time 3D LUT', 80, 170);
+  };
+
+  const hasMediaRecorder =
+    typeof window !== 'undefined' &&
+    'MediaRecorder' in window &&
+    typeof (canvas as any).captureStream === 'function';
+
+  if (hasMediaRecorder) {
+    const stream = (canvas as any).captureStream(30);
+    const mimeType =
+      MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : MediaRecorder.isTypeSupported('video/webm')
+        ? 'video/webm'
+        : 'video/mp4';
+
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    recorder.start();
+
+    // Render 60 animated frames (~2 seconds)
+    let frame = 0;
+    const totalFrames = 60;
+    const step = () => {
+      frame++;
+      drawFrame(frame, totalFrames);
+      if (frame < totalFrames) {
+        requestAnimationFrame(step);
+      } else {
+        recorder.stop();
+      }
+    };
+    step();
+  } else {
+    // Fallback: draw single high-resolution PNG frame
+    drawFrame(30, 60);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-frame.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
+}

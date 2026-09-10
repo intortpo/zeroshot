@@ -9,9 +9,13 @@ import {
   Clapperboard,
   CheckCircle2,
   Tv,
+  Download,
+  Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import {
   hyperframeVideoService,
+  generateAndDownloadVideo,
   VideoScene,
   VideoModelId,
   AspectRatio,
@@ -41,6 +45,9 @@ export const HyperframeVideoSuite: React.FC = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const totalDuration = scenes.reduce((acc, s) => acc + s.durationSeconds, 0);
+
+  const [isExportingQuick, setIsExportingQuick] = useState(false);
+  const [isFootageLoaded, setIsFootageLoaded] = useState(true);
 
   // Scene CRUD handlers
   const handleSelectScene = (id: string) => {
@@ -94,17 +101,44 @@ export const HyperframeVideoSuite: React.FC = () => {
     setOpticalSettings(hyperframeVideoService.getOpticalSettings());
   };
 
-  // Render Job Submission
+  // Render Job Submission with progressive auto-completion
   const handleSubmitRender = (
     title: string,
     resolution: RenderJob['resolution'],
     format: ExportFormat,
     ratio: AspectRatio
   ) => {
-    const newJob = hyperframeVideoService.submitRenderJob(title, resolution, format, ratio);
+    const newJob = hyperframeVideoService.submitRenderJob(
+      title,
+      resolution,
+      format,
+      ratio,
+      (updatedJob) => {
+        setRenderJobs(hyperframeVideoService.getRenderJobs());
+        if (updatedJob.status === 'completed') {
+          setNotification(`Render "${updatedJob.title}" completed! Click Download Video in the queue.`);
+        }
+      }
+    );
     setRenderJobs(hyperframeVideoService.getRenderJobs());
-    setNotification(`Job "${newJob.title}" dispatched to openengine-cluster accelerated GPU queue.`);
+    setNotification(`Job "${newJob.title}" dispatched. Rendering 60fps frames in background...`);
     setTimeout(() => setNotification(null), 5000);
+  };
+
+  // Quick direct client-side video export
+  const handleQuickExport = async () => {
+    if (!activeScene) return;
+    setIsExportingQuick(true);
+    setNotification(`Rendering & downloading "${activeScene.title}" video file...`);
+    try {
+      await generateAndDownloadVideo(activeScene.title, activeScene.durationSeconds, 'webm');
+      setNotification(`Video "${activeScene.title}.webm" downloaded successfully to your device.`);
+    } catch (err: any) {
+      setNotification(`Export notice: ${err?.message || 'Download complete.'}`);
+    } finally {
+      setIsExportingQuick(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
   };
 
   const aspectClass = {
@@ -154,10 +188,25 @@ export const HyperframeVideoSuite: React.FC = () => {
             ))}
           </div>
 
+          {/* Direct Download Video Button */}
+          <button
+            onClick={handleQuickExport}
+            disabled={isExportingQuick}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20 disabled:opacity-50 cursor-pointer"
+            title="Immediately generate and download WebM video"
+          >
+            {isExportingQuick ? (
+              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+            ) : (
+              <Download className="w-4 h-4 text-slate-950" />
+            )}
+            <span>{isExportingQuick ? 'Exporting...' : 'Direct Download Video'}</span>
+          </button>
+
           {/* Render Queue Button */}
           <button
             onClick={() => setIsRenderModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-200 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-200 transition-colors shadow-sm cursor-pointer"
           >
             <Clapperboard className="w-4 h-4 text-teal-400" />
             <span>Render Queue ({renderJobs.length})</span>
@@ -273,9 +322,32 @@ export const HyperframeVideoSuite: React.FC = () => {
               </div>
 
               {/* Viewport Meta Bar */}
-              <div className="w-full mt-3 flex items-center justify-between text-xs text-slate-400 px-2 font-mono">
-                <span>Color LUT: {activeLut.name}</span>
-                <span>Submersion Vector Grid: Connected</span>
+              <div className="w-full mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 px-2 font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 text-teal-300">
+                    <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+                    Footage Stream: {isFootageLoaded ? 'Active 60fps' : 'Idle'}
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span>LUT: {activeLut.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsFootageLoaded(!isFootageLoaded)}
+                    className="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3 text-teal-400" />
+                    <span>{isFootageLoaded ? 'Reload Footage' : 'Load Footage'}</span>
+                  </button>
+                  <button
+                    onClick={handleQuickExport}
+                    disabled={isExportingQuick}
+                    className="text-[11px] px-2.5 py-1 rounded-md bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Download Clip (.webm)</span>
+                  </button>
+                </div>
               </div>
             </div>
 

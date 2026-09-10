@@ -13,6 +13,7 @@ import {
   RenderJob,
   ExportFormat,
   AspectRatio,
+  generateAndDownloadVideo,
 } from '../../../services/hyperframeVideoService';
 
 interface RenderQueueModalProps {
@@ -41,6 +42,7 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
   const [resolution, setResolution] = useState<RenderJob['resolution']>('4K Cinema');
   const [format, setFormat] = useState<ExportFormat>('prores-422');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -217,13 +219,23 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
                     {/* Download / Action */}
                     <div>
                       {isDone ? (
-                        <a
-                          href={job.downloadUrl || '#'}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/40 text-xs font-semibold transition-colors"
+                        <button
+                          onClick={() => {
+                            setDownloadingJobId(job.id);
+                            generateAndDownloadVideo(job.title, job.durationTotal, job.format).finally(() => {
+                              setTimeout(() => setDownloadingJobId(null), 1000);
+                            });
+                          }}
+                          disabled={downloadingJobId === job.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/40 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                         >
-                          <Download className="w-3.5 h-3.5" />
-                          Download
-                        </a>
+                          {downloadingJobId === job.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-400" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
+                          <span>{downloadingJobId === job.id ? 'Exporting...' : 'Download Video'}</span>
+                        </button>
                       ) : (
                         <span className="flex items-center gap-1 text-xs text-slate-400 font-mono">
                           <Clock className="w-3.5 h-3.5 text-amber-400" />
