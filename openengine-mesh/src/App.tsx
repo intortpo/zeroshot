@@ -27,6 +27,8 @@ import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { FederatedDataView } from './components/federated/FederatedDataView';
 import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
 import { McpServerManagerView } from './components/mcp/McpServerManagerView';
+import { ProjectsHubView } from './components/projects/ProjectsHubView';
+import { MotionContainer } from './components/motion/MotionContainer';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
 import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
@@ -538,7 +540,7 @@ function inferPetriKind(text: string): PetriItemKind {
 
         {/* Main Workspace Body with Optional Side-by-Side Agentation Live Preview */}
         <div className="flex-1 flex overflow-hidden relative min-w-0 pb-16 md:pb-0">
-          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <MotionContainer viewKey={currentView} preset="gentle" className="flex-1 flex flex-col overflow-hidden min-w-0">
             {/* View -1: Consumer Portal (Primary Surface for Consumer Tier) */}
             {currentView === 'consumer' && (
               <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
@@ -634,6 +636,18 @@ function inferPetriKind(text: string): PetriItemKind {
                         setCurrentView('chat');
                       }}
                       onNavigateToChat={() => setCurrentView('chat')}
+                    />
+                  </div>
+                )}
+
+                {/* View: Projects Hub (Multi-Account GitHub & Local Workspaces) */}
+                {currentView === 'projects' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <ProjectsHubView
+                      activeUser={activeUser}
+                      activeWorkspace={activeWorkspace}
+                      onSelectWorkspace={(ws) => setActiveWorkspaceId(ws.id)}
+                      onNavigateToView={(v) => setCurrentView(v as PetriViewMode)}
                     />
                   </div>
                 )}
@@ -776,7 +790,7 @@ function inferPetriKind(text: string): PetriItemKind {
                 )}
               </>
             )}
-          </div>
+          </MotionContainer>
 
           {/* Agentation Live Preview Panel (When active or toggled) */}
           {isPreviewOpen && (
