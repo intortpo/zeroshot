@@ -30,16 +30,17 @@ impl Default for ModelHyperplane {
     }
 }
 
-pub struct TacticalRiskClassifier {
-    pub hyperplane: ModelHyperplane,
+#[derive(Debug, Clone)]
+pub struct TacticalRiskInput<'a> {
+    pub dina_profile: &'a DinaLatentProfile,
+    pub norm_attendance: f64,
+    pub norm_homework: f64,
+    pub velocity: f64,
 }
 
-impl Default for TacticalRiskClassifier {
-    fn default() -> Self {
-        Self {
-            hyperplane: ModelHyperplane::default(),
-        }
-    }
+#[derive(Debug, Clone, Default)]
+pub struct TacticalRiskClassifier {
+    pub hyperplane: ModelHyperplane,
 }
 
 impl TacticalRiskClassifier {
@@ -55,26 +56,40 @@ impl TacticalRiskClassifier {
         };
     }
 
-    pub fn evaluate(
-        &self,
-        dina_profile: &DinaLatentProfile,
-        norm_attendance: f64,
-        norm_homework: f64,
-        velocity: f64,
-    ) -> TacticalRiskAlert {
-        let p_vocab = dina_profile.mastery_probabilities.get("skill_vocab").copied().unwrap_or(0.5);
-        let p_grammar = dina_profile.mastery_probabilities.get("skill_grammar").copied().unwrap_or(0.5);
-        let p_reading = dina_profile.mastery_probabilities.get("skill_reading_comp").copied().unwrap_or(0.5);
-        let p_synth = dina_profile.mastery_probabilities.get("skill_synthesis").copied().unwrap_or(0.5);
+    pub fn evaluate(&self, input: &TacticalRiskInput) -> TacticalRiskAlert {
+        let p_vocab = input
+            .dina_profile
+            .mastery_probabilities
+            .get("skill_vocab")
+            .copied()
+            .unwrap_or(0.5);
+        let p_grammar = input
+            .dina_profile
+            .mastery_probabilities
+            .get("skill_grammar")
+            .copied()
+            .unwrap_or(0.5);
+        let p_reading = input
+            .dina_profile
+            .mastery_probabilities
+            .get("skill_reading_comp")
+            .copied()
+            .unwrap_or(0.5);
+        let p_synth = input
+            .dina_profile
+            .mastery_probabilities
+            .get("skill_synthesis")
+            .copied()
+            .unwrap_or(0.5);
 
         let features = [
             p_vocab,
             p_grammar,
             p_reading,
             p_synth,
-            norm_attendance,
-            norm_homework,
-            velocity,
+            input.norm_attendance,
+            input.norm_homework,
+            input.velocity,
         ];
 
         let mut z = self.hyperplane.bias;
@@ -93,13 +108,23 @@ impl TacticalRiskClassifier {
         let confidence = (0.5 + distance_from_margin).min(0.99);
         let low_confidence_trigger = distance_from_margin < 0.12;
 
-        let (risk_level, status_label) = if rounded_prob > 0.60 || velocity < -0.15 {
-            ("red".to_string(), "High-Risk (Urgent Intervention Required)".to_string())
-        } else if rounded_prob > 0.35 || velocity < -0.05 {
-            ("amber".to_string(), "Moderate Risk (Latent Divergence)".to_string())
-        } else {
-            ("green".to_string(), "On-Track (Mastery Trajectory Stable)".to_string())
-        };
+        let (risk_level, status_label) =
+            if rounded_prob > 0.55 || input.velocity < -0.15 || input.norm_homework < 0.55 {
+                (
+                    "red".to_string(),
+                    "High-Risk (Urgent Intervention Required)".to_string(),
+                )
+            } else if rounded_prob > 0.35 || input.velocity < -0.05 || input.norm_homework < 0.70 {
+                (
+                    "amber".to_string(),
+                    "Moderate Risk (Latent Divergence)".to_string(),
+                )
+            } else {
+                (
+                    "green".to_string(),
+                    "On-Track (Mastery Trajectory Stable)".to_string(),
+                )
+            };
 
         TacticalRiskAlert {
             risk_level,
@@ -107,7 +132,7 @@ impl TacticalRiskClassifier {
             risk_probability: rounded_prob,
             confidence_score: (confidence * 1000.0).round() / 1000.0,
             low_confidence_trigger,
-            composite_velocity: velocity,
+            composite_velocity: input.velocity,
         }
     }
 }

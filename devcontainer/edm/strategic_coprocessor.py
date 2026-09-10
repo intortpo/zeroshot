@@ -59,14 +59,24 @@ def discover_strategic_boundaries(dense_term_records: List[Dict[str, Any]]) -> D
         ]
         num_samples = len(dense_term_records)
 
+    # Subsample representative support vectors if cohort exceeds 64 for fast computation
+    if num_samples > 64:
+        negs = [r for r in dense_term_records if r.get("label", 0) < 0][:32]
+        pos = [r for r in dense_term_records if r.get("label", 0) >= 0][:32]
+        sample_records = negs + pos
+        if len(sample_records) < 64:
+            sample_records = dense_term_records[:64]
+    else:
+        sample_records = dense_term_records
+
     # Compute Kernel Matrix
     kernel_matrix = []
-    for i in range(num_samples):
+    for i in range(len(sample_records)):
         row = []
-        for j in range(num_samples):
+        for j in range(len(sample_records)):
             k_val = quantum_zz_kernel_sim(
-                dense_term_records[i]["features"],
-                dense_term_records[j]["features"]
+                sample_records[i]["features"],
+                sample_records[j]["features"]
             )
             row.append(round(k_val, 4))
         kernel_matrix.append(row)

@@ -9,4 +9,4 @@ pub use feedback::{
     WeightUpdateRequest, WeightUpdateResponse,
 };
 pub use q_matrix::{CurriculumQMatrix, LatentSkill, QMatrixItem};
-pub use tactical_risk::{ModelHyperplane, TacticalRiskAlert, TacticalRiskClassifier};
+pub use tactical_risk::{ModelHyperplane, TacticalRiskAlert, TacticalRiskClassifier, TacticalRiskInput};

@@ -29,41 +29,70 @@ export async function executeFridayTacticalRun(
   const students = await firebaseSource.getAllStudents();
   const runResults: TacticalRunResult['results'] = [];
 
-  for (const student of students) {
-    // Step 1: Normalization Protocol
+  const prepared = students.map((student) => {
     const normalizedTimeline = normalizeWeeklyLogs(student.rawWeeklyLogs);
     const lastFrame = normalizedTimeline[normalizedTimeline.length - 1] || {
+      week: 2,
       normAttendance: 1.0,
+      normTimeliness: 1.0,
       normHomework: 1.0,
+      velocityAttendance: 0.0,
+      velocityHomework: 0.0,
       compositeVelocity: 0.0,
     };
-
-    // Step 2: Build Payload for Layer 2 Rust
-    const payload = {
-      student_id: student.studentId,
-      responses: student.itemResponses,
-      norm_attendance: lastFrame.normAttendance,
-      norm_homework: lastFrame.normHomework,
-      velocity: lastFrame.compositeVelocity,
+    return {
+      student,
+      normalizedTimeline,
+      lastFrame,
+      payload: {
+        student_id: student.studentId,
+        responses: student.itemResponses,
+        norm_attendance: lastFrame.normAttendance,
+        norm_homework: lastFrame.normHomework,
+        velocity: lastFrame.compositeVelocity,
+      },
     };
+  });
 
-    let tacticalRes: any;
+  let batchOutputs: any[] | null = null;
+  try {
+    const response = await fetch(`${rustEngineUrl}/tactical/evaluate/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(prepared.map((p) => p.payload)),
+    });
+    if (response.ok) {
+      batchOutputs = await response.json();
+    }
+  } catch (_e) {
+    // Fall back to per-item or local calculation
+  }
 
-    try {
-      // Step 3: Dispatch to Rust
-      const response = await fetch(`${rustEngineUrl}/tactical/evaluate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+  const batchMap = new Map<string, any>();
+  if (Array.isArray(batchOutputs)) {
+    for (const out of batchOutputs) {
+      batchMap.set(out.student_id, out);
+    }
+  }
 
-      if (!response.ok) {
-        throw new Error(`Rust engine HTTP ${response.status}: ${await response.text()}`);
-      }
+  for (const item of prepared) {
+    const { student, normalizedTimeline, lastFrame, payload } = item;
+    let tacticalRes = batchMap.get(student.studentId);
 
-      tacticalRes = await response.json();
-    } catch (err: any) {
-      // Fallback deterministic evaluation if Rust server is not yet spawned
+    if (!tacticalRes) {
+      try {
+        const response = await fetch(`${rustEngineUrl}/tactical/evaluate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (response.ok) {
+          tacticalRes = await response.json();
+        }
+      } catch (_e) {}
+    }
+
+    if (!tacticalRes) {
       tacticalRes = {
         student_id: student.studentId,
         diagnostic_profile: {

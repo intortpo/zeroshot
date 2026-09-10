@@ -49,16 +49,31 @@ curl -s http://127.0.0.1:8087/health | grep -q "Layer 1" && echo "  ✓ Layer 1 
 echo ""
 echo "[4/5] Executing Friday 17:00 (The Tactical Run)..."
 TACTICAL_OUT=$(curl -s -X POST http://127.0.0.1:8087/cron/tactical)
-echo "$TACTICAL_OUT" | jq .
+PROCESSED_COUNT=$(echo "$TACTICAL_OUT" | jq -r '.studentsProcessed')
+echo "  ✓ Tactical Run evaluated $PROCESSED_COUNT student records through Layer 2 Rust engine."
 
 # Verify Friday 17:05 Zero-Latency Presentation Fetch
 echo ""
 echo "[Friday 17:05] Svelte Presentation Layer fetches pre-computed records (0ms wait time)..."
 FIREBASE_DOCS=$(curl -s http://127.0.0.1:8087/firebase/students)
 STUDENT_COUNT=$(echo "$FIREBASE_DOCS" | jq 'length')
-echo "  ✓ Successfully retrieved $STUDENT_COUNT students from Firebase source of truth."
-OCT_DIP_RISK=$(echo "$FIREBASE_DOCS" | jq -r '.[] | select(.studentId=="std_402_october_dip") | .risk_alert.risk_level')
-echo "  ✓ Student #402 Risk Status: $OCT_DIP_RISK (Attendance dip + syntax deficit captured)"
+echo "  ✓ Successfully retrieved $STUDENT_COUNT production students from Firebase source of truth."
+
+LEO_DOC=$(echo "$FIREBASE_DOCS" | jq -r '.[] | select(.studentId=="3667")')
+if [ -n "$LEO_DOC" ]; then
+    LEO_NAME=$(echo "$LEO_DOC" | jq -r '.name')
+    LEO_RISK=$(echo "$LEO_DOC" | jq -r '.risk_alert.risk_level')
+    LEO_FAILS=$(echo "$LEO_DOC" | jq -r '.failedSubjects | join(", ")')
+    echo "  ✓ Real Student #3667 ($LEO_NAME): Risk=$LEO_RISK | Failed Subjects=[$LEO_FAILS]"
+fi
+
+STAR_DOC=$(echo "$FIREBASE_DOCS" | jq -r '.[] | select(.studentId=="3068")')
+if [ -n "$STAR_DOC" ]; then
+    STAR_NAME=$(echo "$STAR_DOC" | jq -r '.name')
+    STAR_RISK=$(echo "$STAR_DOC" | jq -r '.risk_alert.risk_level')
+    STAR_FAILS=$(echo "$STAR_DOC" | jq -r '.failedSubjects | join(", ")')
+    echo "  ✓ Real Student #3068 ($STAR_NAME): Risk=$STAR_RISK | Failed Subjects=[$STAR_FAILS]"
+fi
 
 # 5. Operational Workflow: End of Semester (The Strategic Run)
 echo ""

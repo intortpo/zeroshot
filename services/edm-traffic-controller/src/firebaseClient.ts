@@ -31,6 +31,9 @@ export interface FirebaseStudentDoc {
   lastEvaluatedAt?: number;
 }
 
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 export class FirebaseSourceOfTruth {
   private students: Map<string, FirebaseStudentDoc> = new Map();
 
@@ -39,7 +42,30 @@ export class FirebaseSourceOfTruth {
   }
 
   private seedInitialCohort() {
-    // Seed realistic student records
+    const potentialPaths = [
+      process.env.EDM_DATA_PATH,
+      join(__dirname, '../data/real_students.json'),
+      join(process.cwd(), 'data/real_students.json'),
+      join(process.cwd(), 'services/edm-traffic-controller/data/real_students.json'),
+    ].filter(Boolean) as string[];
+
+    for (const p of potentialPaths) {
+      if (existsSync(p)) {
+        try {
+          const raw = readFileSync(p, 'utf-8');
+          const data: FirebaseStudentDoc[] = JSON.parse(raw);
+          for (const s of data) {
+            this.students.set(s.studentId, s);
+          }
+          console.log(`[layer-1:firebase] Loaded ${this.students.size} production student records from ${p}`);
+          return;
+        } catch (err) {
+          console.error(`[layer-1:firebase] Error parsing ${p}:`, err);
+        }
+      }
+    }
+
+    // Fallback seed realistic student records
     this.students.set('std_402_october_dip', {
       studentId: 'std_402_october_dip',
       name: 'Student #402 (Cohort Fall 2026)',

@@ -50,14 +50,54 @@ impl Default for CurriculumQMatrix {
         let mut items = HashMap::new();
 
         let raw_items = vec![
-            ("item_q1_vocab", "Quiz 1 · Vocabulary Matching", "quiz", [1, 0, 0, 0]),
-            ("item_q2_cloze", "Quiz 2 · Syntactic Cloze Item", "quiz", [1, 1, 0, 0]),
-            ("item_q3_grammar_fix", "Quiz 3 · Grammar Correction", "quiz", [0, 1, 0, 0]),
-            ("item_hw_comprehend", "Homework 2 · Passage Inference", "homework", [0, 0, 1, 0]),
-            ("item_hw_short_synth", "Homework 4 · Analytical Summary", "homework", [0, 0, 1, 1]),
-            ("item_midterm_essay", "Midterm · Argumentative Essay", "midterm", [1, 1, 1, 1]),
-            ("item_midterm_critique", "Midterm · Textual Critique", "midterm", [0, 1, 0, 1]),
-            ("item_final_case", "Project · Final Case Study", "final", [0, 0, 1, 1]),
+            (
+                "item_q1_vocab",
+                "Quiz 1 · Vocabulary Matching",
+                "quiz",
+                [1, 0, 0, 0],
+            ),
+            (
+                "item_q2_cloze",
+                "Quiz 2 · Syntactic Cloze Item",
+                "quiz",
+                [1, 1, 0, 0],
+            ),
+            (
+                "item_q3_grammar_fix",
+                "Quiz 3 · Grammar Correction",
+                "quiz",
+                [0, 1, 0, 0],
+            ),
+            (
+                "item_hw_comprehend",
+                "Homework 2 · Passage Inference",
+                "homework",
+                [0, 0, 1, 0],
+            ),
+            (
+                "item_hw_short_synth",
+                "Homework 4 · Analytical Summary",
+                "homework",
+                [0, 0, 1, 1],
+            ),
+            (
+                "item_midterm_essay",
+                "Midterm · Argumentative Essay",
+                "midterm",
+                [1, 1, 1, 1],
+            ),
+            (
+                "item_midterm_critique",
+                "Midterm · Textual Critique",
+                "midterm",
+                [0, 1, 0, 1],
+            ),
+            (
+                "item_final_case",
+                "Project · Final Case Study",
+                "final",
+                [0, 0, 1, 1],
+            ),
         ];
 
         for (id, name, cat, q_row) in raw_items {

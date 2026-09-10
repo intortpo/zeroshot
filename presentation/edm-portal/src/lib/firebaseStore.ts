@@ -7,7 +7,12 @@
 export interface StudentProfile {
   studentId: string;
   name: string;
+  nickname?: string;
   cohort: string;
+  course?: string;
+  failedSubjects?: string[];
+  failedSubjectCount?: number;
+  subjectScores?: Record<string, number>;
   itemResponses: Record<string, number>;
   rawWeeklyLogs: Array<{
     week: number;
@@ -43,6 +48,171 @@ export interface StudentProfile {
 }
 
 export const INITIAL_STUDENTS: StudentProfile[] = [
+  {
+    studentId: '3667',
+    name: 'Leo (Thananaet Santiwong)',
+    nickname: 'Leo',
+    cohort: 'G1.2',
+    failedSubjects: ['Man', 'MatIP', 'MatTH'],
+    failedSubjectCount: 3,
+    subjectScores: {
+      THLang: 12.0,
+      MatTH: 14.0,
+      SSTH: 15.0,
+      ESL: 28.0,
+      GW: 20.0,
+      MatIP: 13.0,
+      SciIP: 21.0,
+      Man: 12.0,
+    },
+    itemResponses: {
+      item_q1_vocab: 1,
+      item_q2_cloze: 1,
+      item_q3_grammar_fix: 1,
+      item_hw_comprehend: 1,
+      item_hw_short_synth: 1,
+      item_midterm_essay: 0,
+      item_midterm_critique: 0,
+      item_final_case: 0,
+    },
+    rawWeeklyLogs: [
+      { week: 1, attendedDays: 5, totalDays: 5, hoursLate: 0.88, homeworkPoints: 66, homeworkMaxPoints: 100 },
+      { week: 2, attendedDays: 5, totalDays: 5, hoursLate: 0.0, homeworkPoints: 56, homeworkMaxPoints: 100 },
+    ],
+    normalizedTimeline: [
+      { week: 1, normAttendance: 1.0, normTimeliness: 0.99, normHomework: 0.66, velocityAttendance: 0.0, velocityHomework: -0.34, compositeVelocity: -0.20 },
+      { week: 2, normAttendance: 1.0, normTimeliness: 1.0, normHomework: 0.56, velocityAttendance: 0.0, velocityHomework: -0.10, compositeVelocity: -0.06 },
+    ],
+    diagnostic_profile: {
+      mastery_vector: [1, 1, 1, 0],
+      mastery_probabilities: {
+        skill_vocab: 0.88,
+        skill_grammar: 0.76,
+        skill_reading_comp: 0.79,
+        skill_synthesis: 0.38,
+      },
+      slip_parameter: 0.10,
+      guess_parameter: 0.15,
+    },
+    risk_alert: {
+      risk_level: 'red',
+      status_label: 'High-Risk (3 Failed Subjects: Math IP, Math Thai, Mandarin)',
+      risk_probability: 0.82,
+      confidence_score: 0.89,
+      composite_velocity: -0.06,
+      low_confidence_trigger: false,
+    },
+  },
+  {
+    studentId: '3068',
+    name: 'Star (Thanita Sanapang)',
+    nickname: 'Star',
+    cohort: 'G1.2',
+    failedSubjects: ['Man', 'MatIP', 'MatTH', 'SSTH', 'THLang'],
+    failedSubjectCount: 5,
+    subjectScores: {
+      THLang: 8.0,
+      MatTH: 11.0,
+      SSTH: 9.0,
+      ESL: 22.0,
+      GW: 16.0,
+      MatIP: 10.0,
+      SciIP: 18.0,
+      Man: 9.0,
+    },
+    itemResponses: {
+      item_q1_vocab: 1,
+      item_q2_cloze: 1,
+      item_q3_grammar_fix: 1,
+      item_hw_comprehend: 0,
+      item_hw_short_synth: 1,
+      item_midterm_essay: 0,
+      item_midterm_critique: 0,
+      item_final_case: 0,
+    },
+    rawWeeklyLogs: [
+      { week: 1, attendedDays: 5, totalDays: 5, hoursLate: 0.0, homeworkPoints: 54, homeworkMaxPoints: 100 },
+      { week: 2, attendedDays: 5, totalDays: 5, hoursLate: 0.0, homeworkPoints: 46, homeworkMaxPoints: 100 },
+    ],
+    normalizedTimeline: [
+      { week: 1, normAttendance: 1.0, normTimeliness: 1.0, normHomework: 0.54, velocityAttendance: 0.0, velocityHomework: -0.46, compositeVelocity: -0.28 },
+      { week: 2, normAttendance: 1.0, normTimeliness: 1.0, normHomework: 0.46, velocityAttendance: 0.0, velocityHomework: -0.08, compositeVelocity: -0.05 },
+    ],
+    diagnostic_profile: {
+      mastery_vector: [1, 0, 0, 0],
+      mastery_probabilities: {
+        skill_vocab: 0.81,
+        skill_grammar: 0.42,
+        skill_reading_comp: 0.28,
+        skill_synthesis: 0.19,
+      },
+      slip_parameter: 0.10,
+      guess_parameter: 0.15,
+    },
+    risk_alert: {
+      risk_level: 'red',
+      status_label: 'High-Risk (5 Failed Subjects: Critical Remediation Required)',
+      risk_probability: 0.94,
+      confidence_score: 0.95,
+      composite_velocity: -0.05,
+      low_confidence_trigger: false,
+    },
+  },
+  {
+    studentId: '2631',
+    name: 'Phupha (Laphatsakorn Suraka)',
+    nickname: 'Phupha',
+    cohort: 'G1.1',
+    failedSubjects: [],
+    failedSubjectCount: 0,
+    subjectScores: {
+      THLang: 18.0,
+      MatTH: 28.0,
+      SSTH: 19.0,
+      ESL: 38.0,
+      GW: 27.0,
+      MatIP: 28.0,
+      SciIP: 27.0,
+      Man: 26.0,
+    },
+    itemResponses: {
+      item_q1_vocab: 1,
+      item_q2_cloze: 1,
+      item_q3_grammar_fix: 1,
+      item_hw_comprehend: 1,
+      item_hw_short_synth: 1,
+      item_midterm_essay: 1,
+      item_midterm_critique: 1,
+      item_final_case: 1,
+    },
+    rawWeeklyLogs: [
+      { week: 1, attendedDays: 5, totalDays: 5, hoursLate: 0.0, homeworkPoints: 80, homeworkMaxPoints: 100 },
+      { week: 2, attendedDays: 5, totalDays: 5, hoursLate: 0.0, homeworkPoints: 82, homeworkMaxPoints: 100 },
+    ],
+    normalizedTimeline: [
+      { week: 1, normAttendance: 1.0, normTimeliness: 1.0, normHomework: 0.80, velocityAttendance: 0.0, velocityHomework: -0.20, compositeVelocity: -0.12 },
+      { week: 2, normAttendance: 1.0, normTimeliness: 1.0, normHomework: 0.82, velocityAttendance: 0.0, velocityHomework: 0.02, compositeVelocity: 0.01 },
+    ],
+    diagnostic_profile: {
+      mastery_vector: [1, 1, 1, 1],
+      mastery_probabilities: {
+        skill_vocab: 0.96,
+        skill_grammar: 0.94,
+        skill_reading_comp: 0.95,
+        skill_synthesis: 0.92,
+      },
+      slip_parameter: 0.10,
+      guess_parameter: 0.15,
+    },
+    risk_alert: {
+      risk_level: 'green',
+      status_label: 'Low Risk (Advanced Mastery & Punctual Attendance)',
+      risk_probability: 0.05,
+      confidence_score: 0.98,
+      composite_velocity: 0.01,
+      low_confidence_trigger: false,
+    },
+  },
   {
     studentId: 'std_402_october_dip',
     name: 'Student #402 (Cohort Fall 2026)',

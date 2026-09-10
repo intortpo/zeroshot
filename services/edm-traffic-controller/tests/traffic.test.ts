@@ -53,9 +53,9 @@ describe('Layer 1: Bun Traffic Controller & Normalization', () => {
     expect(result.results.length).toBeGreaterThanOrEqual(3);
 
     const students = await firebaseSource.getAllStudents();
-    const student402 = students.find((s) => s.studentId === 'std_402_october_dip');
-    expect(student402?.diagnostic_profile).toBeDefined();
-    expect(student402?.risk_alert).toBeDefined();
+    const firstStudent = students[0];
+    expect(firstStudent?.diagnostic_profile).toBeDefined();
+    expect(firstStudent?.risk_alert).toBeDefined();
   });
 
   test('Strategic Term Run triggers quantum boundary discovery and closes feedback loop', async () => {

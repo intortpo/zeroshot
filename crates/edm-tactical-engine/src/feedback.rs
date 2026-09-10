@@ -60,12 +60,12 @@ impl TacticalEngineState {
             .estimate_profile(&req.responses, &self.q_matrix);
 
         let classifier = self.classifier.read();
-        let risk = classifier.evaluate(
-            &profile,
-            req.norm_attendance,
-            req.norm_homework,
-            req.velocity,
-        );
+        let risk = classifier.evaluate(&crate::tactical_risk::TacticalRiskInput {
+            dina_profile: &profile,
+            norm_attendance: req.norm_attendance,
+            norm_homework: req.norm_homework,
+            velocity: req.velocity,
+        });
         let model_source = classifier.hyperplane.source.clone();
 
         TacticalEvaluationResponse {
@@ -74,6 +74,13 @@ impl TacticalEngineState {
             risk_alert: risk,
             model_source,
         }
+    }
+
+    pub fn evaluate_batch(
+        &self,
+        reqs: &[TacticalEvaluationRequest],
+    ) -> Vec<TacticalEvaluationResponse> {
+        reqs.iter().map(|req| self.evaluate_student(req)).collect()
     }
 
     pub fn update_weights(&self, req: &WeightUpdateRequest) -> WeightUpdateResponse {

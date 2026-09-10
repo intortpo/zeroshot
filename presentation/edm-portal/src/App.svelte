@@ -9,16 +9,40 @@
   let selectedStudentId = $state<string>(INITIAL_STUDENTS[0].studentId);
   let isRefreshing = $state<boolean>(false);
   let refreshNotice = $state<string>('Loaded instant cached Firebase diagnostic records.');
+  let searchQuery = $state<string>('');
+  let riskFilter = $state<string>('all');
+  let cohortFilter = $state<string>('all');
+
+  let uniqueCohorts = $derived([
+    'all',
+    ...Array.from(new Set(students.map((s) => s.cohort).filter(Boolean))).sort(),
+  ]);
+
+  let filteredStudents = $derived(
+    students.filter((s) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchSearch =
+        q === '' ||
+        s.name.toLowerCase().includes(q) ||
+        s.studentId.toLowerCase().includes(q) ||
+        (s.nickname && s.nickname.toLowerCase().includes(q));
+      const matchRisk =
+        riskFilter === 'all' || s.risk_alert?.risk_level === riskFilter;
+      const matchCohort =
+        cohortFilter === 'all' || s.cohort === cohortFilter;
+      return matchSearch && matchRisk && matchCohort;
+    })
+  );
 
   let selectedStudent = $derived(
-    students.find((s) => s.studentId === selectedStudentId) || students[0]
+    students.find((s) => s.studentId === selectedStudentId) || filteredStudents[0] || students[0]
   );
 
   async function refreshFromFirebase() {
     isRefreshing = true;
     students = await fetchLiveFirebaseStudents();
     isRefreshing = false;
-    refreshNotice = `Refreshed from Firebase (0ms ML compute wait time) at ${new Date().toLocaleTimeString()}`;
+    refreshNotice = `Refreshed ${students.length} students from Firebase (0ms ML compute wait time) at ${new Date().toLocaleTimeString()}`;
   }
 
   onMount(() => {
@@ -58,9 +82,57 @@
   <div class="dashboard-content">
     <!-- Left Column: Student Roster -->
     <aside class="roster-panel">
-      <h2>Enrolled Cohort ({students.length})</h2>
+      <div class="roster-top">
+        <h2>Roster ({filteredStudents.length} / {students.length})</h2>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="roster-filters">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search name, nickname, or ID..."
+          bind:value={searchQuery}
+        />
+
+        <div class="filter-controls">
+          <select class="cohort-select" bind:value={cohortFilter}>
+            {#each uniqueCohorts as c}
+              <option value={c}>{c === 'all' ? 'All Classes' : c}</option>
+            {/each}
+          </select>
+
+          <div class="risk-tabs">
+            <button
+              type="button"
+              class="tab-btn"
+              class:active={riskFilter === 'all'}
+              onclick={() => (riskFilter = 'all')}>All</button
+            >
+            <button
+              type="button"
+              class="tab-btn red"
+              class:active={riskFilter === 'red'}
+              onclick={() => (riskFilter = 'red')}>Red</button
+            >
+            <button
+              type="button"
+              class="tab-btn amber"
+              class:active={riskFilter === 'amber'}
+              onclick={() => (riskFilter = 'amber')}>Amber</button
+            >
+            <button
+              type="button"
+              class="tab-btn green"
+              class:active={riskFilter === 'green'}
+              onclick={() => (riskFilter = 'green')}>Green</button
+            >
+          </div>
+        </div>
+      </div>
+
       <div class="student-list">
-        {#each students as student}
+        {#each filteredStudents as student}
           <button
             type="button"
             class="student-card"
@@ -82,8 +154,16 @@
               <span>{student.cohort}</span>
               <span>Vel: {student.risk_alert?.composite_velocity > 0 ? '+' : ''}{student.risk_alert?.composite_velocity?.toFixed(2) || '0.00'}/wk</span>
             </div>
+            {#if student.failedSubjects && student.failedSubjects.length > 0}
+              <div class="card-fails">
+                <span class="fail-pill">Below passing: {student.failedSubjects.join(', ')}</span>
+              </div>
+            {/if}
           </button>
         {/each}
+        {#if filteredStudents.length === 0}
+          <div class="empty-roster">No students match current search/filter.</div>
+        {/if}
       </div>
     </aside>
 
@@ -93,7 +173,21 @@
       <div class="detail-header">
         <div>
           <h2>{selectedStudent.name}</h2>
-          <p class="meta-sub">{selectedStudent.cohort} · ID: {selectedStudent.studentId}</p>
+          <p class="meta-sub">
+            {selectedStudent.cohort} · ID: {selectedStudent.studentId}
+            {#if selectedStudent.course} · Course: {selectedStudent.course}{/if}
+          </p>
+
+          {#if selectedStudent.failedSubjects && selectedStudent.failedSubjects.length > 0}
+            <div class="alert-failed-subjects">
+              <span class="alert-tag">Curriculum Intervention Required ({selectedStudent.failedSubjects.length} subjects):</span>
+              <div class="chips-row">
+                {#each selectedStudent.failedSubjects as subj}
+                  <span class="subj-chip fail">{subj}</span>
+                {/each}
+              </div>
+            </div>
+          {/if}
         </div>
 
         <TrafficLight
@@ -253,7 +347,7 @@
   }
   .dashboard-content {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 360px 1fr;
     gap: 20px;
     padding: 20px 24px;
     flex: 1;
@@ -263,17 +357,89 @@
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 140px);
   }
-  h2 {
+  .roster-top h2 {
     font-size: 14px;
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     font-weight: 700;
     color: #334155;
+  }
+  .roster-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+  }
+  .search-input:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+  }
+  .filter-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .cohort-select {
+    font-size: 11px;
+    padding: 4px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #334155;
+    flex: 1;
+  }
+  .risk-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .tab-btn {
+    font-size: 10px;
+    padding: 3px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+  .tab-btn.red.active {
+    background: #991b1b;
+    border-color: #991b1b;
+    color: #ffffff;
+  }
+  .tab-btn.amber.active {
+    background: #b45309;
+    border-color: #b45309;
+    color: #ffffff;
+  }
+  .tab-btn.green.active {
+    background: #065f46;
+    border-color: #065f46;
+    color: #ffffff;
   }
   .student-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    overflow-y: auto;
+    padding-right: 4px;
+    flex: 1;
   }
   .student-card {
     border: 1px solid #e2e8f0;
@@ -320,6 +486,24 @@
     margin-top: 4px;
     font-family: monospace;
   }
+  .card-fails {
+    margin-top: 6px;
+  }
+  .fail-pill {
+    font-size: 9px;
+    color: #b91c1c;
+    background: #fef2f2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    display: inline-block;
+  }
+  .empty-roster {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 24px 0;
+  }
   .detail-panel {
     display: flex;
     flex-direction: column;
@@ -339,6 +523,31 @@
     color: #64748b;
     font-family: monospace;
     margin: 4px 0 0 0;
+  }
+  .alert-failed-subjects {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .alert-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: #b91c1c;
+  }
+  .chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .subj-chip.fail {
+    font-size: 10px;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    border: 1px solid #fca5a5;
   }
   .vis-grid {
     display: grid;
