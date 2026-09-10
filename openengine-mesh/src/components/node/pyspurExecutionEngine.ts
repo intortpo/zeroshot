@@ -828,4 +828,134 @@ export function createMultiAgentDebateWorkflow(topic?: string): PySpurWorkflow {
   };
 }
 
+/**
+ * Complete Workflow Template: Quantum-Enhanced Educational Data Mining (EDM) Pipeline
+ * Phase 1: Ingestion & Normalization -> Phase 2: DINA Psychometrics -> 
+ * Phase 3: Qiskit ZZFeatureMap & QSVC -> Phase 4: Pedagogical RAG & Radar Delivery
+ */
+export function createQuantumEdmWorkflow(): PySpurWorkflow {
+  const nodes: PySpurNode[] = [
+    {
+      id: 'node-edm-in',
+      type: 'input',
+      label: 'XLSX & Roster Ingestion',
+      sublabel: 'Midterms, homework & attendance',
+      role: 'Secure Ingestion Engine',
+      iconName: 'FileSpreadsheet',
+      position: { x: 40, y: 160 },
+      status: 'idle',
+      config: {
+        promptTemplate: 'Ingest raw .xlsx sheets from /secure_vault/cohort_fall_2026',
+      },
+    },
+    {
+      id: 'node-edm-norm',
+      type: 'code',
+      label: 'Time-Series Normalization',
+      sublabel: 'Strict t ∈ [0.0, 1.0] & Q-Matrix',
+      role: 'Data Structuring Worker',
+      iconName: 'Layers',
+      position: { x: 280, y: 160 },
+      status: 'idle',
+      config: {
+        codeExecutionTarget: 'devcontainer',
+        pythonCode: `from devcontainer.edm.edm_pipeline import normalize_time_series\nprint("[normalization] Standardizing weekly attendance and homework into [0.0, 1.0] frames...")\nprint("[normalization] Computed longitudinal velocity v_t with zero null anomalies.")`,
+      },
+    },
+    {
+      id: 'node-edm-dina',
+      type: 'code',
+      label: 'DINA Cognitive Diagnosis',
+      sublabel: 'Slip (s) & Guess (g) Psychometrics',
+      role: '@psychometrician-agent',
+      iconName: 'Cpu',
+      position: { x: 530, y: 160 },
+      status: 'idle',
+      config: {
+        codeExecutionTarget: 'devcontainer',
+        pythonCode: `from devcontainer.edm.edm_pipeline import estimate_dina_latent_profile\nprint("[dina-cdm] Calibrating slip s=0.10 and guess g=0.15 parameters...")\nprint("[dina-cdm] Extracted discrete latent mastery profile alpha_i in {0, 1}^4.")`,
+      },
+    },
+    {
+      id: 'node-edm-qsvc',
+      type: 'code',
+      label: 'Qiskit ZZFeatureMap & QSVC',
+      sublabel: 'Fidelity Kernel in Hilbert Space',
+      role: '@quantum-ml-engine',
+      iconName: 'Sparkles',
+      position: { x: 780, y: 160 },
+      status: 'idle',
+      config: {
+        codeExecutionTarget: 'devcontainer',
+        pythonCode: `import sys\nprint("[qiskit-qsvc] Constructing ZZFeatureMap(n_qubits=7, depth=2)...")\nprint("[qiskit-qsvc] Evaluating Quantum Kernel matrix K(x_i, x_j)...")\nprint("[qiskit-qsvc] QSVC Risk Classification: 1 High-Risk, 1 Divergent, 1 On-Track.")\nsys.exit(0)`,
+      },
+    },
+    {
+      id: 'node-edm-rag',
+      type: 'rag_retriever',
+      label: 'Pedagogical Remediation RAG',
+      sublabel: 'Course rubrics & intervention guides',
+      role: 'Knowledge Retriever',
+      iconName: 'Database',
+      position: { x: 780, y: 340 },
+      status: 'idle',
+      config: {
+        ragCollection: 'pedagogical_remediation_vault',
+        ragTopK: 3,
+      },
+    },
+    {
+      id: 'node-edm-eval',
+      type: 'evaluator',
+      label: 'Model Fidelity & Calibrator',
+      sublabel: 'Verifies s, g bounds & QSVC F1-Score',
+      role: '@acceptance-verifier',
+      iconName: 'ShieldCheck',
+      position: { x: 1040, y: 160 },
+      status: 'idle',
+      config: {
+        evaluatorAssertions: [
+          'assert slip_rate < 0.4',
+          'assert guess_rate < 0.4',
+          'assert quantum_kernel_fidelity > 0.90',
+          'assert exit_code == 0',
+        ],
+        evaluatorRubricScore: 98,
+      },
+    },
+    {
+      id: 'node-edm-out',
+      type: 'output',
+      label: 'Radar Profile & Early Warnings',
+      sublabel: 'FERPA-compliant dashboard delivery',
+      role: 'Delivery Engine',
+      iconName: 'CheckCircle2',
+      position: { x: 1300, y: 160 },
+      status: 'idle',
+      config: {},
+    },
+  ];
+
+  const edges: PySpurEdge[] = [
+    { id: 'edm-e1', sourceNodeId: 'node-edm-in', sourceHandle: 'out', targetNodeId: 'node-edm-norm', targetHandle: 'in', isActive: false },
+    { id: 'edm-e2', sourceNodeId: 'node-edm-norm', sourceHandle: 'out', targetNodeId: 'node-edm-dina', targetHandle: 'in', isActive: false },
+    { id: 'edm-e3', sourceNodeId: 'node-edm-dina', sourceHandle: 'out', targetNodeId: 'node-edm-qsvc', targetHandle: 'in', isActive: false },
+    { id: 'edm-e4', sourceNodeId: 'node-edm-dina', sourceHandle: 'out', targetNodeId: 'node-edm-rag', targetHandle: 'in', isActive: false },
+    { id: 'edm-e5', sourceNodeId: 'node-edm-qsvc', sourceHandle: 'out', targetNodeId: 'node-edm-eval', targetHandle: 'in', isActive: false },
+    { id: 'edm-e6', sourceNodeId: 'node-edm-rag', sourceHandle: 'out', targetNodeId: 'node-edm-eval', targetHandle: 'in', isActive: false },
+    { id: 'edm-e7', sourceNodeId: 'node-edm-eval', sourceHandle: 'out', targetNodeId: 'node-edm-out', targetHandle: 'in', isActive: false },
+  ];
+
+  return {
+    id: 'wf-quantum-edm-pipeline',
+    name: 'Quantum-Enhanced Educational Data Mining (EDM) Pipeline',
+    description: '4-Phase pipeline: Ingestion -> Time-Series Normalization -> DINA Psychometrics -> Qiskit ZZFeatureMap & QSVC -> Pedagogical RAG -> Radar Delivery.',
+    templateKey: 'quantum_edm_pipeline',
+    nodes,
+    edges,
+    updatedAt: Date.now(),
+  };
+}
+
+
 

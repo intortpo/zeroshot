@@ -263,7 +263,8 @@ export type PetriViewMode =
   | 'settings'
   | 'governance'
   | 'consumer'
-  | 'server';
+  | 'server'
+  | 'edm';
 
 export interface SteerableConceptWord {
   id: string;
@@ -686,7 +687,7 @@ export interface PySpurWorkflow {
   id: string;
   name: string;
   description: string;
-  templateKey: 'petri_orchestration' | 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'multi_agent_debate' | 'custom';
+  templateKey: 'petri_orchestration' | 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'multi_agent_debate' | 'quantum_edm_pipeline' | 'custom';
   nodes: PySpurNode[];
   edges: PySpurEdge[];
   updatedAt: number;

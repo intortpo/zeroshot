@@ -19,6 +19,7 @@ import {
   Wrench,
   Users,
   Server,
+  GraduationCap,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -458,6 +459,23 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               <span>Server</span>
               <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
                 Petri
+              </span>
+            </button>
+
+            {/* EDM: Quantum-Enhanced Educational Data Mining */}
+            <button
+              onClick={() => onSelectView('edm')}
+              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                currentView === 'edm'
+                  ? 'border-teal-600 text-teal-950 font-semibold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+              }`}
+              title="Quantum-Enhanced Educational Data Mining (Q-Matrix + DINA + QSVC)"
+            >
+              <GraduationCap className={`w-4 h-4 ${currentView === 'edm' ? 'text-teal-600' : 'text-stone-400'}`} />
+              <span>EDM</span>
+              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-teal-50 text-teal-700 border border-teal-200">
+                QML
               </span>
             </button>
 

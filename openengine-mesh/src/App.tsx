@@ -23,6 +23,7 @@ import { AiProviderMonitorModal } from './components/models/AiProviderMonitorMod
 import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
+import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
 import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
@@ -705,6 +706,17 @@ function inferPetriKind(text: string): PetriItemKind {
                     <PetriServerView
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
+                    />
+                  </div>
+                )}
+
+                {/* View 9: Quantum-Enhanced Educational Data Mining (EDM) Dashboard */}
+                {currentView === 'edm' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <EdmDashboardView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      onNavigateToNodeStudio={() => setCurrentView('node')}
                     />
                   </div>
                 )}

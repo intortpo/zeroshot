@@ -15,6 +15,7 @@ import {
   Cpu,
   BarChart3,
   ChevronRight,
+  GraduationCap,
 } from 'lucide-react';
 import { PetriViewMode, UserProfile, Workspace } from '../../types';
 
@@ -125,6 +126,27 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
               <div>
                 <div className="text-xs font-bold">Plan Canvas</div>
                 <div className="text-[11px] text-stone-500">ECC Interactive Planning & Verification</div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleNavigate('edm')}
+            className={`w-full p-3 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
+              currentView === 'edm'
+                ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
+                : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold">EDM Diagnostics</div>
+                <div className="text-[11px] text-stone-500">Q-Matrix, DINA CDM & Quantum QSVC</div>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-stone-400" />

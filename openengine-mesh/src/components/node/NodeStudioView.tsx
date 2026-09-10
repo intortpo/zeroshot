@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Trash2,
   Repeat,
+  GraduationCap,
 } from 'lucide-react';
 import {
   PySpurWorkflow,
@@ -46,6 +47,7 @@ import {
   createDevContainerCoderWorkflow,
   createEvaluatorSuiteWorkflow,
   createMultiAgentDebateWorkflow,
+  createQuantumEdmWorkflow,
   executePySpurNode,
   getTopologicalNodeOrder,
   detectTemplateVariables,
@@ -177,13 +179,20 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
       | 'devcontainer_coder'
       | 'evaluator_suite'
       | 'multi_agent_debate'
+      | 'quantum_edm_pipeline'
   ) => {
     setIsTemplateMenuOpen(false);
     let newWf: PySpurWorkflow;
     let defaultSelectedId: string;
     let defaultPrompt = goalPrompt;
 
-    if (key === 'petri_orchestration') {
+    if (key === 'quantum_edm_pipeline') {
+      newWf = createQuantumEdmWorkflow();
+      defaultSelectedId = 'node-edm-qsvc';
+      defaultPrompt = 'Quantum-Enhanced Educational Data Mining (EDM) Pipeline: Q-Matrix, DINA, ZZFeatureMap & QSVC';
+      setSynthesizedPlan(null);
+      showToast('Loaded Quantum-Enhanced EDM Diagnostic Pipeline');
+    } else if (key === 'petri_orchestration') {
       newWf = createPetriOrchestrationWorkflow(goalPrompt);
       defaultSelectedId = 'node-petri-worker';
       setSynthesizedPlan(null);
@@ -719,6 +728,24 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
                     </div>
                     <div className="text-[10px] text-stone-500 font-normal">
                       6-stage: Ingestion → DevContainer → Tests → Gate → Repair → CAS Merge
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTemplate('quantum_edm_pipeline')}
+                  className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                    workflow.templateKey === 'quantum_edm_pipeline'
+                      ? 'bg-teal-50 text-teal-900 font-semibold'
+                      : 'text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4 text-teal-600 shrink-0" />
+                  <div>
+                    <div className="text-xs font-semibold">Quantum-Enhanced EDM Pipeline</div>
+                    <div className="text-[10px] text-stone-500 font-normal">
+                      Q-Matrix + DINA Psychometrics + Qiskit ZZFeatureMap & QSVC
                     </div>
                   </div>
                 </button>
