@@ -14,6 +14,19 @@ import {
   X,
   Plus,
   Trash2,
+  Compass,
+  Columns,
+  MessageSquare,
+  Cpu,
+  Zap,
+  Database,
+  GraduationCap,
+  Target,
+  GitBranch,
+  Sliders,
+  Layers,
+  Save,
+  Download,
 } from 'lucide-react';
 import {
   Workspace,
@@ -21,14 +34,45 @@ import {
   PlanCanvasDoc,
   PlanAnnotation,
   AgentChatMessage,
+  EccOptimizationState,
 } from '../types';
+
+export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
 
 interface ChatPlanCanvasViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
+  initialMode?: CanvasDisplayMode;
   onApprovePlan?: (plan: PlanCanvasDoc) => void;
   onSelectView?: (view: 'board' | 'graph') => void;
 }
+
+const INITIAL_DEFAULT_ECC_STATE: EccOptimizationState = {
+  modelTier: 'sonnet_flash',
+  systemPromptSlimming: true,
+  promptTokensSavedPercent: 42.6,
+  backgroundDaemonEnabled: true,
+  sessionPersistenceHooks: true,
+  lastSessionSavedAt: Date.now() - 1000 * 60 * 4,
+  savedCheckpointsCount: 3,
+  autoExtractPatterns: true,
+  extractedSkillsCount: 6,
+  confidenceThreshold: 0.85,
+  evalMode: 'continuous',
+  graderType: 'deterministic_test',
+  passAt1: 94.2,
+  passAt3: 98.8,
+  activeGitWorktrees: ['worktree/task-plan-ecc', 'worktree/mesh-ledger-test'],
+  cascadeMethodEnabled: true,
+  scaleInstancesRecommendation: 3,
+  contextSlicingRatio: 14.8,
+  iterativeRetrievalEnabled: true,
+  activeSubagentSlices: [
+    { agent: '@architect', tokenBudget: 24000, tokensUsed: 4200, retrievalCalls: 6 },
+    { agent: '@speculative-coder', tokenBudget: 32000, tokensUsed: 11500, retrievalCalls: 14 },
+    { agent: '@acceptance-verifier', tokenBudget: 18000, tokensUsed: 3100, retrievalCalls: 4 },
+  ],
+};
 
 const INITIAL_DEFAULT_PLAN: PlanCanvasDoc = {
   id: 'plan-ecc-01',
@@ -116,9 +160,28 @@ const INITIAL_DEFAULT_PLAN: PlanCanvasDoc = {
 export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   activeWorkspace,
   activeUser,
+  initialMode,
   onApprovePlan,
   onSelectView,
 }) => {
+  // Display Mode: 'canvas' (Plan Canvas Full) | 'split' (Chat + Canvas) | 'chat' (Chat Full) | 'ecc' (ECC Engine Hub)
+  const [displayMode, setDisplayMode] = useState<CanvasDisplayMode>(initialMode || 'split');
+  const [eccState, setEccState] = useState<EccOptimizationState>(INITIAL_DEFAULT_ECC_STATE);
+  const [eccToast, setEccToast] = useState<string | null>(null);
+
+  const showEccToast = (msg: string) => {
+    setEccToast(msg);
+    setTimeout(() => {
+      setEccToast((prev) => (prev === msg ? null : prev));
+    }, 3000);
+  };
+
+  useEffect(() => {
+    if (initialMode) {
+      setDisplayMode(initialMode);
+    }
+  }, [initialMode]);
+
   // Plan Canvas Document State
   const [plan, setPlan] = useState<PlanCanvasDoc>(INITIAL_DEFAULT_PLAN);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -342,28 +405,135 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col xl:flex-row overflow-hidden font-sans bg-[#FAFBFB] text-stone-900">
-      {/* ========================================================================= */}
-      {/* 1. LEFT PANE: CONVERSATIONAL AGENT CHAT (ECC Interface)                  */}
-      {/* ========================================================================= */}
-      <div className="w-full xl:w-[45%] h-full flex flex-col border-r border-stone-200/90 bg-white/80 backdrop-blur-md">
-        {/* Chat Top Header */}
-        <div className="px-5 py-3.5 border-b border-stone-200/90 bg-white/90 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-emerald-500 flex items-center justify-center text-white shadow-xs">
-              <Bot className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-stone-900 font-mono">@orchestrator</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-stone-500 font-sans">ECC Agent Harness</span>
-              </div>
-              <div className="text-[11px] text-stone-400 font-mono">
-                Claude 3.7 Sonnet / Gemini 2.5 Flash
-              </div>
-            </div>
+    <div className="flex-1 w-full h-full flex flex-col overflow-hidden font-sans bg-[#FAFBFB] text-stone-900">
+      {/* Top View Mode & ECC Optimization Header */}
+      <div className="px-5 py-2.5 bg-white/95 border-b border-stone-200/90 flex flex-wrap items-center justify-between gap-3 shrink-0 backdrop-blur-md">
+        {/* Left: View Mode Segmented Switcher */}
+        <div className="flex items-center space-x-1 bg-stone-100/90 p-1 rounded-xl border border-stone-200/80 text-xs">
+          <button
+            type="button"
+            onClick={() => setDisplayMode('canvas')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              displayMode === 'canvas'
+                ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-[#FF5F1F]" />
+            <span>Plan Canvas</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDisplayMode('split')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              displayMode === 'split'
+                ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Columns className="w-3.5 h-3.5 text-[#0ABAB5]" />
+            <span>Split View</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDisplayMode('chat')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              displayMode === 'chat'
+                ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-stone-700" />
+            <span>Chat Only</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDisplayMode('ecc')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              displayMode === 'ecc'
+                ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+            <span>ECC Engine</span>
+            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+              -42.6%
+            </span>
+          </button>
+        </div>
+
+        {/* Right: Live ECC Telemetry Indicators & Quick Actions */}
+        <div className="flex items-center space-x-3 text-xs">
+          <div className="hidden md:flex items-center space-x-2 text-[11px] font-mono text-stone-500">
+            <span className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <Zap className="w-3 h-3 text-emerald-600" />
+              <span>Tokens: -42.6%</span>
+            </span>
+            <span className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <GitBranch className="w-3 h-3 text-indigo-600" />
+              <span>Worktrees: 2</span>
+            </span>
+            <span className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-stone-100 text-stone-700 border border-stone-200">
+              <Target className="w-3 h-3 text-stone-600" />
+              <span>pass@1: 94.2%</span>
+            </span>
           </div>
+
+          {onSelectView && (
+            <button
+              type="button"
+              onClick={() => onSelectView('graph')}
+              className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+              title="View in Orchestration Graph"
+            >
+              <Workflow className="w-3.5 h-3.5 text-[#0ABAB5]" />
+              <span className="hidden sm:inline">Graph</span>
+            </button>
+          )}
+
+          {displayMode === 'canvas' && (
+            <button
+              type="button"
+              onClick={handleApprovePlan}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Approve Plan</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* ========================================================================= */}
+        {/* 1. LEFT PANE: CONVERSATIONAL AGENT CHAT (ECC Interface)                  */}
+        {/* ========================================================================= */}
+        {(displayMode === 'chat' || displayMode === 'split') && (
+          <div className={`h-full flex flex-col border-r border-stone-200/90 bg-white/80 backdrop-blur-md overflow-hidden ${
+            displayMode === 'chat' ? 'w-full max-w-4xl mx-auto flex-1' : 'w-full lg:w-[42%] shrink-0'
+          }`}>
+            {/* Chat Top Header */}
+            <div className="px-5 py-3.5 border-b border-stone-200/90 bg-white/90 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-emerald-500 flex items-center justify-center text-white shadow-xs">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-stone-900 font-mono">@orchestrator</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] text-stone-500 font-sans">ECC Agent Harness</span>
+                  </div>
+                  <div className="text-[11px] text-stone-400 font-mono">
+                    Claude 3.7 Sonnet / Gemini 2.5 Flash
+                  </div>
+                </div>
+              </div>
 
           <div className="flex items-center space-x-2 text-xs">
             <button
@@ -514,13 +684,17 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
           </form>
         </div>
       </div>
+    )}
 
       {/* ========================================================================= */}
       {/* 2. RIGHT PANE: ECC-STYLE PLAN CANVAS                                      */}
       {/* ========================================================================= */}
-      <div className="w-full xl:w-[55%] h-full flex flex-col bg-white overflow-hidden">
-        {/* Plan Canvas Header Bar */}
-        <div className="px-6 py-3.5 border-b border-stone-200/90 bg-stone-50/70 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
+      {(displayMode === 'canvas' || displayMode === 'split') && (
+        <div className={`h-full flex flex-col bg-white overflow-hidden ${
+          displayMode === 'canvas' ? 'w-full max-w-5xl mx-auto flex-1 shadow-sm' : 'flex-1 min-w-0'
+        }`}>
+          {/* Plan Canvas Header Bar */}
+          <div className="px-6 py-3.5 border-b border-stone-200/90 bg-stone-50/70 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2 text-xs font-mono">
               <span className="text-[#FF5F1F] font-bold">PLAN CANVAS</span>
@@ -886,8 +1060,471 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
           </div>
         )}
       </div>
+      )}
 
-      {/* Popover: Add Pinned Annotation Modal */}
+      {/* ========================================================================= */}
+      {/* 3. ECC CORE ARCHITECTURE & OPTIMIZATION DASHBOARD (When in 'ecc' mode)   */}
+      {/* ========================================================================= */}
+      {displayMode === 'ecc' && (
+        <div className="flex-1 w-full max-w-6xl mx-auto h-full overflow-y-auto p-6 sm:p-8 space-y-6">
+          {/* Header & Toast */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-200/80">
+            <div>
+              <div className="flex items-center space-x-2 text-xs font-mono">
+                <span className="text-indigo-600 font-bold uppercase tracking-wider">ECC Core Architecture</span>
+                <span className="text-stone-300">·</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-indigo-50 border-indigo-200 text-indigo-700">
+                  CLI & Token Optimization Engine
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 mt-1">
+                Everything Claude Code (ECC) Optimization Hub
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
+                Dynamic model tiering, system prompt slimming, working memory persistence hooks, continuous learning, verification loops, worktree parallelization, and subagent orchestration.
+              </p>
+            </div>
+
+            {eccToast && (
+              <div className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium animate-in fade-in flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{eccToast}</span>
+              </div>
+            )}
+          </div>
+
+          {/* 6 Core ECC Architectural Pillars Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* 1. Token Optimization */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800">
+                    -42.6% TOKENS
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">1. Token Optimization</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Model selection, system prompt slimming, and background processes.
+                </p>
+
+                {/* Model Tier Selector */}
+                <div className="pt-2 space-y-1.5">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Model Tier Routing</div>
+                  <div className="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl text-[11px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, modelTier: 'opus_pro' }));
+                        showEccToast('Selected Opus 3.5 / Pro 2.5 for deep architecture');
+                      }}
+                      className={`py-1 rounded-lg transition-all cursor-pointer ${
+                        eccState.modelTier === 'opus_pro'
+                          ? 'bg-white text-stone-900 font-bold shadow-xs'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      Opus/Pro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, modelTier: 'sonnet_flash' }));
+                        showEccToast('Selected Sonnet 3.7 / Flash 2.5 for balanced execution');
+                      }}
+                      className={`py-1 rounded-lg transition-all cursor-pointer ${
+                        eccState.modelTier === 'sonnet_flash'
+                          ? 'bg-white text-stone-900 font-bold shadow-xs'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      Sonnet/Flash
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, modelTier: 'haiku_lite' }));
+                        showEccToast('Selected Haiku 3.5 / Flash-Lite for fast triage');
+                      }}
+                      className={`py-1 rounded-lg transition-all cursor-pointer ${
+                        eccState.modelTier === 'haiku_lite'
+                          ? 'bg-white text-stone-900 font-bold shadow-xs'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      Haiku/Lite
+                    </button>
+                  </div>
+                </div>
+
+                {/* Slimming & Background Toggles */}
+                <div className="space-y-2 pt-1">
+                  <label className="flex items-center justify-between p-2 rounded-xl bg-stone-50 border border-stone-200/80 cursor-pointer">
+                    <span className="text-xs text-stone-700 font-medium">System Prompt Slimming</span>
+                    <input
+                      type="checkbox"
+                      checked={eccState.systemPromptSlimming}
+                      onChange={(e) => {
+                        setEccState((prev) => ({ ...prev, systemPromptSlimming: e.target.checked }));
+                        showEccToast(e.target.checked ? 'Enabled system prompt slimming' : 'Disabled prompt slimming');
+                      }}
+                      className="rounded accent-emerald-600 cursor-pointer"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between p-2 rounded-xl bg-stone-50 border border-stone-200/80 cursor-pointer">
+                    <span className="text-xs text-stone-700 font-medium">Background Process Daemon</span>
+                    <input
+                      type="checkbox"
+                      checked={eccState.backgroundDaemonEnabled}
+                      onChange={(e) => {
+                        setEccState((prev) => ({ ...prev, backgroundDaemonEnabled: e.target.checked }));
+                        showEccToast(e.target.checked ? 'Background daemon active' : 'Background daemon paused');
+                      }}
+                      className="rounded accent-emerald-600 cursor-pointer"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Memory Persistence */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-600">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800">
+                    4 HOOKS ACTIVE
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">2. Memory Persistence</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Hooks that save/load context across sessions automatically.
+                </p>
+
+                <div className="grid grid-cols-2 gap-1.5 pt-2 text-[11px] font-mono">
+                  <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                    <div className="text-stone-400 text-[10px]">HOOK 1</div>
+                    <div className="font-bold text-emerald-600">session:start</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                    <div className="text-stone-400 text-[10px]">HOOK 2</div>
+                    <div className="font-bold text-emerald-600">session:save</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                    <div className="text-stone-400 text-[10px]">HOOK 3</div>
+                    <div className="font-bold text-emerald-600">session:resume</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                    <div className="text-stone-400 text-[10px]">HOOK 4</div>
+                    <div className="font-bold text-emerald-600">context:dump</div>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-stone-500 font-mono pt-1">
+                  Saved Checkpoints: <span className="font-bold text-stone-800">{eccState.savedCheckpointsCount}</span> (Auto-saved 4m ago)
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEccState((prev) => ({
+                      ...prev,
+                      savedCheckpointsCount: prev.savedCheckpointsCount + 1,
+                      lastSessionSavedAt: Date.now(),
+                    }));
+                    showEccToast('Persisted session snapshot to .agents/memory/session-ecc-state.json');
+                  }}
+                  className="flex-1 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5 text-stone-500" />
+                  <span>Save Snapshot</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showEccToast('Exported context dump: 3.8 KB JSON snapshot');
+                  }}
+                  className="p-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 transition-colors cursor-pointer"
+                  title="Export Context JSON"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Continuous Learning */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800">
+                    {eccState.extractedSkillsCount} REUSABLE SKILLS
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">3. Continuous Learning</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Auto-extract patterns from sessions into reusable skills.
+                </p>
+
+                <div className="space-y-1.5 pt-2">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Extracted Patterns</div>
+                  <div className="space-y-1 text-xs">
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-stone-800 truncate">safe-log-timestamp-epoch</span>
+                      <span className="text-[10px] font-mono text-emerald-600 font-bold">97%</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-stone-800 truncate">fail-closed-mcp-recovery</span>
+                      <span className="text-[10px] font-mono text-emerald-600 font-bold">94%</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-stone-800 truncate">worktree-zero-contamination</span>
+                      <span className="text-[10px] font-mono text-emerald-600 font-bold">99%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEccState((prev) => ({
+                    ...prev,
+                    extractedSkillsCount: prev.extractedSkillsCount + 1,
+                  }));
+                  showEccToast('Extracted new skill "bounded-sqlite-queue" into Skills Catalog!');
+                }}
+                className="w-full py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-xs font-semibold flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Auto-Extract Skill from Session</span>
+              </button>
+            </div>
+
+            {/* 4. Verification Loops */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600">
+                    <Target className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-100 text-rose-800">
+                    PASS@1: {eccState.passAt1}%
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">4. Verification Loops</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Checkpoint vs continuous evals, grader types, pass@k metrics.
+                </p>
+
+                {/* Eval Strategy Selector */}
+                <div className="pt-2 space-y-1.5">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Eval Mode</div>
+                  <div className="grid grid-cols-2 gap-1 bg-stone-100 p-1 rounded-xl text-[11px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, evalMode: 'continuous' }));
+                        showEccToast('Switched to Continuous Streaming Evals');
+                      }}
+                      className={`py-1 rounded-lg transition-all cursor-pointer ${
+                        eccState.evalMode === 'continuous'
+                          ? 'bg-white text-stone-900 font-bold shadow-xs'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      Continuous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, evalMode: 'checkpoint' }));
+                        showEccToast('Switched to Checkpoint Gate Evals');
+                      }}
+                      className={`py-1 rounded-lg transition-all cursor-pointer ${
+                        eccState.evalMode === 'checkpoint'
+                          ? 'bg-white text-stone-900 font-bold shadow-xs'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      Checkpoint Gate
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grader Type Selector */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Grader Type</div>
+                  <div className="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, graderType: 'deterministic_test' }));
+                        showEccToast('Grader: Deterministic Test Runner');
+                      }}
+                      className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                        eccState.graderType === 'deterministic_test'
+                          ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
+                          : 'bg-stone-50 border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      Test Runner
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, graderType: 'invariant_ast' }));
+                        showEccToast('Grader: Invariant AST Synthesizer');
+                      }}
+                      className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                        eccState.graderType === 'invariant_ast'
+                          ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
+                          : 'bg-stone-50 border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      AST Invariant
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEccState((prev) => ({ ...prev, graderType: 'llm_judge' }));
+                        showEccToast('Grader: LLM-as-a-Judge Rubric');
+                      }}
+                      className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                        eccState.graderType === 'llm_judge'
+                          ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
+                          : 'bg-stone-50 border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      LLM Judge
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-mono pt-1 text-stone-500 border-t border-stone-100">
+                <span>pass@1: <strong className="text-stone-900">{eccState.passAt1}%</strong></span>
+                <span>pass@3: <strong className="text-stone-900">{eccState.passAt3}%</strong></span>
+                <span className="text-emerald-600 font-bold">14/14 Suites Pass</span>
+              </div>
+            </div>
+
+            {/* 5. Parallelization */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-50 border border-cyan-200/80 flex items-center justify-center text-cyan-600">
+                    <GitBranch className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-100 text-cyan-800">
+                    {eccState.activeGitWorktrees.length} WORKTREES ACTIVE
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">5. Parallelization</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Git worktrees, cascade method, when to scale instances.
+                </p>
+
+                {/* Worktrees list */}
+                <div className="space-y-1.5 pt-2">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Isolated Worktree Sandboxes</div>
+                  <div className="space-y-1 text-xs font-mono">
+                    {eccState.activeGitWorktrees.map((wt) => (
+                      <div key={wt} className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                        <span className="text-stone-700 truncate text-[11px]">{wt}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">CLEAN</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scaling Recommendation */}
+                <div className="p-2.5 rounded-xl bg-cyan-50/70 border border-cyan-200/80 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-cyan-800 font-bold">Cascade Scaling Recommendation:</span>
+                    <span className="font-bold text-cyan-900">{eccState.scaleInstancesRecommendation} Instances</span>
+                  </div>
+                  <div className="text-[10px] text-cyan-700 mt-1">
+                    DAG width of 3 tasks indicates zero merge conflicts. Fan-out execution ready.
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  showEccToast('Triggered git worktree refresh and cascade barrier check');
+                }}
+                className="w-full py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-stone-500" />
+                <span>Verify Worktree Isolation</span>
+              </button>
+            </div>
+
+            {/* 6. Subagent Orchestration */}
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-violet-50 border border-violet-200/80 flex items-center justify-center text-violet-600">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-violet-100 text-violet-800">
+                    14.8% SLICE BUDGET
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900">6. Subagent Orchestration</h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  The context problem, iterative retrieval pattern.
+                </p>
+
+                {/* The Context Problem Solution Info */}
+                <div className="p-2.5 rounded-xl bg-violet-50/70 border border-violet-200/80 text-xs space-y-1">
+                  <div className="text-[11px] font-mono font-bold text-violet-900">
+                    Context Problem Solved:
+                  </div>
+                  <p className="text-[10px] text-violet-700 leading-normal">
+                    Subagents receive compact task slices (under 15% budget) and query AST iteratively on demand, preventing 100k token context bloat.
+                  </p>
+                </div>
+
+                {/* Subagents Table */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[11px] font-mono text-stone-500 font-semibold uppercase">Active Agent Slices</div>
+                  <div className="space-y-1 text-xs font-mono">
+                    {eccState.activeSubagentSlices.map((slice) => (
+                      <div key={slice.agent} className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                        <div>
+                          <span className="text-stone-800 font-bold text-[11px]">{slice.agent}</span>
+                          <span className="text-stone-400 text-[10px] ml-1.5">{slice.tokensUsed} / {slice.tokenBudget}</span>
+                        </div>
+                        <span className="text-[10px] text-indigo-600 font-bold">{slice.retrievalCalls} reqs</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-stone-500 text-[11px]">Iterative Retrieval:</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono text-[10px] font-bold">
+                  ACTIVE
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
       {isAddingPin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-100 font-sans">
           <div className="bg-white rounded-2xl border border-stone-200 p-5 w-full max-w-md shadow-2xl space-y-3">

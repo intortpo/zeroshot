@@ -224,7 +224,47 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+
+// ECC (Everything Claude Code) Engine & Optimization Types
+export interface EccOptimizationState {
+  // 1. Token Optimization
+  modelTier: 'opus_pro' | 'sonnet_flash' | 'haiku_lite';
+  systemPromptSlimming: boolean;
+  promptTokensSavedPercent: number;
+  backgroundDaemonEnabled: boolean;
+
+  // 2. Memory Persistence
+  sessionPersistenceHooks: boolean;
+  lastSessionSavedAt?: number;
+  savedCheckpointsCount: number;
+
+  // 3. Continuous Learning
+  autoExtractPatterns: boolean;
+  extractedSkillsCount: number;
+  confidenceThreshold: number;
+
+  // 4. Verification Loops
+  evalMode: 'checkpoint' | 'continuous';
+  graderType: 'deterministic_test' | 'invariant_ast' | 'llm_judge';
+  passAt1: number;
+  passAt3: number;
+
+  // 5. Parallelization
+  activeGitWorktrees: string[];
+  cascadeMethodEnabled: boolean;
+  scaleInstancesRecommendation: number;
+
+  // 6. Subagent Orchestration
+  contextSlicingRatio: number;
+  iterativeRetrievalEnabled: boolean;
+  activeSubagentSlices: {
+    agent: string;
+    tokenBudget: number;
+    tokensUsed: number;
+    retrievalCalls: number;
+  }[];
+}
 
 // ECC (Everything Claude Code) Chat & Plan Canvas Types
 export interface PlanAnnotation {

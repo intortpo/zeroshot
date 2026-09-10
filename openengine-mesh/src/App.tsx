@@ -148,13 +148,48 @@ export function App() {
     [items, activeWorkspaceId]
   );
 
+// Automatic AI heuristic for intent kind classification
+function inferPetriKind(text: string): PetriItemKind {
+  const lower = text.toLowerCase();
+  if (
+    lower.startsWith('fix') ||
+    lower.includes('bug') ||
+    lower.includes('error') ||
+    lower.includes('crash') ||
+    lower.includes('broken') ||
+    lower.includes('fail')
+  ) {
+    return 'bug';
+  }
+  if (
+    lower.startsWith('why') ||
+    lower.includes('issue') ||
+    lower.includes('investigate') ||
+    lower.includes('problem') ||
+    lower.includes('audit')
+  ) {
+    return 'issue';
+  }
+  if (
+    lower.startsWith('v1') ||
+    lower.includes('release') ||
+    lower.includes('launch') ||
+    lower.includes('milestone') ||
+    lower.includes('roadmap')
+  ) {
+    return 'mile';
+  }
+  return 'feat';
+}
+
   // Handle Intent Submission from Frosted Hero Bar
-  const handleCreateIntent = async (title: string, kind: PetriItemKind) => {
+  const handleCreateIntent = async (title: string, kind?: PetriItemKind) => {
+    const determinedKind = kind || inferPetriKind(title);
     const newItemId = `pt-${Math.random().toString(36).substring(2, 7)}`;
     const newItem: PetriItem = {
       id: newItemId,
       workspaceId: activeWorkspaceId,
-      kind,
+      kind: determinedKind,
       title,
       stage: 'in_flight',
       createdAt: Date.now(),
@@ -392,12 +427,13 @@ export function App() {
         />
 
         {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
-        {currentView === 'chat' && (
+        {(currentView === 'chat' || currentView === 'plan') && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <ChatPlanCanvasView
               activeWorkspace={activeWorkspace}
               activeUser={activeUser}
-              onApprovePlan={(plan) => handleCreateIntent(plan.title, 'feat')}
+              initialMode={currentView === 'plan' ? 'canvas' : 'split'}
+              onApprovePlan={(plan) => handleCreateIntent(plan.title)}
               onSelectView={setCurrentView}
             />
           </div>
