@@ -126,4 +126,27 @@ mod tests {
         assert_eq!(profile.mastery_vector, vec![1, 1, 1, 1]);
         assert!(profile.mastery_probabilities["skill_vocab"] > 0.8);
     }
+
+    #[test]
+    fn test_dina_estimation_thailand_4_0() {
+        let q_matrix = CurriculumQMatrix::thailand_4_0();
+        let estimator = DinaEstimator::default();
+
+        let mut responses = HashMap::new();
+        responses.insert("item_t4_algo_decomp".to_string(), 1);
+        responses.insert("item_t4_deductive_eval".to_string(), 1);
+        responses.insert("item_esl_audio_retention".to_string(), 1);
+        responses.insert("item_esl_cloze_latency".to_string(), 1);
+        responses.insert("item_manova_group_project".to_string(), 1);
+        responses.insert("item_onet_benchmark_exam".to_string(), 1);
+        responses.insert("item_gpa_velocity_tracking".to_string(), 1);
+        responses.insert("item_multiplayer_solution".to_string(), 1);
+
+        let profile = estimator.estimate_profile(&responses, &q_matrix);
+        assert_eq!(profile.mastery_vector, vec![1, 1, 1, 1, 1, 1]);
+        assert!(profile.mastery_probabilities["skill_comp_thinking"] > 0.8);
+        assert!(profile.mastery_probabilities["skill_critical_inquiry"] > 0.8);
+        assert!(profile.mastery_probabilities["skill_bigfive_conscientiousness"] > 0.8);
+    }
 }
+

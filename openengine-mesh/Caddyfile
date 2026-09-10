@@ -1,6 +1,17 @@
 :80 {
     root * /usr/share/caddy
     encode gzip zstd
-    try_files {path} /index.html
-    file_server
+
+    # Optional internal backend proxies
+    @api path /api/* /ws/*
+    handle @api {
+        reverse_proxy petri-engine:8080
+    }
+
+    # Web SPA fallback
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
 }
+

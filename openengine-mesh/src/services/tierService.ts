@@ -110,14 +110,17 @@ export const DEFAULT_TIER_PERMISSIONS: Record<SystemTier, TierPermissions> = {
 export const STANDARD_TIER_PERSONAS: UserProfile[] = [
   {
     id: 'usr-hideo',
-    name: 'Hideo (intortpo)',
-    email: '82773932+intortpo@users.noreply.github.com',
+    name: 'Hideo',
+    email: 'intortpo@gmail.com',
+    impersonateUser: 'j.sadol@bbs.ac.th',
     role: 'owner',
     tier: 'superadmin',
     organization: 'Petri Zero Platform',
     canApproveGates: true,
     canDeploy: true,
     canEditRules: true,
+    zitadelSub: 'intortpo@gmail.com',
+    pyspurExternalId: 'intortpo@gmail.com',
   },
 ];
 

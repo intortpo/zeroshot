@@ -220,6 +220,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  impersonateUser?: string;
   avatar?: string;
   role: UserRole;
   tier: SystemTier;
@@ -228,6 +229,9 @@ export interface UserProfile {
   canDeploy: boolean;
   canEditRules: boolean;
   permissions?: Partial<TierPermissions>;
+  zitadelSub?: string;
+  pyspurUserId?: string;
+  pyspurExternalId?: string;
 }
 
 export interface EnterpriseStats {

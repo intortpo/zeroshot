@@ -41,6 +41,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   // Edit State
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editImpersonateUser, setEditImpersonateUser] = useState('');
   const [editRole, setEditRole] = useState<UserProfile['role']>('owner');
   const [editOrg, setEditOrg] = useState('');
   const [editCanApprove, setEditCanApprove] = useState(true);
@@ -58,6 +59,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     if (activeUser) {
       setEditName(activeUser.name);
       setEditEmail(activeUser.email);
+      setEditImpersonateUser(activeUser.impersonateUser || 'j.sadol@bbs.ac.th');
       setEditRole(activeUser.role);
       setEditOrg(activeUser.organization);
       setEditCanApprove(activeUser.canApproveGates);
@@ -76,6 +78,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       ...activeUser,
       name: editName.trim(),
       email: editEmail.trim(),
+      impersonateUser: editImpersonateUser.trim() || 'j.sadol@bbs.ac.th',
       role: editRole,
       organization: editOrg.trim() || 'Petri Zero Platform',
       canApproveGates: editCanApprove,
@@ -153,6 +156,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <span className="text-stone-300">·</span>
                   <span className="text-stone-600 font-medium capitalize">{activeUser.role.replace('_', ' ')}</span>
                 </div>
+                {activeUser.impersonateUser && (
+                  <div className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-lg inline-flex items-center space-x-1.5 mt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Work Impersonation: <strong>{activeUser.impersonateUser}</strong></span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -186,7 +195,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-stone-500 uppercase">Email Address</label>
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Login / Email Address</label>
                   <input
                     type="email"
                     value={editEmail}
@@ -196,6 +205,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     required
                   />
                 </div>
+              </div>
+              <div className="space-y-1 text-xs">
+                <label className="text-[10px] font-mono text-stone-500 uppercase">Work Impersonation Target (Google Workspace DWD)</label>
+                <input
+                  type="email"
+                  value={editImpersonateUser}
+                  onChange={(e) => setEditImpersonateUser(e.target.value)}
+                  placeholder="e.g. j.sadol@bbs.ac.th"
+                  className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 text-xs font-mono"
+                />
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="space-y-1">

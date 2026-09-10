@@ -14,6 +14,51 @@ import argparse
 from typing import Dict, List, Any, Tuple
 from telecounto_mitigation import TelecountoDriftSuppressor
 
+# Authoritative Cognitive, Thailand 4.0 & ESL MANOVA Latent Skills
+THAILAND_4_0_LATENT_SKILLS = [
+    {
+        "id": "skill_comp_thinking",
+        "name": "Computational Thinking & Algorithmic Reasoning",
+        "description": "Decomposition, algorithmic abstraction, and digital literacy (Thailand 4.0 Core)"
+    },
+    {
+        "id": "skill_critical_inquiry",
+        "name": "Critical Inquiry & Deductive Reasoning",
+        "description": "Inductive/deductive reasoning, assumption checking, and evaluating source credibility"
+    },
+    {
+        "id": "skill_esl_receptive_productive",
+        "name": "ESL Receptive vs Productive Ratio",
+        "description": "Reading/listening comprehension balanced against speaking/writing output"
+    },
+    {
+        "id": "skill_esl_syntactic_latency",
+        "name": "Syntactic Accuracy & Response Latency",
+        "description": "Vocabulary retention vs structural correctness and gamified response latency"
+    },
+    {
+        "id": "skill_manova_activity_orientation",
+        "name": "Activity Orientation (GAO / IAO / PO)",
+        "description": "MANOVA clustering across Group Activity (GAO), Individual (IAO), and Project (PO)"
+    },
+    {
+        "id": "skill_bigfive_conscientiousness",
+        "name": "Big Five: Conscientiousness & GPA Velocity",
+        "description": "Diligence predictor, mission completion rates, and longitudinal GPA delta over time"
+    }
+]
+
+THAILAND_4_0_Q_MATRIX = {
+    "item_t4_algo_decomp":       [1, 1, 0, 0, 0, 1],
+    "item_t4_deductive_eval":     [0, 1, 0, 0, 0, 1],
+    "item_esl_audio_retention":   [0, 0, 1, 1, 0, 0],
+    "item_esl_cloze_latency":     [1, 0, 1, 1, 0, 1],
+    "item_manova_group_project":  [1, 1, 0, 0, 1, 1],
+    "item_onet_benchmark_exam":   [1, 1, 1, 1, 0, 1],
+    "item_gpa_velocity_tracking": [1, 0, 0, 1, 1, 1],
+    "item_multiplayer_solution":  [1, 1, 1, 0, 1, 1]
+}
+
 # Authoritative Quantum Computing & Qiskit Fundamentals Latent Skills
 QUANTUM_LATENT_SKILLS = [
     {
@@ -62,8 +107,8 @@ CLASSICAL_Q_MATRIX = {
     "item_final_case":     [0, 0, 1, 1]
 }
 
-DEFAULT_Q_MATRIX = QUANTUM_Q_MATRIX
-DEFAULT_SKILLS = QUANTUM_LATENT_SKILLS
+DEFAULT_Q_MATRIX = THAILAND_4_0_Q_MATRIX
+DEFAULT_SKILLS = THAILAND_4_0_LATENT_SKILLS
 
 def normalize_time_series(raw_weekly_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """

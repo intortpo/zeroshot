@@ -245,10 +245,126 @@ impl CurriculumQMatrix {
             items,
         }
     }
+
+    /// Cognitive & Thailand 4.0 Competencies, ESL Acquisition & MANOVA Orientations Q-Matrix
+    pub fn thailand_4_0() -> Self {
+        let skills = vec![
+            LatentSkill {
+                id: "skill_comp_thinking".to_string(),
+                name: "Computational Thinking & Algorithmic Reasoning".to_string(),
+                benchmark_target: 0.85,
+            },
+            LatentSkill {
+                id: "skill_critical_inquiry".to_string(),
+                name: "Critical Inquiry & Deductive Verification".to_string(),
+                benchmark_target: 0.80,
+            },
+            LatentSkill {
+                id: "skill_esl_receptive_productive".to_string(),
+                name: "ESL Receptive/Productive Balance".to_string(),
+                benchmark_target: 0.85,
+            },
+            LatentSkill {
+                id: "skill_esl_syntactic_latency".to_string(),
+                name: "Syntactic Accuracy & Real-Time Latency".to_string(),
+                benchmark_target: 0.75,
+            },
+            LatentSkill {
+                id: "skill_manova_activity_orientation".to_string(),
+                name: "Activity Orientation (GAO / IAO / PO)".to_string(),
+                benchmark_target: 0.70,
+            },
+            LatentSkill {
+                id: "skill_bigfive_conscientiousness".to_string(),
+                name: "Conscientiousness & Engagement Velocity".to_string(),
+                benchmark_target: 0.80,
+            },
+        ];
+
+        let mut items = HashMap::new();
+        let raw_items = vec![
+            (
+                "item_t4_algo_decomp",
+                "T4.0 Algorithmic Decomposition & Abstraction Challenge",
+                "quiz",
+                [1, 1, 0, 0, 0, 1],
+            ),
+            (
+                "item_t4_deductive_eval",
+                "Critical Inquiry: Source Credibility & Fallacy Deduction",
+                "quiz",
+                [0, 1, 0, 0, 0, 1],
+            ),
+            (
+                "item_esl_audio_retention",
+                "ESL Diagnostic: Listening Retention vs Productive Speech",
+                "quiz",
+                [0, 0, 1, 1, 0, 0],
+            ),
+            (
+                "item_esl_cloze_latency",
+                "ESL Speed: Interactive Gamified Syntactic Cloze",
+                "homework",
+                [1, 0, 1, 1, 0, 1],
+            ),
+            (
+                "item_manova_group_project",
+                "MANOVA: Group Activity vs Project Orientation Sprint",
+                "homework",
+                [1, 1, 0, 0, 1, 1],
+            ),
+            (
+                "item_onet_benchmark_exam",
+                "National O-NET Benchmark: Mathematics & English Velocity",
+                "midterm",
+                [1, 1, 1, 1, 0, 1],
+            ),
+            (
+                "item_gpa_velocity_tracking",
+                "Longitudinal GPA Velocity & Mission Completion Audit",
+                "midterm",
+                [1, 0, 0, 1, 1, 1],
+            ),
+            (
+                "item_multiplayer_solution",
+                "Capstone: Multiplayer Digital Sandbox Solution Rate",
+                "final",
+                [1, 1, 1, 0, 1, 1],
+            ),
+        ];
+
+        for (id, name, cat, q_row) in raw_items {
+            let mut skill_map = HashMap::new();
+            skill_map.insert("skill_comp_thinking".to_string(), q_row[0]);
+            skill_map.insert("skill_critical_inquiry".to_string(), q_row[1]);
+            skill_map.insert("skill_esl_receptive_productive".to_string(), q_row[2]);
+            skill_map.insert("skill_esl_syntactic_latency".to_string(), q_row[3]);
+            skill_map.insert("skill_manova_activity_orientation".to_string(), q_row[4]);
+            skill_map.insert("skill_bigfive_conscientiousness".to_string(), q_row[5]);
+
+            items.insert(
+                id.to_string(),
+                QMatrixItem {
+                    item_id: id.to_string(),
+                    name: name.to_string(),
+                    category: cat.to_string(),
+                    skills: skill_map,
+                },
+            );
+        }
+
+        Self {
+            domain_id: "thailand_4_0".to_string(),
+            domain_name: "Cognitive, Thailand 4.0 & ESL MANOVA Psychometrics".to_string(),
+            skills,
+            items,
+        }
+    }
 }
 
 impl Default for CurriculumQMatrix {
     fn default() -> Self {
-        Self::quantum_computing()
+        Self::thailand_4_0()
     }
 }
+

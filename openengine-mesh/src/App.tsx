@@ -597,6 +597,7 @@ function inferPetriKind(text: string): PetriItemKind {
                     <CentricFocusChatView
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
+                      users={users}
                       onHandoffPlan={(plan) => {
                         handleCreateIntent(plan.title, 'feat');
                         setCurrentView('plan');

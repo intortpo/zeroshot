@@ -7,10 +7,12 @@ services:
     container_name: petri-zitadel
     restart: unless-stopped
     ports:
-      - "80:8080"
       - "8080:8080"
     volumes:
       - /var/lib/petri/vault/zitadel/config.yaml:/config.yaml
+    environment:
+      - ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_ENABLED=false
+      - ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED=false
     depends_on:
       - petri-postgres
     command: ["start", "--config", "/config.yaml", "--masterkey", "${ZITADEL_MASTERKEY:-PetriMasterKey32ByteString2026!!}"]
@@ -29,17 +31,16 @@ services:
     volumes:
       - /var/lib/petri/vault/postgres:/var/lib/postgresql/data
 
-  # 2. Petri Web UI (SPA)
-  #    Internal only — Petri Server proxies authenticated traffic here.
+  # 2. Petri Web UI (SPA) & Ingress Gateway
   petri-web:
-    build:
-      context: ../openengine-mesh
-      dockerfile: Dockerfile
-    image: petri-web:latest
+    image: caddy:2-alpine
     container_name: petri-web
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
+    ports:
+      - "80:80"
+    volumes:
+      - /opt/zero-petri/openengine-mesh/dist:/usr/share/caddy
+      - /opt/zero-petri/openengine-mesh/Caddyfile:/etc/caddy/Caddyfile
 
   # 3. Petri Engine — Rust Native Daemon & Cluster Server
   #    Handles /api/* and /ws/* behind Petri Server auth gate.

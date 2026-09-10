@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Sparkles,
   Play,
@@ -23,6 +23,7 @@ import {
   Trash2,
   Repeat,
   GraduationCap,
+  UserCheck,
 } from 'lucide-react';
 import {
   PySpurWorkflow,
@@ -61,6 +62,7 @@ import {
 import { DevContainerConsoleDrawer } from './DevContainerConsoleDrawer';
 import { PySpurEvalsPanel } from './PySpurEvalsPanel';
 import { execInDevContainer } from '../../services/devcontainerService';
+import { pyspurUserService, PySpurUserResponse } from '../../services/pyspurUserService';
 
 interface NodeStudioViewProps {
   activeWorkspace?: Workspace;
@@ -95,11 +97,33 @@ const PRESET_GOALS = [
 
 export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
   activeWorkspace,
-  activeUser: _activeUser,
+  activeUser,
   initialTab = 'canvas',
   onHandoffPlan,
   onNavigateToChat,
 }) => {
+  // PySpur User & Zitadel Identity Binding State
+  const [pyspurUser, setPyspurUser] = useState<PySpurUserResponse | null>(null);
+  const [isLinkingUser, setIsLinkingUser] = useState<boolean>(false);
+
+  // Auto-link Zitadel user to PySpur User API (/user/)
+  useEffect(() => {
+    if (activeUser) {
+      setIsLinkingUser(true);
+      pyspurUserService
+        .linkZitadelUserToPySpur(activeUser)
+        .then((res) => {
+          setPyspurUser(res);
+        })
+        .catch((err) => {
+          console.warn('PySpur user sync error:', err);
+        })
+        .finally(() => {
+          setIsLinkingUser(false);
+        });
+    }
+  }, [activeUser?.id, activeUser?.email, activeUser?.role]);
+
   // Active Workflow State - Defaults to Canonical Petri Orchestration Pipeline
   const [workflow, setWorkflow] = useState<PySpurWorkflow>(() =>
     createPetriOrchestrationWorkflow()
@@ -967,6 +991,18 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
           </div>
 
           <div className="h-5 w-[1px] bg-stone-200 hidden sm:block" />
+
+          {/* PySpur User Identity / Zitadel Linked Pill */}
+          <div
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-purple-50 border border-purple-200 text-purple-950 text-xs font-mono"
+            title={`PySpur User: ${pyspurUser?.id || (isLinkingUser ? 'Syncing...' : 'Offline')} | Zitadel IAM: ${activeUser?.name || 'Hideo'} (${activeUser?.role || 'owner'})`}
+          >
+            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span className="font-semibold">{pyspurUser?.id || (isLinkingUser ? 'U-Syncing...' : 'U-Linked')}</span>
+            <span className="text-[10px] text-purple-600 bg-purple-100/80 px-1.5 py-0.2 rounded-full font-sans">
+              Zitadel Linked
+            </span>
+          </div>
 
           {/* Action Buttons */}
           <button
