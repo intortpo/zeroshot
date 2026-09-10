@@ -481,10 +481,20 @@ class OpenDesignService {
     name: string;
     category?: OpenDesignProject['category'];
     description?: string;
-    template?: 'landing' | 'dashboard' | 'slides' | 'mobile' | 'blank';
+    template?: 'landing' | 'dashboard' | 'submersion_3d' | 'slides' | 'mobile' | 'blank';
     dimensions?: PetriWorkdeskDimensions;
   }): PetriWorkdesk {
-    const category = params.category || (params.template === 'mobile' ? 'mobile_app' : params.template === 'slides' ? 'slides' : params.template === 'dashboard' ? 'dashboard' : 'landing_page');
+    const category =
+      params.category ||
+      (params.template === 'mobile'
+        ? 'mobile_app'
+        : params.template === 'slides'
+        ? 'slides'
+        : params.template === 'dashboard'
+        ? 'dashboard'
+        : params.template === 'submersion_3d'
+        ? 'prototype'
+        : 'landing_page');
     const description = params.description || `Petri Design Workdesk: ${params.name}`;
     const id = `workdesk-${Date.now().toString(36)}`;
 
@@ -495,7 +505,259 @@ class OpenDesignService {
       label: 'Desktop (1280x800)',
     };
 
-    if (params.template === 'mobile') {
+    if (params.template === 'submersion_3d') {
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <title>${params.name} - 3D Submersion</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #0c121e; font-family: 'Inter', system-ui, sans-serif; }
+    #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+  </style>
+</head>
+<body class="text-white select-none">
+  <div id="canvas-container"></div>
+
+  <!-- HUD Overlay -->
+  <div class="relative z-10 p-6 pointer-events-none flex flex-col justify-between h-screen">
+    <div class="flex items-start justify-between">
+      <div class="bg-stone-900/80 backdrop-blur-md p-4 rounded-2xl border border-teal-500/30 shadow-2xl pointer-events-auto">
+        <div class="flex items-center space-x-2 mb-1">
+          <span class="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
+          <span class="text-[11px] font-mono font-bold tracking-wider uppercase text-teal-400">3D Petri Submersion Manifold</span>
+        </div>
+        <h1 class="text-xl font-black text-white">${params.name}</h1>
+        <p class="text-xs text-stone-400 mt-0.5 max-w-sm">${description}</p>
+      </div>
+
+      <div class="bg-stone-900/80 backdrop-blur-md p-3.5 rounded-2xl border border-stone-800 space-y-2 pointer-events-auto text-right">
+        <div class="text-[10px] font-mono text-stone-500 uppercase">Submersion Telemetry</div>
+        <div class="text-sm font-mono font-bold text-teal-300">Elevation: +2.4σ</div>
+        <div class="text-[11px] font-mono text-emerald-400">DINA Convergence: 98.4%</div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div class="bg-stone-900/80 backdrop-blur-md px-4 py-2 rounded-xl border border-stone-800 text-[11px] font-mono text-stone-400">
+        Left-Click + Drag: Rotate 3D Manifold · Scroll: Zoom
+      </div>
+      <div class="bg-teal-950/80 backdrop-blur-md px-4 py-2 rounded-xl border border-teal-700/50 text-[11px] font-mono text-teal-300 font-semibold">
+        Waterline Risk Boundary: Active
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0c121e, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 20, 35);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Terrain Geometry
+    const gridX = 40;
+    const gridY = 40;
+    const geometry = new THREE.PlaneGeometry(50, 50, gridX, gridY);
+    geometry.rotateX(-Math.PI / 2);
+
+    const pos = geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const d = Math.sqrt(x * x + z * z);
+      const y = Math.sin(x * 0.25) * Math.cos(z * 0.25) * 4 + Math.exp(-d * 0.08) * 6;
+      pos.setY(i, y);
+    }
+    geometry.computeVertexNormals();
+
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x0ABAB5, wireframe: true, transparent: true, opacity: 0.65 });
+    const terrain = new THREE.Mesh(geometry, wireMat);
+    scene.add(terrain);
+
+    // Translucent Submersion Waterplane
+    const waterGeo = new THREE.PlaneGeometry(60, 60);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterMat = new THREE.MeshBasicMaterial({ color: 0x0891B2, transparent: true, opacity: 0.35 });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.y = 1.2;
+    scene.add(water);
+
+    // Floating trajectory nodes
+    const particleGeo = new THREE.BufferGeometry();
+    const particleCount = 120;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      particlePositions[i] = (Math.random() - 0.5) * 40;
+      particlePositions[i + 1] = Math.random() * 12 + 1;
+      particlePositions[i + 2] = (Math.random() - 0.5) * 40;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({ color: 0x38BDF8, size: 0.8, transparent: true, opacity: 0.8 });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
+
+    // Mouse Interaction
+    let isDragging = false;
+    let prevMouseX = 0;
+    let targetRotationY = 0;
+    let targetRotationX = 0.2;
+
+    window.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - prevMouseX;
+      targetRotationY += deltaX * 0.008;
+      prevMouseX = e.clientX;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      terrain.rotation.y += (targetRotationY - terrain.rotation.y) * 0.05;
+      water.rotation.y = terrain.rotation.y;
+      water.position.y = 1.2 + Math.sin(Date.now() * 0.002) * 0.25;
+      particles.rotation.y += 0.001;
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>`;
+    } else if (params.template === 'dashboard') {
+      starterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>${params.name} - Psychometric Scorebook</title>
+  <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+</head>
+<body class="bg-stone-50 text-stone-900 min-h-screen p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-200">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-teal-100 text-teal-800">EDM Q-MATRIX ENGINE</span>
+          <span class="text-xs text-stone-400">AY2026 Term 1</span>
+        </div>
+        <h1 class="text-2xl font-black text-stone-900 mt-1">${params.name}</h1>
+        <p class="text-xs text-stone-500">${description}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-white border border-stone-200 hover:bg-stone-50 rounded-xl text-xs font-semibold text-stone-700 shadow-2xs cursor-pointer">
+          Export CSV / Scorebook
+        </button>
+        <button class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-2xs cursor-pointer">
+          Calibrate DINA Parameters
+        </button>
+      </div>
+    </header>
+
+    <!-- Top KPI Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+        <div class="text-[11px] font-mono uppercase text-stone-400 font-bold">Enrolled Cohort</div>
+        <div class="text-3xl font-black text-stone-900 mt-1">849</div>
+        <div class="text-xs text-emerald-600 font-medium mt-1">↑ 100% Synced from BBS</div>
+      </div>
+      <div class="p-5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+        <div class="text-[11px] font-mono uppercase text-stone-400 font-bold">DINA Latent Mastery</div>
+        <div class="text-3xl font-black text-teal-600 mt-1">86.4%</div>
+        <div class="text-xs text-stone-500 font-medium mt-1">16 Core Competencies</div>
+      </div>
+      <div class="p-5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+        <div class="text-[11px] font-mono uppercase text-stone-400 font-bold">Attendance Velocity</div>
+        <div class="text-3xl font-black text-indigo-600 mt-1">94.8%</div>
+        <div class="text-xs text-indigo-500 font-medium mt-1">+1.2% over target baseline</div>
+      </div>
+      <div class="p-5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+        <div class="text-[11px] font-mono uppercase text-stone-400 font-bold">Intervention Alert</div>
+        <div class="text-3xl font-black text-rose-500 mt-1">12</div>
+        <div class="text-xs text-rose-600 font-medium mt-1">Requires teacher review</div>
+      </div>
+    </div>
+
+    <!-- Student Mastery Matrix Table -->
+    <div class="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
+      <div class="p-4 border-b border-stone-100 flex items-center justify-between">
+        <h2 class="text-sm font-bold text-stone-900">Student Psychometric Trajectories</h2>
+        <span class="text-xs text-stone-400 font-mono">Live RAG-calibrated</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-stone-50 text-stone-500 font-mono text-[11px] uppercase border-b border-stone-200">
+            <tr>
+              <th class="px-4 py-3">Student Name</th>
+              <th class="px-4 py-3">Grade Level</th>
+              <th class="px-4 py-3">Mastery Profile</th>
+              <th class="px-4 py-3">Attendance</th>
+              <th class="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            <tr class="hover:bg-stone-50/60 transition">
+              <td class="px-4 py-3 font-semibold text-stone-900">Sirapop Chaiprasert</td>
+              <td class="px-4 py-3 text-stone-600">Grade 9 - Bilingual STEM</td>
+              <td class="px-4 py-3">
+                <div class="w-32 bg-stone-200 rounded-full h-2">
+                  <div class="bg-teal-500 h-2 rounded-full" style="width: 92%"></div>
+                </div>
+              </td>
+              <td class="px-4 py-3 font-mono text-emerald-600 font-semibold">98.5%</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Mastered</span></td>
+            </tr>
+            <tr class="hover:bg-stone-50/60 transition">
+              <td class="px-4 py-3 font-semibold text-stone-900">Nutthida Somboon</td>
+              <td class="px-4 py-3 text-stone-600">Grade 10 - Advanced Humanities</td>
+              <td class="px-4 py-3">
+                <div class="w-32 bg-stone-200 rounded-full h-2">
+                  <div class="bg-teal-500 h-2 rounded-full" style="width: 78%"></div>
+                </div>
+              </td>
+              <td class="px-4 py-3 font-mono text-teal-600 font-semibold">95.0%</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">On Track</span></td>
+            </tr>
+            <tr class="hover:bg-stone-50/60 transition">
+              <td class="px-4 py-3 font-semibold text-stone-900">Tanawat Pradit</td>
+              <td class="px-4 py-3 text-stone-600">Grade 9 - Standard Track</td>
+              <td class="px-4 py-3">
+                <div class="w-32 bg-stone-200 rounded-full h-2">
+                  <div class="bg-amber-500 h-2 rounded-full" style="width: 58%"></div>
+                </div>
+              </td>
+              <td class="px-4 py-3 font-mono text-amber-600 font-semibold">88.2%</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Support Req.</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+    } else if (params.template === 'mobile') {
       defaultDimensions = params.dimensions || { width: 375, height: 812, label: 'Mobile (375x812 iPhone / Pixel)' };
       starterHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -708,6 +970,100 @@ class OpenDesignService {
 
   public updateMcpServer(id: string, updates: Partial<McpServerDefinition>): void {
     this.mcpServers = this.mcpServers.map((s) => (s.id === id ? { ...s, ...updates } : s));
+  }
+
+  public async synthesizeDesignFromPrompt(params: {
+    name: string;
+    prompt: string;
+    template?: 'landing' | 'dashboard' | 'submersion_3d' | 'slides' | 'mobile' | 'blank';
+    style?: 'tiffany' | 'dark' | 'academic' | 'vibrant';
+    dimensions?: PetriWorkdeskDimensions;
+  }): Promise<PetriWorkdesk> {
+    const pLower = params.prompt.toLowerCase();
+    const is3d = params.template === 'submersion_3d' || pLower.includes('3d') || pLower.includes('submersion') || pLower.includes('manifold');
+    const isEduOrDashboard = params.template === 'dashboard' || pLower.includes('student') || pLower.includes('score') || pLower.includes('grade') || pLower.includes('dina') || pLower.includes('matrix') || pLower.includes('attendance') || pLower.includes('school');
+    const isMobile = params.template === 'mobile' || pLower.includes('mobile') || pLower.includes('phone') || pLower.includes('ios') || pLower.includes('touch');
+    const isSlides = params.template === 'slides' || pLower.includes('slide') || pLower.includes('deck') || pLower.includes('presentation');
+
+    const effectiveTemplate = is3d
+      ? 'submersion_3d'
+      : isEduOrDashboard
+      ? 'dashboard'
+      : isMobile
+      ? 'mobile'
+      : isSlides
+      ? 'slides'
+      : 'landing';
+
+    const workdesk = this.createWorkdesk({
+      name: params.name || 'AI Synthesized Prototype',
+      description: `Generated from prompt: "${params.prompt.substring(0, 100)}..."`,
+      template: effectiveTemplate,
+      dimensions: params.dimensions,
+    });
+
+    // If custom prompt provides unique requirements, tailor the synthesized HTML
+    const currentCode = workdesk.artifacts[0].code;
+    let customHtml = currentCode;
+
+    // Apply color accent based on style parameter
+    const accentColor =
+      params.style === 'dark'
+        ? '#6366F1'
+        : params.style === 'academic'
+        ? '#0D9488'
+        : params.style === 'vibrant'
+        ? '#EC4899'
+        : '#0ABAB5'; // Tiffany teal default
+
+    // Replace headline and add tailored AI banner
+    const bannerHtml = `\n<!-- AI Synthesizer Attribution -->\n<div class="fixed bottom-3 right-3 z-50 px-3 py-1.5 bg-stone-900/90 text-white rounded-full text-[10px] font-mono shadow-lg flex items-center space-x-1.5 border border-stone-700/60 backdrop-blur-md">\n  <span class="w-1.5 h-1.5 rounded-full bg-[${accentColor}] animate-ping"></span>\n  <span>Petri One-Shot Synthesizer: ${params.style || 'tiffany'}</span>\n</div>\n`;
+
+    if (customHtml.includes('</body>')) {
+      customHtml = customHtml.replace('</body>', `${bannerHtml}\n</body>`);
+    } else {
+      customHtml += bannerHtml;
+    }
+
+    this.updateArtifactCode(workdesk.id, workdesk.artifacts[0].id, customHtml);
+    return workdesk;
+  }
+
+  public importWorkdeskFromFile(content: string, filename: string): PetriWorkdesk {
+    if (filename.endsWith('.json')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.name && parsed.artifacts) {
+          const workdesk = this.createWorkdesk({
+            name: parsed.name,
+            description: parsed.description || `Imported from ${filename}`,
+            category: parsed.category || 'prototype',
+            dimensions: parsed.dimensions,
+          });
+          if (parsed.artifacts && parsed.artifacts.length > 0) {
+            workdesk.artifacts = parsed.artifacts;
+            workdesk.activeArtifactId = parsed.artifacts[0].id;
+            this.saveProjects();
+          }
+          return workdesk;
+        }
+      } catch (err) {
+        console.warn('Failed to parse workdesk JSON, falling back to HTML import:', err);
+      }
+    }
+
+    // HTML fallback
+    const rawName = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    const titleMatch = content.match(/<title>(.*?)<\/title>/i);
+    const projectName = titleMatch ? titleMatch[1].trim() : rawName || 'Imported Design';
+
+    const workdesk = this.createWorkdesk({
+      name: projectName,
+      description: `Imported HTML template: ${filename}`,
+      template: 'blank',
+    });
+    this.updateArtifactCode(workdesk.id, workdesk.artifacts[0].id, content);
+    return workdesk;
   }
 }
 

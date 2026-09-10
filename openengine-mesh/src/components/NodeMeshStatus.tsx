@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Minus,
+  Plus,
   X,
   ChevronDown,
   Kanban,
@@ -433,6 +434,26 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
               {openDropdown === 'gen' && (
                 <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  {/* Quick Action: Start New Open Design */}
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_design');
+                      window.dispatchEvent(new CustomEvent('petri:open-new-design-modal'));
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 mb-1.5 rounded-xl text-left bg-teal-50/90 hover:bg-teal-100/90 text-teal-950 border border-teal-200/80 transition-all cursor-pointer group shadow-2xs"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 rounded-lg bg-teal-600 text-white flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                        <Plus className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-teal-950">Start New Open Design</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-white text-teal-800 border border-teal-200/60 shadow-2xs">
+                      Ctrl+N
+                    </span>
+                  </button>
+
                   <button
                     onClick={() => {
                       onSelectView('generative_design');

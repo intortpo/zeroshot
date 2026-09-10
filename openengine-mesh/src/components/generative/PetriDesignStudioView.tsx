@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles,
   Monitor,
@@ -16,10 +16,7 @@ import {
   Copy,
   Trash2,
   Cloud,
-  Layout,
-  X,
   GripVertical,
-  Upload,
   HelpCircle,
   Box,
 } from 'lucide-react';
@@ -28,6 +25,7 @@ import {
   PetriWorkdesk,
 } from '../../services/openDesignService';
 import { RcloneSyncModal } from '../rclone/RcloneSyncModal';
+import { NewOpenDesignModal } from './NewOpenDesignModal';
 
 export const PetriDesignStudioView: React.FC = () => {
   const [workdesks, setWorkdesks] = useState<PetriWorkdesk[]>(() =>
@@ -49,9 +47,6 @@ export const PetriDesignStudioView: React.FC = () => {
 
   // New Workdesk Dialog State
   const [isNewWorkdeskOpen, setIsNewWorkdeskOpen] = useState(false);
-  const [newDeskName, setNewDeskName] = useState('');
-  const [newDeskTemplate, setNewDeskTemplate] = useState<'landing' | 'dashboard' | 'slides' | 'mobile' | 'blank'>('landing');
-  const [newDeskDesc, setNewDeskDesc] = useState('');
 
   // Rclone Cloud Sync Modal State
   const [isRcloneOpen, setIsRcloneOpen] = useState(false);
@@ -60,7 +55,6 @@ export const PetriDesignStudioView: React.FC = () => {
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
   const [isCanvasDragOver, setIsCanvasDragOver] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
-  const projectImportInputRef = useRef<HTMLInputElement>(null);
 
   const PALETTE_COMPONENTS = [
     {
@@ -100,7 +94,7 @@ export const PetriDesignStudioView: React.FC = () => {
     },
   ];
 
-  // Global Ctrl+N shortcut to create new project/workdesk
+  // Global Ctrl+N shortcut or custom trigger to create new project/workdesk
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
@@ -108,8 +102,15 @@ export const PetriDesignStudioView: React.FC = () => {
         setIsNewWorkdeskOpen(true);
       }
     };
+    const handleCustomTrigger = () => {
+      setIsNewWorkdeskOpen(true);
+    };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('petri:open-new-design-modal', handleCustomTrigger);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('petri:open-new-design-modal', handleCustomTrigger);
+    };
   }, []);
 
   const injectHtmlIntoCode = (snippet: string, name: string) => {
@@ -184,56 +185,6 @@ export const PetriDesignStudioView: React.FC = () => {
     }
   };
 
-  const handleImportProject = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    if (file.name.endsWith('.json')) {
-      reader.onload = (ev) => {
-        try {
-          const parsed = JSON.parse(ev.target?.result as string);
-          if (parsed.name && parsed.artifacts) {
-            const created = openDesignService.createWorkdesk({
-              name: parsed.name,
-              description: parsed.description,
-              template: 'blank',
-            });
-            if (parsed.artifacts[0]?.code) {
-              openDesignService.updateArtifactCode(created.id, created.artifacts[0].id, parsed.artifacts[0].code);
-            }
-            const updated = openDesignService.getWorkdesks();
-            setWorkdesks(updated);
-            setActiveWorkdeskId(created.id);
-            setIsNewWorkdeskOpen(false);
-            setExportSuccessMsg(`Imported workdesk project: "${created.name}"`);
-            setTimeout(() => setExportSuccessMsg(null), 3000);
-          }
-        } catch {
-          alert('Invalid JSON workdesk format');
-        }
-      };
-      reader.readAsText(file);
-    } else if (file.name.endsWith('.html') || file.type === 'text/html') {
-      reader.onload = (ev) => {
-        const content = ev.target?.result as string;
-        const created = openDesignService.createWorkdesk({
-          name: file.name.replace(/\.[^/.]+$/, ''),
-          description: 'Imported HTML Prototype',
-          template: 'blank',
-        });
-        openDesignService.updateArtifactCode(created.id, created.artifacts[0].id, content);
-        const updated = openDesignService.getWorkdesks();
-        setWorkdesks(updated);
-        setActiveWorkdeskId(created.id);
-        setIsNewWorkdeskOpen(false);
-        setExportSuccessMsg(`Imported HTML design: "${created.name}"`);
-        setTimeout(() => setExportSuccessMsg(null), 3000);
-      };
-      reader.readAsText(file);
-    }
-  };
-
   const activeWorkdesk = useMemo(
     () => workdesks.find((w) => w.id === activeWorkdeskId) || workdesks[0],
     [workdesks, activeWorkdeskId]
@@ -277,26 +228,6 @@ export const PetriDesignStudioView: React.FC = () => {
     setWorkdesks([...openDesignService.getWorkdesks()]);
     setExportSuccessMsg('Workdesk code updated and saved to local memory.');
     setTimeout(() => setExportSuccessMsg(null), 2500);
-  };
-
-  const handleCreateNewWorkdesk = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDeskName.trim()) return;
-
-    const created = openDesignService.createWorkdesk({
-      name: newDeskName.trim(),
-      description: newDeskDesc.trim() || undefined,
-      template: newDeskTemplate,
-    });
-
-    const updated = openDesignService.getWorkdesks();
-    setWorkdesks(updated);
-    setActiveWorkdeskId(created.id);
-    setIsNewWorkdeskOpen(false);
-    setNewDeskName('');
-    setNewDeskDesc('');
-    setExportSuccessMsg(`Created new workdesk: "${created.name}"`);
-    setTimeout(() => setExportSuccessMsg(null), 3000);
   };
 
   const handleDuplicateWorkdesk = () => {
@@ -859,120 +790,19 @@ export const PetriDesignStudioView: React.FC = () => {
         </aside>
       </div>
 
-      {/* New Workdesk Modal Dialog */}
-      {isNewWorkdeskOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <Layout className="w-5 h-5 text-teal-600" />
-                <h3 className="font-bold text-sm text-stone-900">Start New Petri Design Workdesk</h3>
-              </div>
-              <button
-                onClick={() => setIsNewWorkdeskOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:text-stone-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <input
-              type="file"
-              ref={projectImportInputRef}
-              onChange={handleImportProject}
-              accept=".json,.html"
-              className="hidden"
-            />
-
-            <div className="flex items-center justify-between p-3 bg-stone-50 border border-stone-200 rounded-2xl">
-              <div>
-                <div className="font-semibold text-stone-800 text-xs">Have an existing layout or prototype?</div>
-                <div className="text-[10px] text-stone-500">Import an existing .html webpage or Petri .json export</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => projectImportInputRef.current?.click()}
-                className="px-3 py-1.5 bg-white border border-stone-200 hover:border-teal-300 text-stone-700 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Upload className="w-3.5 h-3.5 text-teal-600" />
-                <span>Import Project</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateNewWorkdesk} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[11px] font-semibold text-stone-600 mb-1 uppercase font-mono">
-                  Workdesk Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Student Progress Portal, Parent Notification Deck..."
-                  value={newDeskName}
-                  onChange={(e) => setNewDeskName(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-stone-600 mb-1 uppercase font-mono">
-                  Starter Template Preset
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { id: 'landing', label: 'SaaS Landing', desc: 'Marketing page' },
-                    { id: 'dashboard', label: 'Dashboard', desc: 'Data analytics' },
-                    { id: 'slides', label: 'Presentation Deck', desc: '16:9 slides' },
-                    { id: 'mobile', label: 'Mobile App', desc: 'iOS & Android' },
-                    { id: 'blank', label: 'Clean Slate', desc: 'Empty canvas' },
-                  ].map((tpl) => (
-                    <div
-                      key={tpl.id}
-                      onClick={() => setNewDeskTemplate(tpl.id as any)}
-                      className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
-                        newDeskTemplate === tpl.id
-                          ? 'border-teal-600 bg-teal-50/60 ring-1 ring-teal-600'
-                          : 'border-stone-200 bg-white hover:border-teal-300'
-                      }`}
-                    >
-                      <div className="font-semibold text-stone-800">{tpl.label}</div>
-                      <div className="text-[10px] text-stone-400 font-mono">{tpl.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-stone-600 mb-1 uppercase font-mono">
-                  Description / Purpose (Optional)
-                </label>
-                <textarea
-                  placeholder="Briefly state target users, brand guidelines, or objectives..."
-                  value={newDeskDesc}
-                  onChange={(e) => setNewDeskDesc(e.target.value)}
-                  rows={2}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsNewWorkdeskOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-stone-600 hover:bg-stone-100 font-medium cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-semibold shadow-xs transition-colors cursor-pointer"
-                >
-                  Create Workdesk
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* New Open Design Studio Modal */}
+      <NewOpenDesignModal
+        isOpen={isNewWorkdeskOpen}
+        onClose={() => setIsNewWorkdeskOpen(false)}
+        onCreated={(created) => {
+          const updated = openDesignService.getWorkdesks();
+          setWorkdesks(updated);
+          setActiveWorkdeskId(created.id);
+          setActiveTab('preview');
+          setExportSuccessMsg(`Started new Open Design workdesk: "${created.name}"`);
+          setTimeout(() => setExportSuccessMsg(null), 3000);
+        }}
+      />
 
       {/* Rclone Multi-Cloud Sync Modal */}
       <RcloneSyncModal

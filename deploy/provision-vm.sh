@@ -17,7 +17,7 @@ STATIC_IP_NAME="petri-turnkey-static-ip"
 echo "========================================================"
 echo " Launching Petri Option 2: Dedicated Turnkey VM"
 echo " Project: $PROJECT_ID | Zone: $ZONE"
-echo " Machine: $MACHINE_TYPE | Monthly: ~$56.50/mo"
+echo " Machine: $MACHINE_TYPE | Monthly: ~\$56.50/mo"
 echo "========================================================"
 
 echo ">>> 1. Reserving Regional Static IPv4..."
