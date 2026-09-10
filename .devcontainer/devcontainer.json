@@ -1,0 +1,55 @@
+{
+  "name": "Zero-Petri & PySpur Agentic DevContainer",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [5173, 8000, 8080, 8787, 8788],
+  "portsAttributes": {
+    "5173": {
+      "label": "OpenEngine Mesh Vite Frontend",
+      "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "PySpur FastApi Agent Engine",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Zero Target Server",
+      "onAutoForward": "silent"
+    },
+    "8787": {
+      "label": "Native v2 Direct Target",
+      "onAutoForward": "silent"
+    },
+    "8788": {
+      "label": "Cluster Protocol Gateway",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "rust-analyzer.check.command": "clippy"
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "tamasfe.even-better-toml",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "remoteEnv": {
+    "RUST_BACKTRACE": "1",
+    "PYSPUR_ENV": "devcontainer",
+    "PYTHONPATH": "/workspace"
+  },
+  "postCreateCommand": "echo 'DevContainer ready for Zero-Petri and PySpur execution!'"
+}

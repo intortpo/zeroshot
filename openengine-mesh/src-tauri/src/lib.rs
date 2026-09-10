@@ -1,4 +1,5 @@
 pub mod agy;
+pub mod devcontainer;
 pub mod ecc;
 pub mod github_delivery;
 pub mod google_dwd;
@@ -11,6 +12,7 @@ use hardware::detect_hardware;
 use mesh::get_mesh_peers;
 use ecc::{run_ecc_command, save_ecc_memory_entry, query_ecc_memory_vault, run_ecc_memory_doctor};
 use agy::{check_agy_status, get_agy_models, run_agy_prompt, test_provider_connection};
+use devcontainer::{check_devcontainer_status, start_devcontainer, stop_devcontainer, exec_in_devcontainer, get_devcontainer_logs};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -33,6 +35,11 @@ pub fn run() {
             get_agy_models,
             run_agy_prompt,
             test_provider_connection,
+            check_devcontainer_status,
+            start_devcontainer,
+            stop_devcontainer,
+            exec_in_devcontainer,
+            get_devcontainer_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running petri application");
