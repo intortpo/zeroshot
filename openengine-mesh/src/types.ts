@@ -224,7 +224,58 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+export type PetriViewMode = 'chat' | 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+
+// ECC (Everything Claude Code) Chat & Plan Canvas Types
+export interface PlanAnnotation {
+  id: string;
+  pinNumber: number;
+  sectionId: string;
+  selectedText?: string;
+  comment: string;
+  author: string;
+  createdAt: number;
+}
+
+export interface PlanTaskItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  role?: string;
+}
+
+export interface PlanCanvasPhase {
+  id: string;
+  name: string;
+  description: string;
+  tasks: PlanTaskItem[];
+}
+
+export interface PlanCanvasDoc {
+  id: string;
+  title: string;
+  goalPrompt: string;
+  status: 'drafting' | 'review_required' | 'approved' | 'executing';
+  version: number;
+  summary: string;
+  objectives: string[];
+  invariants: string[];
+  phases: PlanCanvasPhase[];
+  testMatrix: string[];
+  annotations: PlanAnnotation[];
+  rawMarkdown?: string;
+  updatedAt: number;
+}
+
+export interface AgentChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  sender: string;
+  content: string;
+  thought?: string;
+  timestamp: number;
+  planRef?: string;
+}
 
 // Bevy & Avian Physics Game Studio Types
 export interface GameQuestionOption {

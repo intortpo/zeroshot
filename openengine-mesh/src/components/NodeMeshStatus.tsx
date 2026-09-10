@@ -10,6 +10,7 @@ import {
   Sliders,
   Disc,
   Workflow,
+  MessageSquare,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
 
@@ -90,6 +91,18 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
       {/* Center: Main Enterprise View Navigation (Flat Tabs, No Rounded Box Container) */}
       <nav className="flex items-center space-x-6 sm:space-x-8">
+        <button
+          onClick={() => onSelectView('chat')}
+          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
+            currentView === 'chat'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+          }`}
+        >
+          <MessageSquare className={`w-4 h-4 ${currentView === 'chat' ? 'text-stone-900' : 'text-stone-400'}`} />
+          <span>Chat</span>
+        </button>
+
         <button
           onClick={() => onSelectView('board')}
           className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${

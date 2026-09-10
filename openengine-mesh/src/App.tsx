@@ -14,6 +14,7 @@ import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
 import { OrchestrationGraphView } from './components/OrchestrationGraphView';
+import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
@@ -389,6 +390,18 @@ export function App() {
           currentView={currentView}
           onSelectView={setCurrentView}
         />
+
+        {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
+        {currentView === 'chat' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <ChatPlanCanvasView
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              onApprovePlan={(plan) => handleCreateIntent(plan.title, 'feat')}
+              onSelectView={setCurrentView}
+            />
+          </div>
+        )}
 
         {/* View 1: Main Kanban Board & Intent Entry Bar */}
         {currentView === 'board' && (
