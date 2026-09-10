@@ -1,23 +1,32 @@
 services:
-  # 1. Caddy Reverse Proxy & Automatic TLS
-  caddy:
-    image: caddy:2-alpine
-    container_name: petri-caddy
+  # 1. Petri Server — Zero-Trust Gateway
+  #    Auth, SmartShield, auto-TLS, rate limiting, reverse proxy.
+  #    This is the front door. All traffic flows through here.
+  #    Base image: azukaar/cosmos-server (upstream engine)
+  petri-server:
+    image: azukaar/cosmos-server:latest
+    container_name: petri-server
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp" # HTTP/3 QUIC
+      - "443:443/udp"   # HTTP/3 QUIC
+      - "4040:4040"     # Petri admin/management API
+    environment:
+      # Upstream image env vars (required by base image)
+      - COSMOS_HTTP_PORT=80
+      - COSMOS_HTTPS_PORT=443
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - /var/lib/petri/vault/caddy_data:/data
-      - /var/lib/petri/vault/caddy_config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/petri/vault/server_data:/var/lib/cosmos  # upstream data path
+      - /var/lib/petri/vault/server_config:/config
     depends_on:
       - petri-web
-      - petri-server
+      - petri-engine
       - playwright-runner
 
   # 2. Petri Web UI (SPA)
+  #    Internal only — Petri Server proxies authenticated traffic here.
   petri-web:
     build:
       context: ../openengine-mesh
@@ -28,18 +37,18 @@ services:
     environment:
       - NODE_ENV=production
 
-  # 3. Rust Native Engine Daemon & Cluster Server
-  petri-server:
+  # 3. Petri Engine — Rust Native Daemon & Cluster Server
+  #    Handles /api/* and /ws/* behind Petri Server auth gate.
+  petri-engine:
     build:
       context: ..
-      dockerfile: docker/petri-server/Dockerfile
-    image: petri-server:latest
-    container_name: petri-server
+      dockerfile: docker/zero-target/Dockerfile
+    image: petri-engine:latest
+    container_name: petri-engine
     restart: unless-stopped
     environment:
       - RUST_LOG=info
       - PETRI_VAULT_PATH=/var/lib/petri/vault
-      - PETRI_PORT=4040
       - DWD_IMPERSONATE_USER=j.sadol@bbs.ac.th
     volumes:
       - /var/lib/petri/vault:/var/lib/petri/vault

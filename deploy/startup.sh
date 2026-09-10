@@ -20,7 +20,7 @@ if [ -e "$DISKPTR" ]; then
   fi
 fi
 
-mkdir -p "$VAULT_DIR/caddy_data" "$VAULT_DIR/caddy_config" "$VAULT_DIR/browser_vault" "$VAULT_DIR/tailscale"
+mkdir -p "$VAULT_DIR/server_data" "$VAULT_DIR/server_config" "$VAULT_DIR/browser_vault" "$VAULT_DIR/tailscale"
 
 # 2. Install Docker & Docker Compose Plugin
 apt-get update -y
@@ -49,7 +49,7 @@ fi
 # 4. Setup Systemd Service for Turnkey Fleet
 cat <<'EOF' > /etc/systemd/system/petri-turnkey.service
 [Unit]
-Description=Petri Dedicated Turnkey Service Fleet (Web UI, Rust Daemon, Playwright, Caddy)
+Description=Petri Dedicated Turnkey Service Fleet (Petri Server Gateway, Web UI, Rust Engine, Playwright)
 After=docker.service network-online.target
 Requires=docker.service
 
