@@ -12,7 +12,6 @@ import {
   Disc,
   Workflow,
   MessageSquare,
-  Compass,
   Boxes,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
@@ -119,18 +118,6 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         >
           <MessageSquare className={`w-4 h-4 ${currentView === 'chat' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Chat</span>
-        </button>
-
-        <button
-          onClick={() => onSelectView('plan')}
-          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-            currentView === 'plan'
-              ? 'border-stone-900 text-stone-950 font-semibold'
-              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-          }`}
-        >
-          <Compass className={`w-4 h-4 ${currentView === 'plan' ? 'text-stone-900' : 'text-stone-400'}`} />
-          <span>Plan Canvas</span>
         </button>
 
         <button

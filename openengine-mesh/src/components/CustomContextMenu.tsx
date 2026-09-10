@@ -11,7 +11,6 @@ import {
   RotateCw,
   Workflow,
   MessageSquare,
-  Compass,
 } from 'lucide-react';
 import { PetriViewMode } from '../types';
 
@@ -327,16 +326,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
             className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-stone-100 text-stone-700 transition-colors"
           >
             <MessageSquare className="w-3 h-3 text-[#0ABAB5]" />
-            <span className="text-[11px] font-medium">Chat & Agent</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickNavigate('plan')}
-            className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-stone-100 text-stone-700 transition-colors"
-          >
-            <Compass className="w-3 h-3 text-[#FF5F1F]" />
-            <span className="text-[11px] font-medium">Plan Canvas (ECC)</span>
+            <span className="text-[11px] font-medium">Chat & Plan Canvas</span>
           </button>
 
           <button

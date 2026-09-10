@@ -1,3 +1,4 @@
+pub mod ecc;
 pub mod github_delivery;
 pub mod google_dwd;
 pub mod hardware;
@@ -7,6 +8,7 @@ use github_delivery::{submit_delivery_gate, submit_goal};
 use google_dwd::{dispatch_workspace_use_case, get_google_dwd_status, load_google_dwd_credentials};
 use hardware::detect_hardware;
 use mesh::get_mesh_peers;
+use ecc::{run_ecc_command, save_ecc_memory_entry, query_ecc_memory_vault, run_ecc_memory_doctor};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -21,6 +23,10 @@ pub fn run() {
             load_google_dwd_credentials,
             get_google_dwd_status,
             dispatch_workspace_use_case,
+            run_ecc_command,
+            save_ecc_memory_entry,
+            query_ecc_memory_vault,
+            run_ecc_memory_doctor,
         ])
         .run(tauri::generate_context!())
         .expect("error while running petri application");

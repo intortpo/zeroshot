@@ -41,6 +41,8 @@ import {
   PetriItem,
   ChatThread,
 } from '../types';
+import { EccTerminalConsole } from '../ecc/EccTerminalConsole';
+import { executeEccCli } from '../ecc/eccCliEngine';
 
 export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
 
@@ -331,6 +333,54 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   const activeModelObj = AVAILABLE_MODELS.find((m) => m.id === selectedModelId) || AVAILABLE_MODELS[0];
   const activeThreadObj = threads.find((t) => t.id === activeThreadId) || threads[0];
 
+  // Helper to generate a Plan Canvas for a given goal
+  const generatePlanForGoal = (goalTopic: string) => {
+    setPlan((prev) => ({
+      ...prev,
+      id: `plan-${Date.now()}`,
+      title: goalTopic.length > 50 ? `${goalTopic.slice(0, 50)}...` : goalTopic,
+      goalPrompt: goalTopic,
+      status: 'review_required',
+      version: prev.version + 1,
+      summary: `Comprehensive engineering plan for ${goalTopic}. Structured with test-first reproduction loops, invariant checks, and bounded execution boundaries.`,
+      objectives: [
+        `Implement core requirements for ${goalTopic.slice(0, 40)}.`,
+        'Enforce bounded memory ceilings and backpressure safety.',
+        'Construct isolated acceptance test suite before code modification.',
+      ],
+      phases: [
+        {
+          id: 'phase-1',
+          name: 'Phase 1: Invariant Specification & Preconditions',
+          description: 'Map boundary constraints and author test fixtures.',
+          tasks: [
+            { id: `t-${Date.now()}-1`, text: 'Validate clean baseline worktree & SQLite schema', completed: true, role: '@orchestrator' },
+            { id: `t-${Date.now()}-2`, text: 'Construct acceptance test reproduction harness', completed: false, role: '@acceptance-verifier' },
+          ],
+        },
+        {
+          id: 'phase-2',
+          name: 'Phase 2: Worker AST Implementation',
+          description: 'Synthesize minimal non-breaking code changes in sandbox.',
+          tasks: [
+            { id: `t-${Date.now()}-3`, text: `Implement changes for ${goalTopic.slice(0, 30)}`, completed: false, role: '@speculative-coder' },
+            { id: `t-${Date.now()}-4`, text: 'Verify memory bounds & zero unconstrained allocations', completed: false, role: '@speculative-coder' },
+          ],
+        },
+        {
+          id: 'phase-3',
+          name: 'Phase 3: Verification & Invariant Proof',
+          description: 'Independent dual review and consensus evaluation.',
+          tasks: [
+            { id: `t-${Date.now()}-5`, text: '14/14 automated acceptance tests matrix pass', completed: false, role: '@acceptance-verifier' },
+            { id: `t-${Date.now()}-6`, text: 'Zero compiler warnings, 0 lint defects', completed: false, role: '@security-auditor' },
+          ],
+        },
+      ],
+      updatedAt: Date.now(),
+    }));
+  };
+
   // Handle Chat Submission
   const handleSendMessage = (textToSend?: string) => {
     const text = (textToSend || inputPrompt).trim();
@@ -348,9 +398,48 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
     setInputPrompt('');
     setIsAgentThinking(true);
 
+    const lower = text.toLowerCase();
+
+    // Check if input is a direct ECC CLI command, e.g. "ecc ..." or "/ecc ..."
+    if (/^(?:\/ecc|ecc)\b/i.test(text)) {
+      const rawEccCmd = text.replace(/^\//, ''); // normalize "/ecc" -> "ecc"
+      executeEccCli(rawEccCmd)
+        .then((result) => {
+          if (rawEccCmd.toLowerCase().includes('plan')) {
+            const goalTopic = rawEccCmd.replace(/^ecc\s+plan\s*/i, '').trim();
+            if (goalTopic) {
+              generatePlanForGoal(goalTopic);
+            }
+          }
+
+          const eccMsg: AgentChatMessage = {
+            id: `ecc-${Date.now()}`,
+            role: 'assistant',
+            sender: '@ecc-cli',
+            thought: `Executed bundled ECC CLI command: "${rawEccCmd}" (exit code: ${result.exit_code})`,
+            content: `\`\`\`bash\n$ ${rawEccCmd}\n${result.stdout}${result.stderr ? '\n' + result.stderr : ''}\n\`\`\``,
+            timestamp: Date.now(),
+            planRef: plan.id,
+          };
+          setMessages((prev) => [...prev, eccMsg]);
+          setIsAgentThinking(false);
+        })
+        .catch((err: any) => {
+          const errMsg: AgentChatMessage = {
+            id: `ecc-err-${Date.now()}`,
+            role: 'assistant',
+            sender: '@ecc-cli',
+            content: `Error executing ECC command: ${err?.message || String(err)}`,
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, errMsg]);
+          setIsAgentThinking(false);
+        });
+      return;
+    }
+
     // Simulate Agent Reasoning & Plan Generation
     setTimeout(() => {
-      const lower = text.toLowerCase();
       let replyThought = '';
       let replyContent = '';
 
@@ -359,50 +448,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         replyThought = `Extracting architectural invariants and phase dependencies for "${goalTopic}" using model ${activeModelObj.name}... Synthesizing multi-phase checklist, test matrix, and visual diagram for Plan Canvas.`;
         
         // Dynamically update the Plan Canvas
-        setPlan((prev) => ({
-          ...prev,
-          id: `plan-${Date.now()}`,
-          title: goalTopic.length > 50 ? `${goalTopic.slice(0, 50)}...` : goalTopic,
-          goalPrompt: goalTopic,
-          status: 'review_required',
-          version: prev.version + 1,
-          summary: `Comprehensive engineering plan for ${goalTopic}. Structured with test-first reproduction loops, invariant checks, and bounded execution boundaries.`,
-          objectives: [
-            `Implement core requirements for ${goalTopic.slice(0, 40)}.`,
-            'Enforce bounded memory ceilings and backpressure safety.',
-            'Construct isolated acceptance test suite before code modification.',
-          ],
-          phases: [
-            {
-              id: 'phase-1',
-              name: 'Phase 1: Invariant Specification & Preconditions',
-              description: 'Map boundary constraints and author test fixtures.',
-              tasks: [
-                { id: `t-${Date.now()}-1`, text: 'Validate clean baseline worktree & SQLite schema', completed: true, role: '@orchestrator' },
-                { id: `t-${Date.now()}-2`, text: 'Construct acceptance test reproduction harness', completed: false, role: '@acceptance-verifier' },
-              ],
-            },
-            {
-              id: 'phase-2',
-              name: 'Phase 2: Worker AST Implementation',
-              description: 'Synthesize minimal non-breaking code changes in sandbox.',
-              tasks: [
-                { id: `t-${Date.now()}-3`, text: `Implement changes for ${goalTopic.slice(0, 30)}`, completed: false, role: '@speculative-coder' },
-                { id: `t-${Date.now()}-4`, text: 'Verify memory bounds & zero unconstrained allocations', completed: false, role: '@speculative-coder' },
-              ],
-            },
-            {
-              id: 'phase-3',
-              name: 'Phase 3: Verification & Invariant Proof',
-              description: 'Independent dual review and consensus evaluation.',
-              tasks: [
-                { id: `t-${Date.now()}-5`, text: '14/14 automated acceptance tests matrix pass', completed: false, role: '@acceptance-verifier' },
-                { id: `t-${Date.now()}-6`, text: 'Zero compiler warnings, 0 lint defects', completed: false, role: '@security-auditor' },
-              ],
-            },
-          ],
-          updatedAt: Date.now(),
-        }));
+        generatePlanForGoal(goalTopic);
 
         replyContent = `I have generated a new **Plan Canvas** (v${plan.version + 1}) for **"${goalTopic}"**!\n\nPlease inspect the sections on the canvas to your right. You can add point-and-annotate review notes or hit **✓ Approve Plan** when you are satisfied.`;
       } else if (lower.includes('feedback') || lower.includes('annotation') || lower.includes('revise')) {
@@ -416,7 +462,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         }));
       } else {
         replyThought = 'Evaluating user directive against active plan state...';
-        replyContent = `Understood! I've noted: "${text}". I can adapt the Plan Canvas on the right, or you can use \`/plan <goal>\` to draft a complete new engineering specification.`;
+        replyContent = `Understood! I've noted: "${text}". I can adapt the Plan Canvas on the right, or you can use \`/plan <goal>\` or \`ecc <command>\` to draft a complete new engineering specification.`;
       }
 
       const agentMsg: AgentChatMessage = {
@@ -1398,6 +1444,14 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
               </div>
             )}
           </div>
+
+          {/* Embedded Bundled ECC CLI Terminal Console */}
+          <EccTerminalConsole
+            onPlanGenerated={(goal) => {
+              generatePlanForGoal(goal);
+              showEccToast(`Generated Plan Canvas for "${goal}"`);
+            }}
+          />
 
           {/* 6 Core ECC Architectural Pillars Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
