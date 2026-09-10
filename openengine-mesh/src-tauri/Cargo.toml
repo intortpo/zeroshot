@@ -1,8 +1,8 @@
 [package]
 name = "openengine-mesh-backend"
 version = "0.1.0"
-description = "Distributed mesh backend and multiplatform Tauri v2 coordinator for OpenEngine."
-authors = ["OpenEngine Team"]
+description = "Distributed mesh backend and multiplatform Tauri v2 coordinator for Petri Zero."
+authors = ["Petri Zero Team"]
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true

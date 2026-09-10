@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "The Cognitive Core",
+  "productName": "Petri Zero",
   "version": "0.1.0",
-  "identifier": "com.petri.core",
+  "identifier": "com.petri.zero",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "The Cognitive Core",
+        "title": "Petri Zero",
         "width": 1280,
         "height": 800,
         "minWidth": 400,

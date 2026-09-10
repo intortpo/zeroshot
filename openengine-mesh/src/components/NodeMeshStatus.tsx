@@ -157,12 +157,12 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               ? 'border-stone-900 text-stone-950 font-semibold'
               : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
           }`}
-          title="PySpur Agentic Visual Platform & Mixture of Experts"
+          title="Node Studio Pipeline Engine & DevContainer"
         >
           <Network className={`w-4 h-4 ${currentView === 'node' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Node</span>
           <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
-            PySpur
+            Studio
           </span>
         </button>
 

@@ -30,7 +30,7 @@ export const INITIAL_MEMORIES: MemoryEntry[] = [
     workspaceId: 'ws-petri',
     type: 'rule',
     title: 'Protocol Rust Types as Canonical Source of Truth',
-    content: 'Protocol Rust types are the single source of truth. Generated protocol definitions under protocol/openengine-cluster/v1/ must be regenerated via Rust testkit and never hand-edited.',
+    content: 'Protocol Rust types are the single source of truth. Generated protocol definitions under protocol/ must be regenerated via Rust testkit and never hand-edited.',
     tags: ['rule', 'protocol', 'rust', 'source-of-truth'],
     timestamp: Date.now() - 86400000 * 2,
     tokens: 280,

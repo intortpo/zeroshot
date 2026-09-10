@@ -44,7 +44,7 @@ export function App() {
       name: 'Hideo (intortpo)',
       email: '82773932+intortpo@users.noreply.github.com',
       role: 'owner',
-      organization: 'The Open Engine Co. · zero-petri',
+      organization: 'Petri Zero',
       canApproveGates: true,
       canDeploy: true,
       canEditRules: true,
@@ -542,7 +542,7 @@ function inferPetriKind(text: string): PetriItemKind {
           </div>
         )}
 
-        {/* View: Node Studio (PySpur Visual Platform & Mixture of Experts) */}
+        {/* View: Node Studio (Visual Platform & DevContainer Pipeline Engine) */}
         {currentView === 'node' && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <NodeStudioView

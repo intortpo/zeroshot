@@ -733,10 +733,10 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                 type="button"
                 onClick={() => onSelectView('node')}
                 className="px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-800 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
-                title="Open PySpur Node Studio & Mixture of Experts"
+                title="Open Node Studio Pipelines & DevContainer"
               >
                 <Network className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="hidden sm:inline">Node (MoE)</span>
+                <span className="hidden sm:inline">Node Studio</span>
               </button>
             </>
           )}

@@ -29,7 +29,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserProfile['role']>('senior_dev');
-  const [org, setOrg] = useState('The Open Engine Co.');
+  const [org, setOrg] = useState('Petri Zero');
 
   if (!isOpen) return null;
 

@@ -154,7 +154,7 @@ export const INITIAL_SKILLS: PetriSkill[] = [
     isActive: true,
     samplePrompts: [
       'Scan open issues for duplicate reports on mobile peer discovery',
-      'Auto-label issues based on affected crate (openengine-mesh, protocol, cli)',
+      'Auto-label issues based on affected crate (petri-zero, protocol, cli)',
       'Draft reproduction verification script for reported stdin deadlock',
     ],
   },
@@ -183,7 +183,7 @@ export const INITIAL_SKILLS: PetriSkill[] = [
     tags: ['merge-conflict', 'ast-merge', 'rebase'],
     isActive: true,
     samplePrompts: [
-      'Resolve merge conflict in openengine-mesh/src/App.tsx preserving both changes',
+      'Resolve merge conflict in src/App.tsx preserving both changes',
       'Rebase feature branch onto main and resolve Cargo.lock dependency drift',
       'Verify zero compilation errors after complex 3-way structural merge',
     ],
