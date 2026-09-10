@@ -16,6 +16,7 @@ import { ZeroView } from './components/ZeroView';
 import { OrchestrationGraphView } from './components/OrchestrationGraphView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
 import { NodeStudioView } from './components/node/NodeStudioView';
+import { PreviewAgentationPanel } from './components/preview/PreviewAgentationPanel';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
@@ -33,6 +34,7 @@ export function App() {
 
   // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'
   const [currentView, setCurrentView] = useState<PetriViewMode>('board');
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
   // Enterprise Users & Identity State (Authentic User)
   const [users, setUsers] = useState<UserProfile[]>([
@@ -473,9 +475,14 @@ function inferPetriKind(text: string): PetriItemKind {
           onOpenUserModal={() => setIsUserModalOpen(true)}
           currentView={currentView}
           onSelectView={setCurrentView}
+          isPreviewOpen={isPreviewOpen}
+          onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
         />
 
-        {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
+        {/* Main Workspace Body with Optional Side-by-Side Agentation Live Preview */}
+        <div className="flex-1 flex overflow-hidden relative min-w-0">
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
         {(currentView === 'chat' || currentView === 'plan') && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <ChatPlanCanvasView
@@ -605,6 +612,21 @@ function inferPetriKind(text: string): PetriItemKind {
             />
           </div>
         )}
+          </div>
+
+          {/* Agentation Live Preview Panel (When active or toggled) */}
+          {isPreviewOpen && (
+            <PreviewAgentationPanel
+              isOpen={isPreviewOpen}
+              onClose={() => setIsPreviewOpen(false)}
+              activeUser={activeUser}
+              onSendAnnotationsToChat={(_markdown) => {
+                handleCreateIntent(`[Agentation Feedback] UI Visual Annotations on Preview`, 'issue');
+                setCurrentView('chat');
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* User Switcher & Identity Modal */}
@@ -652,6 +674,7 @@ function inferPetriKind(text: string): PetriItemKind {
       <CustomContextMenu
         onSelectView={(view) => setCurrentView(view)}
         currentView={currentView}
+        onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
       />
     </div>
   );

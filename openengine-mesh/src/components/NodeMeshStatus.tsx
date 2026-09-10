@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Boxes,
   Network,
+  Eye,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
 
@@ -29,6 +30,8 @@ interface NodeMeshStatusProps {
   onOpenUserModal: () => void;
   currentView: PetriViewMode;
   onSelectView: (view: PetriViewMode) => void;
+  isPreviewOpen?: boolean;
+  onTogglePreview?: () => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -43,6 +46,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   onOpenUserModal,
   currentView,
   onSelectView,
+  isPreviewOpen = false,
+  onTogglePreview,
 }) => {
   const [isModulesMenuOpen, setIsModulesMenuOpen] = useState(false);
   const modulesMenuRef = useRef<HTMLDivElement | null>(null);
@@ -287,6 +292,24 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           />
           <span>Google DWD</span>
         </button>
+
+        {/* Live Project Preview & Agentation Trigger */}
+        {onTogglePreview && (
+          <button
+            type="button"
+            onClick={onTogglePreview}
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-xs font-sans transition-all cursor-pointer ${
+              isPreviewOpen
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 border-stone-200'
+            }`}
+            title="Toggle Live Web Preview & Agentation Visual Feedback"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span className="font-medium">Preview</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          </button>
+        )}
 
         {/* Peers Count */}
         <div className="hidden md:flex items-center space-x-1.5 text-stone-500 font-sans">

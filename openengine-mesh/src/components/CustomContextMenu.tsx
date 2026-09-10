@@ -12,6 +12,7 @@ import {
   Workflow,
   MessageSquare,
   Network,
+  Eye,
 } from 'lucide-react';
 import { PetriViewMode } from '../types';
 
@@ -29,11 +30,13 @@ interface ContextMenuState {
 interface CustomContextMenuProps {
   onSelectView?: (view: PetriViewMode) => void;
   currentView?: string;
+  onTogglePreview?: () => void;
 }
 
 export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   onSelectView,
   currentView,
+  onTogglePreview,
 }) => {
   const [menu, setMenu] = useState<ContextMenuState>({
     visible: false,
@@ -315,6 +318,20 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
 
           {/* Divider */}
           <div className="my-1 border-t border-stone-100" />
+
+          {onTogglePreview && (
+            <button
+              type="button"
+              onClick={() => {
+                onTogglePreview();
+                closeMenu();
+              }}
+              className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-indigo-50 text-indigo-900 transition-colors"
+            >
+              <Eye className="w-3 h-3 text-indigo-600" />
+              <span className="text-[11px] font-medium">Toggle Live Preview (Agentation)</span>
+            </button>
+          )}
 
           {/* Navigation Shortcuts */}
           <div className="px-2.5 py-1 text-[9px] text-stone-400 font-semibold uppercase tracking-wider">

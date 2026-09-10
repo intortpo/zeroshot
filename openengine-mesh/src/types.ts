@@ -520,3 +520,25 @@ export interface PySpurWorkflow {
   updatedAt: number;
 }
 
+// ============================================================================
+// Agentation Visual Annotation & Live Preview Panel Types
+// ============================================================================
+
+export type PreviewViewportMode = 'desktop' | 'tablet' | 'mobile';
+
+export interface AgentationAnnotation {
+  id: string;
+  pinNumber: number;
+  xPercent: number;
+  yPercent: number;
+  targetSelector: string;
+  targetTagName: string;
+  targetTextSnippet?: string;
+  comment: string;
+  category: 'bug' | 'visual' | 'feature' | 'copy';
+  priority: 'low' | 'medium' | 'high';
+  author: string;
+  createdAt: number;
+}
+
+
