@@ -330,6 +330,54 @@ function inferPetriKind(text: string): PetriItemKind {
     );
   };
 
+  // Branch a sub-goal from an existing task
+  const handleBranchItem = (parentItem: PetriItem, branchName: string, subGoal: string) => {
+    const newChildId = `pt-${Date.now().toString(36)}`;
+    const newChildItem: PetriItem = {
+      id: newChildId,
+      workspaceId: activeWorkspaceId,
+      kind: 'feat',
+      title: subGoal,
+      stage: 'in_flight',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      parentId: parentItem.id,
+      branchName: branchName,
+      chainOfThought: [
+        `[turn 1 · branch] Forked branch '${branchName}' from parent #${parentItem.id.replace('pt-', '')}`,
+        `[turn 2 · init] Allocated speculative sub-worker context for sub-goal`,
+      ],
+      agents: [
+        {
+          id: `ag-${Date.now()}-1`,
+          role: '@speculative-coder',
+          status: 'recursing',
+          recursionTurn: 1,
+        },
+      ],
+    };
+
+    setItems((prev) => {
+      const updated = prev.map((it) => {
+        if (it.id === parentItem.id) {
+          return {
+            ...it,
+            childrenIds: [...(it.childrenIds || []), newChildId],
+          };
+        }
+        return it;
+      });
+      return [newChildItem, ...updated];
+    });
+
+    // Update workspace item count
+    setWorkspaces((prev) =>
+      prev.map((ws) =>
+        ws.id === activeWorkspaceId ? { ...ws, itemCount: ws.itemCount + 1 } : ws
+      )
+    );
+  };
+
   // Create new workspace
   const handleCreateWorkspace = (name: string, repo: string, path: string) => {
     const newWsId = `ws-${Math.random().toString(36).substring(2, 7)}`;
@@ -432,9 +480,11 @@ function inferPetriKind(text: string): PetriItemKind {
             <ChatPlanCanvasView
               activeWorkspace={activeWorkspace}
               activeUser={activeUser}
+              items={visibleItems}
               initialMode={currentView === 'plan' ? 'canvas' : 'split'}
               onApprovePlan={(plan) => handleCreateIntent(plan.title)}
               onSelectView={setCurrentView}
+              onBranchItem={handleBranchItem}
             />
           </div>
         )}
@@ -458,6 +508,7 @@ function inferPetriKind(text: string): PetriItemKind {
                 onFanOutAgents={handleFanOutAgents}
                 onAdvanceStage={handleAdvanceStage}
                 onRecurseAgent={handleRecurseAgent}
+                onBranchItem={handleBranchItem}
               />
             </div>
           </div>

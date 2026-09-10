@@ -13,6 +13,9 @@ import {
   ChevronDown,
   ChevronUp,
   Play,
+  GitBranch,
+  ExternalLink,
+  X,
 } from 'lucide-react';
 import { PetriItem, PetriStage, PetriItemKind, AgentWorker } from '../types';
 
@@ -23,6 +26,7 @@ interface PetriKanbanProps {
   onFanOutAgents?: (itemId: string) => void;
   onAdvanceStage?: (itemId: string) => void;
   onRecurseAgent?: (itemId: string) => void;
+  onBranchItem?: (parentItem: PetriItem, branchName: string, subGoal: string) => void;
 }
 
 const STAGES: { stage: PetriStage; label: string }[] = [
@@ -65,8 +69,13 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
   onFanOutAgents,
   onAdvanceStage,
   onRecurseAgent,
+  onBranchItem,
 }) => {
   const [expandedCoT, setExpandedCoT] = useState<Record<string, boolean>>({});
+  const [selectedDetailItem, setSelectedDetailItem] = useState<PetriItem | null>(null);
+  const [branchingParentItem, setBranchingParentItem] = useState<PetriItem | null>(null);
+  const [branchNameInput, setBranchNameInput] = useState('');
+  const [subGoalInput, setSubGoalInput] = useState('');
 
   const toggleCoT = (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,6 +83,27 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
       ...prev,
       [itemId]: !prev[itemId],
     }));
+  };
+
+  const handleOpenBranchModal = (item: PetriItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBranchingParentItem(item);
+    const shortId = item.id.replace(/^pt-(commit-)?/, '').slice(0, 8);
+    setBranchNameInput(`feature/${shortId}-sub`);
+    setSubGoalInput('');
+  };
+
+  const handleConfirmBranch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!branchingParentItem || !subGoalInput.trim()) return;
+    onBranchItem?.(
+      branchingParentItem,
+      branchNameInput.trim() || `feature/${branchingParentItem.id.slice(0, 8)}`,
+      subGoalInput.trim()
+    );
+    setBranchingParentItem(null);
+    setBranchNameInput('');
+    setSubGoalInput('');
   };
 
   return (
@@ -154,14 +184,21 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                             : 'border-stone-200/90 bg-white/85 hover:border-stone-400'
                         }`}
                       >
-                        {/* Header: Kind Badge, Time, and Recursion Depth Tag */}
+                        {/* Header: Kind Badge, Branch Tag, Time, and Recursion Depth Tag */}
                         <div className="flex items-center justify-between mb-2.5">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
                             <span
                               className={`px-2 py-0.5 rounded text-xs font-sans font-medium uppercase border ${badge.style}`}
                             >
                               {badge.label}
                             </span>
+
+                            {item.branchName && (
+                              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 text-stone-700 text-[10px] font-mono">
+                                <GitBranch className="w-2.5 h-2.5 text-stone-500" />
+                                <span className="truncate max-w-[95px]">{item.branchName}</span>
+                              </span>
+                            )}
 
                             {item.stage === 'in_flight' && (
                               <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-stone-100 border border-stone-200 text-stone-700 text-xs font-sans font-normal">
@@ -179,6 +216,32 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
                         {/* Title with Clean, Legible Typography */}
                         <div className="text-sm font-medium text-stone-900 group-hover:text-stone-950 transition-colors line-clamp-2 leading-relaxed">
                           {item.title}
+                        </div>
+
+                        {/* Card Action Bar: View More and Branch */}
+                        <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDetailItem(item);
+                            }}
+                            className="flex items-center space-x-1 text-[11px] font-sans font-medium text-stone-500 hover:text-stone-900 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3 text-stone-400" />
+                            <span>View More</span>
+                          </button>
+
+                          {onBranchItem && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleOpenBranchModal(item, e)}
+                              className="flex items-center space-x-1 text-[11px] font-sans font-medium text-[#0ABAB5] hover:text-[#099995] bg-teal-50/70 hover:bg-teal-100/70 px-2 py-0.5 rounded-md border border-teal-200/70 transition-colors cursor-pointer"
+                            >
+                              <GitBranch className="w-3 h-3" />
+                              <span>Branch</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Fanned Out Subagents Section */}
@@ -393,6 +456,260 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
           );
         })}
       </div>
+
+      {/* View More Details Modal */}
+      {selectedDetailItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-xl border border-stone-200 flex flex-col overflow-hidden font-sans">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-stone-200/80 flex items-center justify-between bg-stone-50/70">
+              <div className="flex items-center space-x-2.5">
+                <span className="px-2.5 py-0.5 rounded text-xs font-sans font-medium uppercase border bg-stone-100 text-stone-700 border-stone-200">
+                  {selectedDetailItem.kind}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-sans font-medium capitalize border bg-stone-100 text-stone-600 border-stone-200">
+                  {selectedDetailItem.stage.replace('_', ' ')}
+                </span>
+                <span className="text-xs font-mono text-stone-400">
+                  #{selectedDetailItem.commitHash ? selectedDetailItem.commitHash.slice(0, 7) : selectedDetailItem.id.replace('pt-', '')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDetailItem(null)}
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5">
+              <div>
+                <h2 className="text-base font-bold text-stone-900 leading-snug">
+                  {selectedDetailItem.title}
+                </h2>
+                {selectedDetailItem.description && (
+                  <p className="text-xs text-stone-600 mt-2 leading-relaxed">
+                    {selectedDetailItem.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Branch Tree Hierarchy Info */}
+              <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200/90 space-y-2 text-xs">
+                <div className="font-semibold text-stone-800 flex items-center space-x-1.5 font-mono text-[11px] uppercase tracking-wider">
+                  <GitBranch className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                  <span>Branch Hierarchy & Lineage</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-stone-400 block text-[10px]">Active Branch</span>
+                    <span className="font-mono text-stone-800 font-medium">
+                      {selectedDetailItem.branchName || 'main (trunk)'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10px]">Parent Node</span>
+                    <span className="font-mono text-stone-800 font-medium">
+                      {selectedDetailItem.parentId ? `#${selectedDetailItem.parentId.replace('pt-', '')}` : 'Root Intent'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10px]">Sub-Branches</span>
+                    <span className="font-mono text-stone-800 font-medium">
+                      {selectedDetailItem.childrenIds?.length || 0} child nodes
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Workers & Agents */}
+              {selectedDetailItem.agents && selectedDetailItem.agents.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-stone-800 font-mono uppercase tracking-wider">
+                    Dispatched Workers ({selectedDetailItem.agents.length})
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedDetailItem.agents.map((ag) => (
+                      <div
+                        key={ag.id}
+                        className="p-2.5 rounded-xl border border-stone-200 bg-white flex items-center justify-between text-xs"
+                      >
+                        <span className="font-medium text-stone-900 flex items-center space-x-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
+                          <span>{ag.role}</span>
+                        </span>
+                        <span className="font-mono text-stone-500 text-[10px] uppercase">
+                          T{ag.recursionTurn ?? 1} · {ag.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Chain of Thought */}
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-stone-800 font-mono uppercase tracking-wider flex items-center space-x-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-stone-600" />
+                  <span>Chain of Thought Log</span>
+                </div>
+                <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 space-y-1.5 font-mono text-[11px] text-stone-700">
+                  {(selectedDetailItem.chainOfThought || [
+                    `[turn 1 · cot] Ingest intent & map AST boundaries in zero-petri`,
+                    `[turn 2 · recurse] Speculative synthesis with bounded backpressure`,
+                    `[turn 3 · active] Running property verifiers on local workspace`,
+                  ]).map((step, idx) => (
+                    <div key={idx} className="flex items-start space-x-1.5">
+                      <span className="text-stone-400 select-none">❯</span>
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Test Logs / Verification */}
+              {selectedDetailItem.testLogs && (
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-stone-800 font-mono uppercase tracking-wider">
+                    Verification Output
+                  </div>
+                  <pre className="p-3 rounded-xl bg-stone-900 text-stone-100 text-[11px] font-mono overflow-x-auto whitespace-pre">
+                    {selectedDetailItem.testLogs}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t border-stone-200/80 bg-stone-50 flex items-center justify-between">
+              {onBranchItem && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const itm = selectedDetailItem;
+                    setSelectedDetailItem(null);
+                    handleOpenBranchModal(itm, e);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+                >
+                  <GitBranch className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                  <span>Branch from this Task</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setSelectedDetailItem(null)}
+                className="ml-auto px-4 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-medium transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Branch Sub-goal Modal */}
+      {branchingParentItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <form
+            onSubmit={handleConfirmBranch}
+            className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-stone-200 flex flex-col overflow-hidden font-sans"
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-stone-200/80 flex items-center justify-between bg-stone-50/70">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0ABAB5]">
+                  <GitBranch className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">Branch Sub-goal / Task</h3>
+                  <p className="text-[11px] text-stone-500 font-sans">
+                    Create a child branch in the application task tree
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBranchingParentItem(null)}
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              {/* Parent Preview */}
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1">
+                <span className="text-[10px] font-mono uppercase text-stone-400 font-semibold block">
+                  Parent Item
+                </span>
+                <p className="text-stone-800 font-medium line-clamp-2">
+                  {branchingParentItem.title}
+                </p>
+                <span className="text-[10px] font-mono text-stone-400 block">
+                  #{branchingParentItem.commitHash ? branchingParentItem.commitHash.slice(0, 7) : branchingParentItem.id.replace('pt-', '')} · {branchingParentItem.branchName || 'main'}
+                </span>
+              </div>
+
+              {/* Branch Name Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-stone-700 font-mono">
+                  Branch Name
+                </label>
+                <div className="relative">
+                  <GitBranch className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={branchNameInput}
+                    onChange={(e) => setBranchNameInput(e.target.value)}
+                    placeholder="feature/subtask-name"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs font-mono text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0ABAB5] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Sub-goal Description Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-stone-700 font-mono">
+                  Sub-Goal / Child Intent
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={subGoalInput}
+                  onChange={(e) => setSubGoalInput(e.target.value)}
+                  placeholder="e.g. Implement isolated unit tests and backpressure mock for SQLite WAL"
+                  className="w-full p-3 rounded-xl bg-stone-50 border border-stone-300 text-xs font-sans text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0ABAB5] focus:bg-white resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t border-stone-200/80 bg-stone-50 flex items-center justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={() => setBranchingParentItem(null)}
+                className="px-3.5 py-1.5 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!subGoalInput.trim()}
+                className="px-4 py-1.5 rounded-xl bg-[#0ABAB5] hover:bg-[#099995] disabled:opacity-50 text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>Create Branch</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

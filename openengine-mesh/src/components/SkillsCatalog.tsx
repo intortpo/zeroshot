@@ -11,6 +11,7 @@ import {
   Play,
   Palette,
   ExternalLink,
+  Zap,
 } from 'lucide-react';
 import { PetriSkill, SkillCategory } from '../types';
 
@@ -405,6 +406,40 @@ export const INITIAL_SKILLS: PetriSkill[] = [
       'Create a process flowchart for autonomous agent fanout and recursive execution',
     ],
   },
+  // Everything Claude Code (ECC) Optimization Skills
+  {
+    id: 'ecc-unified-memory',
+    category: 'ecc',
+    name: 'ecc-unified-memory',
+    title: 'ECC Unified Memory Vault (ecc.memory.v1)',
+    description: 'Auto-maintains cross-session unified memory across project (<repo>/.ecc/memory/project/), team (<repo>/.ecc/memory/team/), and user (~/.ecc/memory/) scopes. Provides memory_save, memory_search, memory_read, memory_doctor, and memory_handoff with strict YAML frontmatter schema.',
+    version: 'v2.1.0',
+    tags: ['memory', 'ecc', 'unified-memory', 'persistence', 'sessions', 'doctor'],
+    isActive: true,
+    repoUrl: 'https://github.com/affaan-m/ECC/blob/main/skills/unified-memory/SKILL.md',
+    samplePrompts: [
+      'Save current session context and invariant boundaries to project memory vault under ecc.memory.v1',
+      'Search unified memory for previous decisions on SQLite WAL mode and bounded queue ceilings',
+      'Run memory_doctor to validate frontmatter schema integrity across project and user scopes',
+      'Execute memory_handoff to create an atomic snapshot before recursive subagent turn',
+    ],
+  },
+  {
+    id: 'ecc-token-optimizer',
+    category: 'ecc',
+    name: 'ecc-token-optimizer',
+    title: 'ECC Token & System Prompt Optimizer',
+    description: 'Dynamic model selection (Sonnet 3.7 / Flash 2.5), system prompt slimming (-42.6% tokens), background daemon processes, and iterative retrieval pattern.',
+    version: 'v1.4.0',
+    tags: ['tokens', 'slimming', 'optimization', 'ecc', 'prompt-slimming', 'daemons'],
+    isActive: true,
+    repoUrl: 'https://github.com/affaan-m/ECC',
+    samplePrompts: [
+      'Slim down active system prompt by removing redundant markdown examples and guidelines',
+      'Benchmark token consumption across Claude 3.7 Sonnet vs Gemini 2.5 Flash for code synthesis',
+      'Enable background daemon processes for non-blocking property verifications',
+    ],
+  },
 ];
 
 export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill }) => {
@@ -476,6 +511,12 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
       label: 'Diagrams',
       icon: <Palette className="w-3.5 h-3.5 text-rose-500" />,
       count: skills.filter((s) => s.category === 'diagram').length,
+    },
+    {
+      category: 'ecc',
+      label: 'ECC Optimization',
+      icon: <Zap className="w-3.5 h-3.5 text-indigo-500" />,
+      count: skills.filter((s) => s.category === 'ecc').length,
     },
   ];
 

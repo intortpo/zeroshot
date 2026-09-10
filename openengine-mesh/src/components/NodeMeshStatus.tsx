@@ -1,3 +1,4 @@
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Minus,
   X,
@@ -12,6 +13,7 @@ import {
   Workflow,
   MessageSquare,
   Compass,
+  Boxes,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
 
@@ -42,6 +44,21 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   currentView,
   onSelectView,
 }) => {
+  const [isModulesMenuOpen, setIsModulesMenuOpen] = useState(false);
+  const modulesMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modulesMenuRef.current && !modulesMenuRef.current.contains(event.target as Node)) {
+        setIsModulesMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const isModuleActive = currentView === 'zero' || currentView === 'skills' || currentView === 'memory';
+
   return (
     <header
       data-tauri-drag-region
@@ -140,41 +157,79 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           <span>Graph</span>
         </button>
 
-        <button
-          onClick={() => onSelectView('zero')}
-          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-            currentView === 'zero'
-              ? 'border-stone-900 text-stone-950 font-semibold'
-              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-          }`}
-        >
-          <Disc className={`w-4 h-4 ${currentView === 'zero' ? 'text-stone-900' : 'text-stone-400'}`} />
-          <span>Zero</span>
-        </button>
+        {/* Modules Dropdown Menu Group */}
+        <div className="relative" ref={modulesMenuRef}>
+          <button
+            onClick={() => setIsModulesMenuOpen(!isModulesMenuOpen)}
+            className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+              isModuleActive
+                ? 'border-stone-900 text-stone-950 font-semibold'
+                : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+            }`}
+          >
+            <Boxes className={`w-4 h-4 ${isModuleActive ? 'text-stone-900' : 'text-stone-400'}`} />
+            <span>Modules</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isModulesMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-        <button
-          onClick={() => onSelectView('skills')}
-          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-            currentView === 'skills'
-              ? 'border-stone-900 text-stone-950 font-semibold'
-              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-          }`}
-        >
-          <Sparkles className={`w-4 h-4 ${currentView === 'skills' ? 'text-stone-900' : 'text-stone-400'}`} />
-          <span>Skills</span>
-        </button>
+          {isModulesMenuOpen && (
+            <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+              <button
+                onClick={() => {
+                  onSelectView('zero');
+                  setIsModulesMenuOpen(false);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                  currentView === 'zero'
+                    ? 'bg-stone-100 text-stone-900 font-medium'
+                    : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                }`}
+              >
+                <Disc className="w-4 h-4 text-[#FF5F1F]" />
+                <div>
+                  <div className="text-xs font-semibold">Zero Game Studio</div>
+                  <div className="text-[10px] text-stone-400 font-normal">Bevy 0.15 & Avian Physics</div>
+                </div>
+              </button>
 
-        <button
-          onClick={() => onSelectView('memory')}
-          className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-            currentView === 'memory'
-              ? 'border-stone-900 text-stone-950 font-semibold'
-              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-          }`}
-        >
-          <Brain className={`w-4 h-4 ${currentView === 'memory' ? 'text-stone-900' : 'text-stone-400'}`} />
-          <span>Memory</span>
-        </button>
+              <button
+                onClick={() => {
+                  onSelectView('skills');
+                  setIsModulesMenuOpen(false);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                  currentView === 'skills'
+                    ? 'bg-stone-100 text-stone-900 font-medium'
+                    : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <div>
+                  <div className="text-xs font-semibold">Skills Catalog</div>
+                  <div className="text-[10px] text-stone-400 font-normal">ECC Unified-Memory & Diagram</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  onSelectView('memory');
+                  setIsModulesMenuOpen(false);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                  currentView === 'memory'
+                    ? 'bg-stone-100 text-stone-900 font-medium'
+                    : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                }`}
+              >
+                <Brain className="w-4 h-4 text-indigo-600" />
+                <div>
+                  <div className="text-xs font-semibold">Memory Explorer</div>
+                  <div className="text-[10px] text-stone-400 font-normal">Vault Scopes & Vector Store</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
 
         <button
           onClick={() => onSelectView('stats')}

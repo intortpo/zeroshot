@@ -34,6 +34,9 @@ export interface PetriItem {
   chainOfThought?: string[];
   recursionDepth?: number;
   isFannedOut?: boolean;
+  parentId?: string;
+  branchName?: string;
+  childrenIds?: string[];
 }
 
 export type NodeRole = 'rtx_host' | 'thin_client';
@@ -162,7 +165,7 @@ export interface WorkspaceUseCaseResult {
   execution_log: string[];
 }
 
-export type SkillCategory = 'firebase' | 'github' | 'gcloud' | 'agy' | 'diagram';
+export type SkillCategory = 'firebase' | 'github' | 'gcloud' | 'agy' | 'diagram' | 'ecc';
 
 export interface PetriSkill {
   id: string;
@@ -315,6 +318,18 @@ export interface AgentChatMessage {
   thought?: string;
   timestamp: number;
   planRef?: string;
+}
+
+export interface ChatThread {
+  id: string;
+  title: string;
+  model?: string;
+  activeModel?: string;
+  messageCount?: number;
+  createdAt: number;
+  updatedAt: number;
+  messages?: AgentChatMessage[];
+  planDoc?: PlanCanvasDoc;
 }
 
 // Bevy & Avian Physics Game Studio Types

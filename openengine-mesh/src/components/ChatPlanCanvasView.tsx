@@ -27,6 +27,9 @@ import {
   Layers,
   Save,
   Download,
+  ChevronDown,
+  CornerDownRight,
+  Network,
 } from 'lucide-react';
 import {
   Workspace,
@@ -35,6 +38,8 @@ import {
   PlanAnnotation,
   AgentChatMessage,
   EccOptimizationState,
+  PetriItem,
+  ChatThread,
 } from '../types';
 
 export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
@@ -42,9 +47,11 @@ export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
 interface ChatPlanCanvasViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
+  items?: PetriItem[];
   initialMode?: CanvasDisplayMode;
   onApprovePlan?: (plan: PlanCanvasDoc) => void;
   onSelectView?: (view: 'board' | 'graph') => void;
+  onBranchItem?: (parentItem: PetriItem, branchName: string, subGoal: string) => void;
 }
 
 const INITIAL_DEFAULT_ECC_STATE: EccOptimizationState = {
@@ -157,17 +164,68 @@ const INITIAL_DEFAULT_PLAN: PlanCanvasDoc = {
   updatedAt: Date.now() - 1000 * 60 * 5,
 };
 
+const AVAILABLE_MODELS = [
+  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: 'Hybrid Reasoning', provider: 'Anthropic' },
+  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: 'Fast Triage', provider: 'Anthropic' },
+  { id: 'gemini-2-5-flash', name: 'Gemini 2.5 Flash', badge: 'Low Latency', provider: 'Google' },
+  { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', badge: 'Deep Architecture', provider: 'Google' },
+  { id: 'deepseek-r1-local', name: 'DeepSeek-R1', badge: 'Self-Hosted', provider: 'Local Mesh' },
+];
+
+const INITIAL_THREADS: ChatThread[] = [
+  {
+    id: 'thread-ecc-plan',
+    title: 'ECC Architecture & Plan Canvas',
+    createdAt: Date.now() - 1000 * 60 * 30,
+    updatedAt: Date.now() - 1000 * 60 * 5,
+    messageCount: 4,
+    activeModel: 'Claude 3.7 Sonnet',
+  },
+  {
+    id: 'thread-sqlite-wal',
+    title: 'SQLite Event Ledger & Invariants',
+    createdAt: Date.now() - 1000 * 60 * 120,
+    updatedAt: Date.now() - 1000 * 60 * 45,
+    messageCount: 8,
+    activeModel: 'Gemini 2.5 Pro',
+  },
+  {
+    id: 'thread-memory-vault',
+    title: 'Unified Memory Vault (ecc.memory.v1)',
+    createdAt: Date.now() - 1000 * 60 * 240,
+    updatedAt: Date.now() - 1000 * 60 * 90,
+    messageCount: 5,
+    activeModel: 'Claude 3.7 Sonnet',
+  },
+];
+
 export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   activeWorkspace,
   activeUser,
+  items = [],
   initialMode,
   onApprovePlan,
   onSelectView,
+  onBranchItem,
 }) => {
   // Display Mode: 'canvas' (Plan Canvas Full) | 'split' (Chat + Canvas) | 'chat' (Chat Full) | 'ecc' (ECC Engine Hub)
   const [displayMode, setDisplayMode] = useState<CanvasDisplayMode>(initialMode || 'split');
   const [eccState, setEccState] = useState<EccOptimizationState>(INITIAL_DEFAULT_ECC_STATE);
   const [eccToast, setEccToast] = useState<string | null>(null);
+
+  // Model Selection in upper left of @orchestrator
+  const [selectedModelId, setSelectedModelId] = useState<string>('claude-3-7-sonnet');
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState<boolean>(false);
+
+  // Multi-Thread Chat State
+  const [threads, setThreads] = useState<ChatThread[]>(INITIAL_THREADS);
+  const [activeThreadId, setActiveThreadId] = useState<string>('thread-ecc-plan');
+  const [isThreadDropdownOpen, setIsThreadDropdownOpen] = useState<boolean>(false);
+
+  // Branch Modal inside Plan Canvas Visual Tree
+  const [branchingTreeItem, setBranchingTreeItem] = useState<PetriItem | null>(null);
+  const [treeBranchName, setTreeBranchName] = useState<string>('');
+  const [treeSubGoal, setTreeSubGoal] = useState<string>('');
 
   const showEccToast = (msg: string) => {
     setEccToast(msg);
@@ -204,13 +262,74 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
     },
   ]);
 
-  const [inputPrompt, setInputPrompt] = useState<string>('');
+  // Default prompt is /ecc:plan per user specification
+  const [inputPrompt, setInputPrompt] = useState<string>('/ecc:plan ');
   const [isAgentThinking, setIsAgentThinking] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isAgentThinking]);
+
+  // Thread Switcher Handlers
+  const handleSelectThread = (thread: ChatThread) => {
+    setActiveThreadId(thread.id);
+    setIsThreadDropdownOpen(false);
+    setMessages([
+      {
+        id: `msg-th-${Date.now()}`,
+        role: 'assistant',
+        sender: '@orchestrator',
+        content: `Switched context to thread **"${thread.title}"** (Active Model: ${thread.activeModel || 'Claude 3.7 Sonnet'}). What would you like to explore or plan?`,
+        timestamp: Date.now(),
+        planRef: plan.id,
+      },
+    ]);
+  };
+
+  const handleCreateNewThread = () => {
+    const newThreadId = `thread-${Date.now().toString(36)}`;
+    const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModelId)?.name || 'Claude 3.7 Sonnet';
+    const newThread: ChatThread = {
+      id: newThreadId,
+      title: `Thread #${threads.length + 1}`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messageCount: 1,
+      activeModel: currentModel,
+    };
+    setThreads((prev) => [newThread, ...prev]);
+    setActiveThreadId(newThreadId);
+    setIsThreadDropdownOpen(false);
+    setMessages([
+      {
+        id: `msg-new-${Date.now()}`,
+        role: 'assistant',
+        sender: '@orchestrator',
+        thought: 'Initialized clean conversation context for new task planning...',
+        content: `Started new thread **"${newThread.title}"**! You can specify goals with \`/ecc:plan <goal>\` or ask architectural questions.`,
+        timestamp: Date.now(),
+      },
+    ]);
+  };
+
+  const handleTreeBranchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!branchingTreeItem || !treeSubGoal.trim()) return;
+    onBranchItem?.(
+      branchingTreeItem,
+      treeBranchName.trim() || `feature/${branchingTreeItem.id.slice(0, 8)}`,
+      treeSubGoal.trim()
+    );
+    showEccToast(`Branched sub-goal from #${branchingTreeItem.id.replace('pt-', '')}`);
+    setBranchingTreeItem(null);
+    setTreeBranchName('');
+    setTreeSubGoal('');
+  };
+
+  // Active items and models lookup
+  const activeModelObj = AVAILABLE_MODELS.find((m) => m.id === selectedModelId) || AVAILABLE_MODELS[0];
+  const activeThreadObj = threads.find((t) => t.id === activeThreadId) || threads[0];
 
   // Handle Chat Submission
   const handleSendMessage = (textToSend?: string) => {
@@ -235,9 +354,9 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
       let replyThought = '';
       let replyContent = '';
 
-      if (lower.startsWith('/plan') || lower.includes('plan') || lower.includes('canvas')) {
-        const goalTopic = text.replace(/^\/plan\s*/i, '').trim() || text;
-        replyThought = `Extracting architectural invariants and phase dependencies for "${goalTopic}"... Synthesizing multi-phase checklist, test matrix, and visual diagram for Plan Canvas.`;
+      if (lower.startsWith('/ecc:plan') || lower.startsWith('/plan') || lower.includes('plan') || lower.includes('canvas')) {
+        const goalTopic = text.replace(/^(\/ecc:plan|\/plan)\s*/i, '').trim() || text;
+        replyThought = `Extracting architectural invariants and phase dependencies for "${goalTopic}" using model ${activeModelObj.name}... Synthesizing multi-phase checklist, test matrix, and visual diagram for Plan Canvas.`;
         
         // Dynamically update the Plan Canvas
         setPlan((prev) => ({
@@ -518,7 +637,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
             displayMode === 'chat' ? 'w-full max-w-4xl mx-auto flex-1' : 'w-full lg:w-[42%] shrink-0'
           }`}>
             {/* Chat Top Header */}
-            <div className="px-5 py-3.5 border-b border-stone-200/90 bg-white/90 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-stone-200/90 bg-white/90 flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-emerald-500 flex items-center justify-center text-white shadow-xs">
                   <Bot className="w-4 h-4" />
@@ -529,33 +648,127 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-[10px] text-stone-500 font-sans">ECC Agent Harness</span>
                   </div>
-                  <div className="text-[11px] text-stone-400 font-mono">
-                    Claude 3.7 Sonnet / Gemini 2.5 Flash
+
+                  {/* Interactive Model Selector Dropdown in upper-left */}
+                  <div className="relative mt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                      className="text-[11px] font-mono text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/80 px-2 py-0.5 rounded-md border border-stone-200/80 flex items-center space-x-1 transition-colors cursor-pointer"
+                      title="Select Active AI Model"
+                    >
+                      <span className="font-semibold text-stone-800">{activeModelObj.name}</span>
+                      <span className="text-[10px] text-stone-400">· {activeModelObj.provider}</span>
+                      <ChevronDown className="w-3 h-3 text-stone-400" />
+                    </button>
+
+                    {isModelDropdownOpen && (
+                      <div className="absolute left-0 mt-1 w-64 bg-white rounded-xl shadow-lg border border-stone-200 py-1 z-30 font-sans text-xs">
+                        <div className="px-3 py-1.5 text-[10px] font-mono text-stone-400 font-bold uppercase tracking-wider border-b border-stone-100">
+                          Active Model
+                        </div>
+                        {AVAILABLE_MODELS.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedModelId(m.id);
+                              setIsModelDropdownOpen(false);
+                              showEccToast(`Active model switched to ${m.name}`);
+                            }}
+                            className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-stone-50 transition-colors cursor-pointer ${
+                              selectedModelId === m.id ? 'bg-teal-50/50 font-medium text-stone-900' : 'text-stone-600'
+                            }`}
+                          >
+                            <div>
+                              <div className="text-xs font-mono font-medium">{m.name}</div>
+                              <div className="text-[10px] text-stone-400 font-sans">{m.provider} · {m.badge}</div>
+                            </div>
+                            {selectedModelId === m.id && <Check className="w-3.5 h-3.5 text-[#0ABAB5]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-          <div className="flex items-center space-x-2 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setMessages([
-                  {
-                    id: `msg-${Date.now()}`,
-                    role: 'assistant',
-                    sender: '@orchestrator',
-                    content: 'Session reset. What would you like to plan or execute next?',
-                    timestamp: Date.now(),
-                  },
-                ]);
-              }}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-              title="Reset Conversation"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+              <div className="flex items-center space-x-2 text-xs">
+                {/* Multi-Thread Switcher Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsThreadDropdownOpen(!isThreadDropdownOpen)}
+                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200/70 border border-stone-200 text-xs font-sans text-stone-700 transition-colors cursor-pointer"
+                    title="Change Chat Thread"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-stone-500" />
+                    <span className="max-w-[120px] truncate font-medium">{activeThreadObj?.title || 'Thread'}</span>
+                    <ChevronDown className="w-3 h-3 text-stone-400" />
+                  </button>
+
+                  {isThreadDropdownOpen && (
+                    <div className="absolute right-0 mt-1 w-72 bg-white rounded-xl shadow-lg border border-stone-200 py-1.5 z-30 font-sans text-xs">
+                      <div className="px-3 py-1 flex items-center justify-between border-b border-stone-100 pb-1.5">
+                        <span className="text-[10px] font-mono text-stone-400 font-bold uppercase tracking-wider">
+                          Threads ({threads.length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCreateNewThread}
+                          className="text-[10px] text-[#0ABAB5] font-semibold hover:underline flex items-center space-x-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>New Thread</span>
+                        </button>
+                      </div>
+
+                      <div className="max-h-60 overflow-y-auto py-1 space-y-0.5">
+                        {threads.map((th) => (
+                          <button
+                            key={th.id}
+                            type="button"
+                            onClick={() => handleSelectThread(th)}
+                            className={`w-full text-left px-3 py-2 flex items-start justify-between hover:bg-stone-50 transition-colors cursor-pointer ${
+                              activeThreadId === th.id ? 'bg-teal-50/50 text-stone-900 font-medium' : 'text-stone-600'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="truncate text-xs">{th.title}</div>
+                              <div className="text-[10px] text-stone-400 font-mono flex items-center space-x-2 mt-0.5">
+                                <span>{th.activeModel || 'Claude 3.7'}</span>
+                                <span>·</span>
+                                <span>{new Date(th.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                            </div>
+                            {activeThreadId === th.id && <Check className="w-3.5 h-3.5 text-[#0ABAB5] flex-shrink-0 mt-0.5" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([
+                      {
+                        id: `msg-${Date.now()}`,
+                        role: 'assistant',
+                        sender: '@orchestrator',
+                        content: 'Session reset. What would you like to plan or execute next?',
+                        timestamp: Date.now(),
+                      },
+                    ]);
+                  }}
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+                  title="Reset Conversation"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
 
         {/* Message Stream */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
@@ -1011,6 +1224,99 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                       <span>{test}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Section 6: Visual App & Branch Task Tree */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-stone-200 pb-1.5">
+                  <div className="flex items-center space-x-2">
+                    <Network className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                    <h3 className="text-xs font-bold text-stone-900 font-mono uppercase tracking-wider">
+                      6. Visual App & Branch Task Tree
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono text-stone-400">
+                    Tree Hierarchy ({items.length} nodes)
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
+                  <p className="text-[11px] text-stone-500">
+                    Visual tree structure for tasks and branched sub-intents across the mesh. Click <strong>Branch</strong> on any node to fork a sub-goal.
+                  </p>
+
+                  <div className="space-y-2 font-sans">
+                    {items.map((item) => {
+                      const isChild = !!item.parentId;
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          className={`p-3 rounded-xl border transition-all ${
+                            isChild
+                              ? 'ml-6 border-stone-200 bg-white shadow-2xs relative before:absolute before:-left-4 before:top-4 before:w-3 before:h-2 before:border-b before:border-l before:border-stone-300'
+                              : 'border-stone-200/90 bg-white shadow-xs'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center space-x-2 min-w-0 flex-1">
+                              {isChild ? (
+                                <CornerDownRight className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+                              ) : (
+                                <GitBranch className="w-3.5 h-3.5 text-[#0ABAB5] flex-shrink-0" />
+                              )}
+                              
+                              <span className="font-mono text-[10px] text-stone-400 flex-shrink-0">
+                                #{item.commitHash ? item.commitHash.slice(0, 7) : item.id.replace('pt-', '')}
+                              </span>
+
+                              <span className="text-xs font-medium text-stone-800 truncate">
+                                {item.title}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center space-x-1.5 flex-shrink-0">
+                              {item.branchName && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-stone-100 text-stone-600 border border-stone-200">
+                                  {item.branchName}
+                                </span>
+                              )}
+
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-medium capitalize border ${
+                                item.stage === 'merged'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : item.stage === 'in_flight'
+                                  ? 'bg-teal-50 text-teal-700 border-teal-200'
+                                  : item.stage === 'gated'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-stone-50 text-stone-600 border-stone-200'
+                              }`}>
+                                {item.stage.replace('_', ' ')}
+                              </span>
+
+                              {onBranchItem && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBranchingTreeItem(item);
+                                    const shortId = item.id.replace(/^pt-(commit-)?/, '').slice(0, 8);
+                                    setTreeBranchName(`feature/${shortId}-sub`);
+                                    setTreeSubGoal('');
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#0ABAB5] hover:text-[#099995] text-[10px] font-medium flex items-center space-x-1 transition-colors cursor-pointer"
+                                  title="Branch sub-goal from this node"
+                                >
+                                  <GitBranch className="w-2.5 h-2.5" />
+                                  <span>Branch</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1573,6 +1879,100 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Branch Modal for Tree Nodes */}
+      {branchingTreeItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-xs animate-in fade-in duration-200">
+          <form
+            onSubmit={handleTreeBranchSubmit}
+            className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-stone-200 flex flex-col overflow-hidden font-sans"
+          >
+            <div className="px-6 py-4 border-b border-stone-200/80 flex items-center justify-between bg-stone-50/70">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0ABAB5]">
+                  <GitBranch className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">Branch Sub-goal from Plan Canvas</h3>
+                  <p className="text-[11px] text-stone-500 font-sans">
+                    Fork a child intent into the visual task tree
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBranchingTreeItem(null)}
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1">
+                <span className="text-[10px] font-mono uppercase text-stone-400 font-semibold block">
+                  Parent Task
+                </span>
+                <p className="text-stone-800 font-medium line-clamp-2">
+                  {branchingTreeItem.title}
+                </p>
+                <span className="text-[10px] font-mono text-stone-400 block">
+                  #{branchingTreeItem.commitHash ? branchingTreeItem.commitHash.slice(0, 7) : branchingTreeItem.id.replace('pt-', '')} · {branchingTreeItem.branchName || 'main'}
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-stone-700 font-mono">
+                  Branch Name
+                </label>
+                <div className="relative">
+                  <GitBranch className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={treeBranchName}
+                    onChange={(e) => setTreeBranchName(e.target.value)}
+                    placeholder="feature/subtask-name"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs font-mono text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0ABAB5] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-stone-700 font-mono">
+                  Sub-Goal / Child Intent
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={treeSubGoal}
+                  onChange={(e) => setTreeSubGoal(e.target.value)}
+                  placeholder="e.g. Implement isolated memory_read tests for ECC unified memory"
+                  className="w-full p-3 rounded-xl bg-stone-50 border border-stone-300 text-xs font-sans text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0ABAB5] focus:bg-white resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-3.5 border-t border-stone-200/80 bg-stone-50 flex items-center justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={() => setBranchingTreeItem(null)}
+                className="px-3.5 py-1.5 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!treeSubGoal.trim()}
+                className="px-4 py-1.5 rounded-xl bg-[#0ABAB5] hover:bg-[#099995] disabled:opacity-50 text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>Create Branch</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
