@@ -213,6 +213,7 @@ export interface TierPermissions {
   canSubmitFeedback: boolean;
   canInteractAssistant: boolean;
   canViewPreview: boolean;
+  canManageServer: boolean;
 }
 
 export interface UserProfile {
@@ -247,7 +248,71 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance' | 'consumer';
+export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance' | 'consumer' | 'server';
+
+// Petri Server & SmartShield Types (Rebranded Architecture)
+export interface PetriServerStatus {
+  isRunning: boolean;
+  version: string;
+  engine: string;
+  dockerSocketConnected: boolean;
+  hostIp: string;
+  uptimeSeconds: number;
+  activeContainersCount: number;
+  smartShieldActive: boolean;
+  sslActive: boolean;
+  totalMemoryMb: number;
+  usedMemoryMb: number;
+  cpuPercent: number;
+}
+
+export interface PetriContainerInfo {
+  id: string;
+  names: string[];
+  image: string;
+  status: string;
+  state: string;
+  created: number;
+  ports: string[];
+  command: string;
+}
+
+export interface PetriProxyRoute {
+  id: string;
+  path: string;
+  target: string;
+  smartShieldEnabled: boolean;
+  rateLimitPerMinute: number;
+  requireAuth: boolean;
+  sslEnabled: boolean;
+  corsEnabled: boolean;
+  description: string;
+}
+
+export interface PetriSmartShieldState {
+  antiBotEnabled: boolean;
+  antiDdosEnabled: boolean;
+  rateLimitPerMinute: number;
+  blockedIpsCount: number;
+  geoFenceEnabled: boolean;
+  requirePasskeyOr2Fa: boolean;
+  autoSslCertificates: boolean;
+  totalThreatsMitigated: number;
+  lastMitigationTimestamp?: number;
+}
+
+export interface PetriMarketApp {
+  id: string;
+  name: string;
+  category: 'database' | 'ai_ml' | 'storage' | 'gateway' | 'devcontainer' | 'monitoring';
+  description: string;
+  image: string;
+  defaultPorts: string[];
+  installed: boolean;
+  containerId?: string;
+  icon: string;
+  docsUrl: string;
+}
 
 // ECC (Everything Claude Code) Engine & Optimization Types
 export interface EccOptimizationState {

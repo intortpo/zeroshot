@@ -1,0 +1,39 @@
+services:
+  zero-target:
+    build:
+      context: .
+      dockerfile: docker/zero-target/Dockerfile
+    image: zero-target:latest
+    container_name: zero-target
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ZERO_TARGET_BOOTSTRAP_KEY=${ZERO_TARGET_BOOTSTRAP_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GH_TOKEN=${GH_TOKEN:-}
+    volumes:
+      - zero-data:/var/lib/zero
+
+  petri-server:
+    image: petri-server:latest
+    container_name: petri-server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "4040:4040"
+    environment:
+      - PETRI_HTTP_PORT=80
+      - PETRI_HTTPS_PORT=443
+      - PETRI_SMARTSHIELD_ENABLED=true
+      - PETRI_STORAGE_PATH=/var/lib/petri-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - petri-server-data:/var/lib/petri-server
+      - petri-server-config:/etc/petri-server
+
+volumes:
+  zero-data:
+  petri-server-data:
+  petri-server-config:

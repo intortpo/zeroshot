@@ -22,6 +22,7 @@ import { AgentCognitionHUD } from './components/AgentCognitionHUD';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
 import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
+import { PetriServerView } from './components/server/PetriServerView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
@@ -685,6 +686,16 @@ function inferPetriKind(text: string): PetriItemKind {
                 {currentView === 'governance' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
                     <GovernanceView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                    />
+                  </div>
+                )}
+
+                {/* View 8: Petri Server & SmartShield Container Control Center */}
+                {currentView === 'server' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <PetriServerView
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
                     />

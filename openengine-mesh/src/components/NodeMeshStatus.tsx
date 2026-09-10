@@ -19,6 +19,7 @@ import {
   Shield,
   Wrench,
   Users,
+  Server,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -439,6 +440,23 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                 <span>Settings</span>
               </button>
             )}
+
+            {/* Petri Server: Container Manager, Reverse Proxy & SmartShield */}
+            <button
+              onClick={() => onSelectView('server')}
+              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                currentView === 'server'
+                  ? 'border-stone-900 text-stone-950 font-semibold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+              }`}
+              title="Petri Server: Container Manager, Reverse Proxy & SmartShield"
+            >
+              <Server className={`w-4 h-4 ${currentView === 'server' ? 'text-indigo-600' : 'text-stone-400'}`} />
+              <span>Server</span>
+              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Petri
+              </span>
+            </button>
 
             {/* Quick Link to Consumer Portal for SuperAdmin / Control */}
             <button

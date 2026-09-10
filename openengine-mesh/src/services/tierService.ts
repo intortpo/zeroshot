@@ -71,6 +71,7 @@ export const DEFAULT_TIER_PERMISSIONS: Record<SystemTier, TierPermissions> = {
     canSubmitFeedback: true,
     canInteractAssistant: true,
     canViewPreview: true,
+    canManageServer: true,
   },
   control: {
     canManageGovernance: false, // Read-only governance compliance view
@@ -86,6 +87,7 @@ export const DEFAULT_TIER_PERMISSIONS: Record<SystemTier, TierPermissions> = {
     canSubmitFeedback: true,
     canInteractAssistant: true,
     canViewPreview: true,
+    canManageServer: true,
   },
   consumer: {
     canManageGovernance: false,
@@ -101,6 +103,7 @@ export const DEFAULT_TIER_PERMISSIONS: Record<SystemTier, TierPermissions> = {
     canSubmitFeedback: true,
     canInteractAssistant: true,
     canViewPreview: true,
+    canManageServer: false,
   },
 };
 
@@ -155,6 +158,7 @@ export const TIER_ALLOWED_VIEWS: Record<SystemTier, PetriViewMode[]> = {
     'settings',
     'governance',
     'consumer',
+    'server',
   ],
   control: [
     'chat',
@@ -168,6 +172,7 @@ export const TIER_ALLOWED_VIEWS: Record<SystemTier, PetriViewMode[]> = {
     'zero',
     'tui',
     'governance', // Read-only view
+    'server',
   ],
   consumer: [
     'consumer', // Dedicated Consumer Portal
