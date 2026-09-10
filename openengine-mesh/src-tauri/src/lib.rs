@@ -6,6 +6,7 @@ pub mod google_dwd;
 pub mod hardware;
 pub mod mesh;
 pub mod petri_server;
+pub mod workspace;
 
 use github_delivery::{submit_delivery_gate, submit_goal};
 use google_dwd::{dispatch_workspace_use_case, get_google_dwd_status, load_google_dwd_credentials};
@@ -19,6 +20,7 @@ use petri_server::{
     get_petri_container_logs, get_petri_routes, save_petri_route,
     toggle_petri_smartshield, get_petri_market_apps, install_petri_market_app,
 };
+use workspace::select_folder;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -26,6 +28,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
+            select_folder,
             detect_hardware,
             get_mesh_peers,
             submit_goal,

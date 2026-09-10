@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   User,
@@ -8,6 +8,10 @@ import {
   Shield,
   Wrench,
   Users,
+  Edit3,
+  Save,
+  Key,
+  Network,
 } from 'lucide-react';
 import { UserProfile, SystemTier } from '../types';
 import { TIER_DEFINITIONS } from '../services/tierService';
@@ -19,6 +23,7 @@ interface UserProfileModalProps {
   activeUserId: string;
   onSelectUser: (userId: string) => void;
   onAddUser?: (user: UserProfile) => void;
+  onUpdateUser?: (updatedUser: UserProfile) => void;
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
@@ -28,18 +33,57 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   activeUserId,
   onSelectUser,
   onAddUser,
+  onUpdateUser,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Edit State
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState<UserProfile['role']>('owner');
+  const [editOrg, setEditOrg] = useState('');
+  const [editCanApprove, setEditCanApprove] = useState(true);
+
+  // New Identity State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserProfile['role']>('senior_dev');
   const [tier, setTier] = useState<SystemTier>('control');
   const [org, setOrg] = useState('Petri Zero');
 
+  const activeUser = users.find((u) => u.id === activeUserId) || users[0];
+
+  useEffect(() => {
+    if (activeUser) {
+      setEditName(activeUser.name);
+      setEditEmail(activeUser.email);
+      setEditRole(activeUser.role);
+      setEditOrg(activeUser.organization);
+      setEditCanApprove(activeUser.canApproveGates);
+    }
+  }, [activeUser, isOpen]);
+
   if (!isOpen) return null;
 
-  const activeUser = users.find((u) => u.id === activeUserId) || users[0];
   const activeTierMeta = TIER_DEFINITIONS[activeUser.tier || 'superadmin'];
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim() || !editEmail.trim()) return;
+
+    const updated: UserProfile = {
+      ...activeUser,
+      name: editName.trim(),
+      email: editEmail.trim(),
+      role: editRole,
+      organization: editOrg.trim() || 'Petri Zero Platform',
+      canApproveGates: editCanApprove,
+    };
+
+    onUpdateUser?.(updated);
+    setIsEditing(false);
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +154,126 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <span className="text-stone-600 font-medium capitalize">{activeUser.role.replace('_', ' ')}</span>
                 </div>
               </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsEditing(!isEditing)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-xs font-medium text-stone-700 transition-colors cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-stone-500" />
+              <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
+            </button>
+          </div>
+
+          {/* In-Place Profile Editing Form */}
+          {isEditing && (
+            <form onSubmit={handleSaveEdit} className="p-3.5 rounded-xl bg-white border border-stone-200 space-y-3 animate-in fade-in duration-150">
+              <div className="text-xs font-semibold text-stone-900 flex items-center justify-between border-b border-stone-100 pb-2">
+                <span>Edit SuperAdmin Operator Details</span>
+                <span className="text-[10px] font-mono text-stone-400">ID: {activeUser.id}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Display Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Full Name"
+                    className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 text-xs"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Email Address</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="Email"
+                    className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 text-xs"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Role</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as UserProfile['role'])}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 text-xs"
+                  >
+                    <option value="owner">Platform Owner</option>
+                    <option value="lead_architect">Lead Architect</option>
+                    <option value="security_auditor">Security Auditor</option>
+                    <option value="senior_dev">Senior Dev</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Organization</label>
+                  <input
+                    type="text"
+                    value={editOrg}
+                    onChange={(e) => setEditOrg(e.target.value)}
+                    placeholder="Organization"
+                    className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-stone-500 uppercase">Gate Approval</label>
+                  <div className="flex items-center h-8">
+                    <label className="flex items-center space-x-2 text-xs text-stone-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editCanApprove}
+                        onChange={(e) => setEditCanApprove(e.target.checked)}
+                        className="rounded border-stone-300 text-stone-900 focus:ring-0"
+                      />
+                      <span>Unrestricted</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-3 py-1 rounded-lg text-stone-600 hover:bg-stone-100 text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center space-x-1.5 px-3.5 py-1 rounded-lg bg-stone-900 text-white font-medium text-xs hover:bg-black transition-colors"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Petri Server & Tailscale Mesh Authority Integration */}
+          <div className="p-3 rounded-xl bg-white border border-stone-200/80 text-xs space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-medium text-stone-700">
+              <span className="flex items-center space-x-1.5">
+                <Key className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Petri Server Authority Token:</span>
+              </span>
+              <span className="font-mono text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 rounded-full">
+                petri_root_sec_{activeUser.id}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] font-medium text-stone-700 pt-1 border-t border-stone-100">
+              <span className="flex items-center space-x-1.5">
+                <Network className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Tailscale Mesh Node:</span>
+              </span>
+              <span className="font-mono text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full">
+                po.taildf505d.ts.net (100.81.151.110)
+              </span>
             </div>
           </div>
 

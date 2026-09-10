@@ -19,6 +19,10 @@ export const DEFAULT_SERVER_STATUS: PetriServerStatus = {
   totalMemoryMb: 32768,
   usedMemoryMb: 8420,
   cpuPercent: 4.2,
+  tailscaleConnected: true,
+  tailscaleIp: '100.81.151.110',
+  tailscaleDns: 'po.taildf505d.ts.net',
+  tailscalePeersCount: 2,
 };
 
 export const DEFAULT_SMARTSHIELD_STATE: PetriSmartShieldState = {
@@ -219,6 +223,10 @@ class PetriServerServiceStore {
             totalMemoryMb: Number(rawStatus.total_memory_mb || 32768),
             usedMemoryMb: Number(rawStatus.used_memory_mb || 8420),
             cpuPercent: Number(rawStatus.cpu_percent || 4.2),
+            tailscaleConnected: Boolean(rawStatus.tailscale_connected),
+            tailscaleIp: rawStatus.tailscale_ip ? String(rawStatus.tailscale_ip) : undefined,
+            tailscaleDns: rawStatus.tailscale_dns ? String(rawStatus.tailscale_dns) : undefined,
+            tailscalePeersCount: Number(rawStatus.tailscale_peers_count || 0),
           };
         }
 

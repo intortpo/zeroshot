@@ -264,6 +264,10 @@ export interface PetriServerStatus {
   totalMemoryMb: number;
   usedMemoryMb: number;
   cpuPercent: number;
+  tailscaleConnected?: boolean;
+  tailscaleIp?: string;
+  tailscaleDns?: string;
+  tailscalePeersCount?: number;
 }
 
 export interface PetriContainerInfo {

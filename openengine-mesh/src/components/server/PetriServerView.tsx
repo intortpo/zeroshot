@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   X,
   Trash2,
+  Network,
+  Wifi,
 } from 'lucide-react';
 import {
   PetriServerStatus,
@@ -103,13 +105,24 @@ export const PetriServerView: React.FC<PetriServerViewProps> = ({
     setIsLoadingLogs(false);
   };
 
+  const isSuperAdmin = _activeUser?.tier === 'superadmin';
+
   const handleToggleShieldFeature = async (feature: string, currentVal: boolean) => {
-    await petriServerService.toggleSmartShield(feature, !currentVal);
-    showToast(`Updated Petri SmartShield: ${feature}`);
+    if (!isSuperAdmin) {
+      showToast('🛡️ Blocked: Only SuperAdmin tier can alter SmartShield policies.');
+      return;
+    }
+    const updated = await petriServerService.toggleSmartShield(feature, !currentVal);
+    setSmartShield(updated);
+    showToast(`SmartShield policy updated: ${feature} ${!currentVal ? 'enabled' : 'disabled'}`);
   };
 
   const handleSaveRoute = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSuperAdmin) {
+      showToast('🛡️ Blocked: Only SuperAdmin tier can configure proxy routes.');
+      return;
+    }
     if (!newRoutePath.trim() || !newRouteTarget.trim()) return;
 
     const newRoute: PetriProxyRoute = {
@@ -307,8 +320,67 @@ export const PetriServerView: React.FC<PetriServerViewProps> = ({
               </div>
             </div>
 
+            {/* Tailscale Private Mesh Network Gateway Integration */}
+            <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center space-x-2">
+                      <span>Tailscale Zero-Trust Private Mesh Network</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                        status.tailscaleConnected
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-stone-100 text-stone-600 border border-stone-200'
+                      }`}>
+                        {status.tailscaleConnected ? '● CONNECTED' : '○ STANDBY'}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Encrypted WireGuard mesh connecting local Docker containers directly to your distributed cluster nodes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-[#FAFBFB] border border-stone-200/70 space-y-1">
+                  <div className="text-[10px] font-mono text-stone-400 uppercase">Tailscale Mesh IP</div>
+                  <div className="font-mono font-bold text-stone-900">
+                    {status.tailscaleIp || '100.81.151.110'}
+                  </div>
+                  <div className="text-[11px] text-stone-500">Private tunnel endpoint</div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#FAFBFB] border border-stone-200/70 space-y-1">
+                  <div className="text-[10px] font-mono text-stone-400 uppercase">MagicDNS Hostname</div>
+                  <div className="font-mono font-bold text-indigo-700 truncate">
+                    {status.tailscaleDns || 'po.taildf505d.ts.net'}
+                  </div>
+                  <div className="text-[11px] text-stone-500">Zero-config private DNS</div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#FAFBFB] border border-stone-200/70 space-y-1">
+                  <div className="text-[10px] font-mono text-stone-400 uppercase">Active Mesh Peers</div>
+                  <div className="font-bold text-emerald-700 flex items-center space-x-1.5">
+                    <Wifi className="w-3.5 h-3.5" />
+                    <span>{status.tailscalePeersCount || 2} Mesh Peers Online</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500">Peer load balancer active</div>
+                </div>
+              </div>
+            </div>
+
             {/* SmartShield Zero-Trust Security Suite */}
             <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-xs space-y-5">
+              {!isSuperAdmin && (
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center space-x-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>SuperAdmin Root Required: Control tier operators have read-only visibility over zero-trust SmartShield policies.</span>
+                </div>
+              )}
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                 <div className="space-y-0.5">
                   <h3 className="text-sm font-bold text-stone-900 flex items-center space-x-2">

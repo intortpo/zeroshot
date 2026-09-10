@@ -13,7 +13,6 @@ import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
-import { OrchestrationGraphView } from './components/OrchestrationGraphView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
 import { NodeStudioView } from './components/node/NodeStudioView';
 import { PreviewAgentationPanel } from './components/preview/PreviewAgentationPanel';
@@ -590,20 +589,6 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
          
-                {/* View: Orchestration Graph (zeroshot software-change pipeline) */}
-                {currentView === 'graph' && (
-                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <OrchestrationGraphView
-                      activeWorkspace={activeWorkspace}
-                      activeUser={activeUser}
-                      items={visibleItems}
-                      onAdvanceStage={handleAdvanceStage}
-                      onOpenApproval={handleOpenApproval}
-                      onSubmitGoal={(goalText) => handleCreateIntent(goalText, 'feat')}
-                    />
-                  </div>
-                )}
-
                 {/* View: Node Studio (Visual Platform & DevContainer Pipeline Engine) */}
                 {currentView === 'node' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
@@ -728,6 +713,11 @@ function inferPetriKind(text: string): PetriItemKind {
         activeUserId={activeUserId}
         onSelectUser={(id) => setActiveUserId(id)}
         onAddUser={(newUser) => setUsers((prev) => [...prev, newUser])}
+        onUpdateUser={(updatedUser) =>
+          setUsers((prev) =>
+            prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+          )
+        }
       />
 
       {/* Workspace Switcher Modal */}

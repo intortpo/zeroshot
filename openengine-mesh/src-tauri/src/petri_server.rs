@@ -16,6 +16,10 @@ pub struct PetriServerStatus {
     pub total_memory_mb: u64,
     pub used_memory_mb: u64,
     pub cpu_percent: f32,
+    pub tailscale_connected: bool,
+    pub tailscale_ip: Option<String>,
+    pub tailscale_dns: Option<String>,
+    pub tailscale_peers_count: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -97,6 +101,28 @@ pub fn get_petri_server_status() -> Result<PetriServerStatus, String> {
         }
     }
 
+    // Inspect Tailscale mesh status
+    let mut ts_connected = false;
+    let mut ts_ip: Option<String> = None;
+    let mut ts_dns: Option<String> = None;
+    let mut ts_peers = 0;
+
+    if let Ok(out) = Command::new("tailscale").args(["status", "--json"]).output() {
+        if out.status.success() {
+            if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&out.stdout) {
+                let state = val["BackendState"].as_str().unwrap_or("");
+                ts_connected = state == "Running";
+                ts_ip = val["TailscaleIPs"]
+                    .as_array()
+                    .and_then(|arr| arr.first())
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                ts_dns = val["Self"]["DNSName"].as_str().map(|s| s.to_string());
+                ts_peers = val["Peer"].as_object().map(|p| p.len()).unwrap_or(0);
+            }
+        }
+    }
+
     Ok(PetriServerStatus {
         is_running: true,
         version: "8.5.0-petri".to_string(),
@@ -110,6 +136,10 @@ pub fn get_petri_server_status() -> Result<PetriServerStatus, String> {
         total_memory_mb: 32768,
         used_memory_mb: 8420,
         cpu_percent: 4.2,
+        tailscale_connected: ts_connected,
+        tailscale_ip: ts_ip,
+        tailscale_dns: ts_dns,
+        tailscale_peers_count: ts_peers,
     })
 }
 

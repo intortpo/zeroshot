@@ -10,7 +10,6 @@ import {
   Terminal,
   Sliders,
   Disc,
-  Workflow,
   MessageSquare,
   Boxes,
   Network,
@@ -277,18 +276,6 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
             >
               <Kanban className={`w-4 h-4 ${currentView === 'board' ? 'text-stone-900' : 'text-stone-400'}`} />
               <span>Board</span>
-            </button>
-
-            <button
-              onClick={() => onSelectView('graph')}
-              className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'graph'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-            >
-              <Workflow className={`w-4 h-4 ${currentView === 'graph' ? 'text-stone-900' : 'text-stone-400'}`} />
-              <span>Graph</span>
             </button>
 
             <button
