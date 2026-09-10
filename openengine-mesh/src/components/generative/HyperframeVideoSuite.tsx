@@ -1,139 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Sparkles,
-  Sliders,
-  Download,
   Film,
-  Volume2,
-  VolumeX,
-  Type,
-  Video,
+  Sparkles,
+  Layers,
+  Compass,
+  Palette,
+  Sliders,
+  Clapperboard,
   CheckCircle2,
-  Wand2,
+  Tv,
 } from 'lucide-react';
+import {
+  hyperframeVideoService,
+  VideoScene,
+  VideoModelId,
+  AspectRatio,
+  CameraFlightType,
+  ColorLUTId,
+  ExportFormat,
+  RenderJob,
+} from '../../services/hyperframeVideoService';
+import { SceneStoryboardDrawer } from './video/SceneStoryboardDrawer';
+import { SubmersionFlightStudio } from './video/SubmersionFlightStudio';
+import { ColorGradingLUTCenter } from './video/ColorGradingLUTCenter';
+import { MultiTrackTimeline } from './video/MultiTrackTimeline';
+import { RenderQueueModal } from './video/RenderQueueModal';
 
-export interface TimelineTrackItem {
-  id: string;
-  name: string;
-  type: 'video' | 'overlay' | 'audio' | 'effect';
-  startSec: number;
-  durationSec: number;
-  color: string;
-  details: string;
-}
+type StudioTab = 'preview' | 'storyboard' | 'camera' | 'color';
 
 export const HyperframeVideoSuite: React.FC = () => {
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTimeSec, setCurrentTimeSec] = useState(4.3);
-  const totalDurationSec = 15.0;
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1' | '2.39:1'>('16:9');
+  const [activeTab, setActiveTab] = useState<StudioTab>('preview');
+  const [scenes, setScenes] = useState<VideoScene[]>(() => hyperframeVideoService.getScenes());
+  const [activeSceneId, setActiveSceneId] = useState<string>(scenes[0]?.id || 'scene-101');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [activeLut, setActiveLut] = useState(() => hyperframeVideoService.getActiveLUT());
+  const [opticalSettings, setOpticalSettings] = useState(() => hyperframeVideoService.getOpticalSettings());
+  const [renderJobs, setRenderJobs] = useState<RenderJob[]>(() => hyperframeVideoService.getRenderJobs());
+  const [isRenderModalOpen, setIsRenderModalOpen] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
 
-  // Neural Generator State
-  const [selectedModel, setSelectedModel] = useState<'veo-2' | 'sora-2' | 'wan-2.1' | 'luma-dream'>('veo-2');
-  const [cameraMotion, setCameraMotion] = useState<'orbit_smooth' | 'dolly_in' | 'pan_left' | 'crane_overhead' | 'dutch_roll'>('orbit_smooth');
-  const [motionPrompt, setMotionPrompt] = useState(
-    'Cinematic fluid ribbon simulation with soft cyan and tiffany lighting, 60fps slow motion, 4k render'
-  );
-  const [hyperframeRate, setHyperframeRate] = useState<24 | 60 | 120>(60);
-  const [motionStrength, setMotionStrength] = useState(0.85);
-  const [isRendering, setIsRendering] = useState(false);
-  const [renderProgress, setRenderProgress] = useState(0);
-  const [lastRenderedTime, setLastRenderedTime] = useState<string | null>('Just now');
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'mp4' | 'webm' | 'gif' | 'png_seq'>('mp4');
-  const [exportNotification, setExportNotification] = useState<string | null>(null);
+  const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
+  const totalDuration = scenes.reduce((acc, s) => acc + s.durationSeconds, 0);
 
-  // Timeline Tracks
-  const [tracks] = useState<TimelineTrackItem[]>([
-    {
-      id: 'trk-video-1',
-      name: 'Primary Motion Stream',
-      type: 'video',
-      startSec: 0,
-      durationSec: 15,
-      color: 'bg-indigo-500/80 border-indigo-400',
-      details: 'Google Veo 2: Fluid cyan simulation (1080p60)',
-    },
-    {
-      id: 'trk-overlay-1',
-      name: 'Title & Lower Third',
-      type: 'overlay',
-      startSec: 1.5,
-      durationSec: 8.5,
-      color: 'bg-teal-500/80 border-teal-400',
-      details: 'Text: "Zero Petri v8 · Hyperframe Engine"',
-    },
-    {
-      id: 'trk-audio-1',
-      name: 'Ambient Score',
-      type: 'audio',
-      startSec: 0,
-      durationSec: 15,
-      color: 'bg-rose-500/80 border-rose-400',
-      details: 'BBS Momentum Theme · 120 BPM Stereo (M4A)',
-    },
-    {
-      id: 'trk-effect-1',
-      name: 'Hyperframe Interpolation',
-      type: 'effect',
-      startSec: 0,
-      durationSec: 15,
-      color: 'bg-amber-500/80 border-amber-400',
-      details: 'Optical Flow 60fps frame synthesis',
-    },
-  ]);
+  // Scene CRUD handlers
+  const handleSelectScene = (id: string) => {
+    setActiveSceneId(id);
+  };
 
-  // Animation playback loop
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTimeSec((prev) => {
-          const next = prev + 0.05 * playbackSpeed;
-          if (next >= totalDurationSec) {
-            return 0;
-          }
-          return parseFloat(next.toFixed(2));
-        });
-      }, 50);
+  const handleAddScene = () => {
+    const newScene = hyperframeVideoService.addScene({
+      title: `Scene ${scenes.length + 1}`,
+      prompt: 'Cinematic underwater camera sweeping over iridescent turquoise sand ripples, crystalline caustic light refractions.',
+      durationSeconds: 4.0,
+      motionScale: 6,
+      transitionToNext: 'optical-flow-morph',
+      cameraFlight: 'orbital-descent',
+      seamlessLoop: false,
+      model: 'veo-2',
+      previewGradient: 'from-teal-900 via-emerald-950 to-slate-900',
+    });
+    setScenes(hyperframeVideoService.getScenes());
+    setActiveSceneId(newScene.id);
+  };
+
+  const handleUpdateScene = (id: string, updates: Partial<VideoScene>) => {
+    hyperframeVideoService.updateScene(id, updates);
+    setScenes(hyperframeVideoService.getScenes());
+  };
+
+  const handleDeleteScene = (id: string) => {
+    hyperframeVideoService.deleteScene(id);
+    const updated = hyperframeVideoService.getScenes();
+    setScenes(updated);
+    if (activeSceneId === id && updated.length > 0) {
+      setActiveSceneId(updated[0].id);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed]);
-
-  const handleRenderVideo = () => {
-    setIsRendering(true);
-    setRenderProgress(0);
-    const step = setInterval(() => {
-      setRenderProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(step);
-          setIsRendering(false);
-          setLastRenderedTime(new Date().toLocaleTimeString());
-          return 100;
-        }
-        return prev + 20;
-      });
-    }, 250);
   };
 
-  const handleExport = () => {
-    setIsExportOpen(false);
-    setExportNotification(`Rendered & exported ${exportFormat.toUpperCase()} to local downloads (${aspectRatio}, ${hyperframeRate}fps).`);
-    setTimeout(() => setExportNotification(null), 4000);
+  const handleMoveScene = (index: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? index - 1 : index + 1;
+    hyperframeVideoService.reorderScenes(index, toIndex);
+    setScenes(hyperframeVideoService.getScenes());
   };
 
-  const formatTimecode = (seconds: number) => {
-    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
-    const frames = Math.floor((seconds % 1) * hyperframeRate).toString().padStart(2, '0');
-    return `${mins}:${secs}:${frames}`;
+  // Color & Optical Handlers
+  const handleSelectLUT = (lutId: ColorLUTId) => {
+    hyperframeVideoService.setActiveLUT(lutId);
+    setActiveLut(hyperframeVideoService.getActiveLUT());
+  };
+
+  const handleUpdateOptical = (updates: Parameters<typeof hyperframeVideoService.updateOpticalSettings>[0]) => {
+    hyperframeVideoService.updateOpticalSettings(updates);
+    setOpticalSettings(hyperframeVideoService.getOpticalSettings());
+  };
+
+  // Render Job Submission
+  const handleSubmitRender = (
+    title: string,
+    resolution: RenderJob['resolution'],
+    format: ExportFormat,
+    ratio: AspectRatio
+  ) => {
+    const newJob = hyperframeVideoService.submitRenderJob(title, resolution, format, ratio);
+    setRenderJobs(hyperframeVideoService.getRenderJobs());
+    setNotification(`Job "${newJob.title}" dispatched to openengine-cluster accelerated GPU queue.`);
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const aspectClass = {
@@ -144,52 +115,38 @@ export const HyperframeVideoSuite: React.FC = () => {
   }[aspectRatio];
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0E1117] text-stone-200 overflow-hidden select-none font-sans">
-      {/* Top Suite Toolbar */}
-      <header className="px-6 py-2.5 bg-[#151922] border-b border-stone-800 flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="font-bold text-sm tracking-tight text-white flex items-center space-x-1.5">
-              <Film className="w-4 h-4 text-indigo-400" />
-              <span>Hyperframe Video Design Suite</span>
-            </span>
-            <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-indigo-950/80 text-indigo-300 border border-indigo-700/50">
-              Pro v8
-            </span>
+    <div className="flex-1 flex flex-col h-full bg-[#0B0F19] text-slate-200 overflow-hidden select-none font-sans">
+      {/* Top Header Bar */}
+      <header className="px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/30">
+            <Film className="w-5 h-5" />
           </div>
-
-          <span className="text-stone-700">|</span>
-
-          {/* Model Badge */}
-          <div className="flex items-center space-x-1 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-            <span className="text-stone-400">Neural Engine:</span>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value as any)}
-              className="bg-stone-900 border border-stone-700 text-stone-200 rounded-md px-2 py-0.5 text-xs font-mono cursor-pointer focus:outline-none focus:border-indigo-500"
-            >
-              <option value="veo-2">Google Veo 2 (60fps Ultra)</option>
-              <option value="sora-2">OpenAI Sora v2 (Temporal Coherent)</option>
-              <option value="wan-2.1">Wan 2.1 Pro (Cinematic)</option>
-              <option value="luma-dream">Luma Dream Machine</option>
-            </select>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-white tracking-wide">Hyperframe Cinematic Video Studio</h1>
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                Pro v8.2
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Multi-Scene Storyboards • Petri Submersion 3D Camera Dives • Real-Time Shader LUTs
+            </p>
           </div>
         </div>
 
-        {/* Right Action Bar */}
-        <div className="flex items-center space-x-3">
-          {/* Aspect Ratio Switcher */}
-          <div className="flex items-center bg-stone-900 rounded-lg p-0.5 border border-stone-800 text-[11px]">
-            {(['16:9', '9:16', '1:1', '2.39:1'] as const).map((ratio) => (
+        {/* Aspect Ratio & Render Queue Action */}
+        <div className="flex items-center gap-3">
+          {/* Aspect Ratio Selector */}
+          <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-xs">
+            {(['16:9', '9:16', '1:1', '2.39:1'] as const).map(ratio => (
               <button
                 key={ratio}
                 onClick={() => setAspectRatio(ratio)}
-                className={`px-2 py-1 rounded transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md transition-colors ${
                   aspectRatio === ratio
-                    ? 'bg-indigo-600 text-white font-semibold'
-                    : 'text-stone-400 hover:text-stone-200'
+                    ? 'bg-teal-500 text-slate-950 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {ratio}
@@ -197,361 +154,280 @@ export const HyperframeVideoSuite: React.FC = () => {
             ))}
           </div>
 
-          {/* Export Button */}
+          {/* Render Queue Button */}
           <button
-            onClick={() => setIsExportOpen(true)}
-            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
+            onClick={() => setIsRenderModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-200 transition-colors shadow-sm"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export Clip</span>
+            <Clapperboard className="w-4 h-4 text-teal-400" />
+            <span>Render Queue ({renderJobs.length})</span>
           </button>
         </div>
       </header>
 
       {/* Notification Banner */}
-      {exportNotification && (
+      {notification && (
         <div className="px-6 py-2 bg-teal-950/80 border-b border-teal-700/60 text-teal-300 text-xs flex items-center justify-between animate-in fade-in shrink-0">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-teal-400" />
-            <span>{exportNotification}</span>
+            <span>{notification}</span>
           </div>
-          <button onClick={() => setExportNotification(null)} className="text-teal-400 hover:text-teal-200 font-bold">
+          <button onClick={() => setNotification(null)} className="text-teal-400 hover:text-teal-200 font-bold">
             ✕
           </button>
         </div>
       )}
 
-      {/* Main Workspace (Split Preview + Director Controls) */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left / Center: Preview Canvas */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#0B0D13] relative overflow-hidden">
-          {/* Video Canvas Container */}
-          <div
-            className={`relative rounded-xl border border-stone-800 bg-black overflow-hidden shadow-2xl flex items-center justify-center transition-all duration-300 ${aspectClass}`}
-          >
-            {/* Simulated Generative Canvas Animation */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-950/70 via-stone-900 to-teal-950/50 flex flex-col items-center justify-center text-center p-6">
-              {/* Animated Floating Elements */}
-              <div
-                className="w-48 h-48 rounded-full bg-gradient-to-r from-teal-500/20 to-indigo-500/20 blur-2xl animate-pulse"
-                style={{
-                  transform: `scale(${1 + Math.sin(currentTimeSec * 2) * 0.15}) rotate(${currentTimeSec * 20}deg)`,
-                }}
-              />
-              
-              <div className="relative z-10 space-y-2">
-                <span className="text-[11px] font-mono tracking-widest uppercase text-teal-400/90 px-2 py-0.5 rounded bg-teal-950/80 border border-teal-800/40">
-                  {selectedModel.toUpperCase()} · HYPERFRAME {hyperframeRate} FPS
-                </span>
-                <h3 className="text-lg font-bold text-white tracking-wide drop-shadow-md">
-                  Zero Petri v8 · Neural Motion
-                </h3>
-                <p className="text-xs text-stone-300/80 max-w-md line-clamp-2 italic">
-                  "{motionPrompt}"
-                </p>
-              </div>
-
-              {/* Dynamic Lower Third Overlay */}
-              {currentTimeSec >= 1.5 && currentTimeSec <= 10.0 && (
-                <div className="absolute bottom-6 left-6 bg-stone-900/90 backdrop-blur-md border border-stone-700/80 px-4 py-2 rounded-xl text-left shadow-lg animate-in fade-in duration-300">
-                  <div className="text-[10px] text-teal-400 font-mono">BBS MOMENTUM CORE</div>
-                  <div className="text-xs font-semibold text-white">849 Student Records · 0ms Latency</div>
-                </div>
-              )}
-
-              {/* Watermark / HUD */}
-              <div className="absolute top-4 right-4 flex items-center space-x-2 text-[10px] font-mono text-stone-400 bg-black/60 px-2.5 py-1 rounded-md border border-stone-800">
-                <span>{cameraMotion.replace('_', ' ').toUpperCase()}</span>
-                <span>•</span>
-                <span className="text-teal-400">{hyperframeRate} FPS</span>
-              </div>
-            </div>
-
-            {/* Rendering Progress Overlay */}
-            {isRendering && (
-              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 z-20 space-y-3">
-                <Wand2 className="w-8 h-8 text-indigo-400 animate-spin" />
-                <div className="text-sm font-semibold text-white">Synthesizing Hyperframe Sequence...</div>
-                <div className="w-64 bg-stone-800 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-indigo-500 to-teal-400 h-full transition-all duration-200"
-                    style={{ width: `${renderProgress}%` }}
-                  />
-                </div>
-                <div className="text-xs font-mono text-stone-400">{renderProgress}% Synthesized</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Panel: Director Controls & Neural Attributes */}
-        <aside className="w-88 border-l border-stone-800 bg-[#121620] flex flex-col overflow-y-auto shrink-0 p-5 space-y-5">
-          <div className="flex items-center space-x-2 border-b border-stone-800 pb-3">
-            <Sliders className="w-4 h-4 text-indigo-400" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-white">Camera & Motion Director</h3>
-          </div>
-
-          {/* Prompt Input */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
-              <span>Motion Prompt</span>
-              <span className="text-[10px] text-stone-500 font-mono">Veo / Sora Natural Lang</span>
-            </label>
-            <textarea
-              value={motionPrompt}
-              onChange={(e) => setMotionPrompt(e.target.value)}
-              rows={3}
-              className="w-full bg-[#181D29] border border-stone-700/80 rounded-xl p-3 text-xs text-stone-200 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none"
-            />
-          </div>
-
-          {/* Camera Path */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-stone-300">Camera Trajectory</label>
-            <select
-              value={cameraMotion}
-              onChange={(e) => setCameraMotion(e.target.value as any)}
-              className="w-full bg-[#181D29] border border-stone-700/80 rounded-xl p-2.5 text-xs text-stone-200 cursor-pointer focus:outline-none focus:border-indigo-500"
-            >
-              <option value="orbit_smooth">Orbit Smooth 360°</option>
-              <option value="dolly_in">Dolly Zoom In</option>
-              <option value="pan_left">Slow Pan Left to Right</option>
-              <option value="crane_overhead">Overhead Crane View</option>
-              <option value="dutch_roll">Dutch Angle Cinematic Roll</option>
-            </select>
-          </div>
-
-          {/* Hyperframe Interpolation Rate */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-stone-300">Hyperframe Interpolation</span>
-              <span className="font-mono text-teal-400 font-bold">{hyperframeRate} FPS</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {([24, 60, 120] as const).map((rate) => (
-                <button
-                  key={rate}
-                  onClick={() => setHyperframeRate(rate)}
-                  className={`py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
-                    hyperframeRate === rate
-                      ? 'bg-teal-500/20 border-teal-500 text-teal-300 font-bold'
-                      : 'bg-[#181D29] border-stone-700 text-stone-400 hover:text-stone-200'
-                  }`}
-                >
-                  {rate} FPS
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-stone-500 leading-normal">
-              Zero Petri AI synthesizes in-between frames with optical flow vectors to eliminate judder.
-            </p>
-          </div>
-
-          {/* Motion Strength */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-stone-300">Motion Amplitude</span>
-              <span className="font-mono text-indigo-400">{Math.round(motionStrength * 100)}%</span>
-            </div>
-            <input
-              type="range"
-              min="0.1"
-              max="1.0"
-              step="0.05"
-              value={motionStrength}
-              onChange={(e) => setMotionStrength(parseFloat(e.target.value))}
-              className="w-full accent-indigo-500 cursor-pointer"
-            />
-          </div>
-
-          {/* Render Action Button */}
-          <div className="pt-2">
+      {/* Navigation Studio Tabs */}
+      <div className="px-6 py-2.5 bg-slate-900/60 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto shrink-0">
+        {[
+          { id: 'preview', label: 'Director Canvas & Conditioning', icon: Tv },
+          { id: 'storyboard', label: `Storyboard & Scenes (${scenes.length})`, icon: Layers },
+          { id: 'camera', label: '3D Submersion Camera Flights', icon: Compass },
+          { id: 'color', label: `Color Grading & LUTs (${activeLut.name})`, icon: Palette },
+        ].map(tab => {
+          const Icon = tab.icon;
+          const isSelected = activeTab === tab.id;
+          return (
             <button
-              onClick={handleRenderVideo}
-              disabled={isRendering}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-500 hover:to-teal-500 text-white font-semibold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as StudioTab)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                isSelected
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm'
+                  : 'bg-slate-800/40 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+              }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isRendering ? 'Rendering Hyperframe...' : 'Synthesize Video Stream'}</span>
+              <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-300' : 'text-slate-400'}`} />
+              <span>{tab.label}</span>
             </button>
-            {lastRenderedTime && !isRendering && (
-              <div className="text-[10px] text-stone-500 text-center mt-2 font-mono">
-                Last synthesized: {lastRenderedTime}
-              </div>
-            )}
-          </div>
-        </aside>
+          );
+        })}
       </div>
 
-      {/* Bottom Non-Linear Timeline & Playback Bar */}
-      <footer className="h-56 bg-[#121620] border-t border-stone-800 flex flex-col shrink-0">
-        {/* Playback Controls & Timecode Bar */}
-        <div className="px-6 py-2 bg-[#151924] border-b border-stone-800/80 flex items-center justify-between text-xs">
-          {/* Left: Transport controls */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentTimeSec(0)}
-              className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-              title="Return to Start"
-            >
-              <SkipBack className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors cursor-pointer"
-              title={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-            </button>
-
-            <button
-              onClick={() => setCurrentTimeSec(totalDurationSec)}
-              className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-              title="Go to End"
-            >
-              <SkipForward className="w-3.5 h-3.5" />
-            </button>
-
-            <span className="text-stone-700">|</span>
-
-            {/* Timecode display */}
-            <div className="font-mono text-xs text-white bg-black/40 px-2.5 py-1 rounded border border-stone-800">
-              <span className="text-teal-400 font-bold">{formatTimecode(currentTimeSec)}</span>
-              <span className="text-stone-500"> / {formatTimecode(totalDurationSec)}</span>
-            </div>
-          </div>
-
-          {/* Center: Playback Speed */}
-          <div className="flex items-center space-x-1 font-mono text-[11px]">
-            <span className="text-stone-500">Speed:</span>
-            {[0.5, 1.0, 1.5, 2.0].map((s) => (
-              <button
-                key={s}
-                onClick={() => setPlaybackSpeed(s)}
-                className={`px-1.5 py-0.5 rounded cursor-pointer ${
-                  playbackSpeed === s ? 'bg-indigo-600 text-white font-bold' : 'text-stone-400 hover:text-stone-200'
-                }`}
+      {/* Main Workspace Body */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* TAB 1: DIRECTOR PREVIEW CANVAS & CONDITIONING */}
+        {activeTab === 'preview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Canvas Viewport (7 Cols) */}
+            <div className="lg:col-span-7 flex flex-col items-center justify-center p-4 bg-slate-950/60 rounded-2xl border border-slate-800">
+              <div
+                className={`relative rounded-xl border border-slate-700/80 bg-black overflow-hidden shadow-2xl flex items-center justify-center transition-all ${aspectClass}`}
+                style={{
+                  filter: activeLut.filterCss,
+                }}
               >
-                {s}x
-              </button>
-            ))}
-          </div>
-
-          {/* Right: Audio mute toggle */}
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="p-1.5 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-            title={isMuted ? 'Unmute' : 'Mute'}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Multi-Track Timeline Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-1.5 relative">
-          {/* Timeline Playhead Needle */}
-          <div
-            className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-10 pointer-events-none"
-            style={{
-              left: `calc(180px + (100% - 200px) * (${currentTimeSec} / ${totalDurationSec}))`,
-            }}
-          >
-            <div className="w-2.5 h-2.5 bg-rose-500 -ml-1 -mt-0.5 rotate-45 rounded-xs" />
-          </div>
-
-          {/* Tracks */}
-          {tracks.map((track) => (
-            <div key={track.id} className="flex items-center space-x-3 text-xs">
-              {/* Track Header */}
-              <div className="w-40 shrink-0 flex items-center space-x-2 text-stone-400 truncate">
-                {track.type === 'video' && <Video className="w-3.5 h-3.5 text-indigo-400" />}
-                {track.type === 'overlay' && <Type className="w-3.5 h-3.5 text-teal-400" />}
-                {track.type === 'audio' && <Volume2 className="w-3.5 h-3.5 text-rose-400" />}
-                {track.type === 'effect' && <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
-                <span className="font-semibold text-[11px] truncate text-stone-300">{track.name}</span>
-              </div>
-
-              {/* Track Lane / Clip */}
-              <div className="flex-1 h-7 bg-[#171B26] rounded border border-stone-800/80 relative overflow-hidden flex items-center px-2">
+                {/* Simulated generative visual background */}
                 <div
-                  className={`absolute top-0.5 bottom-0.5 rounded border px-2 flex items-center text-[10px] font-mono text-white truncate shadow-xs ${track.color}`}
-                  style={{
-                    left: `${(track.startSec / totalDurationSec) * 100}%`,
-                    width: `${(track.durationSec / totalDurationSec) * 100}%`,
-                  }}
+                  className={`absolute inset-0 bg-gradient-to-tr ${
+                    activeScene?.previewGradient || 'from-teal-950 via-slate-900 to-indigo-950'
+                  } flex flex-col items-center justify-center text-center p-6`}
                 >
-                  <span className="truncate">{track.details}</span>
+                  {/* Optical Flare Overlay Simulation */}
+                  {opticalSettings.anamorphicFlare > 0 && (
+                    <div
+                      className="absolute inset-x-0 h-1 bg-cyan-300/40 blur-[2px] pointer-events-none"
+                      style={{
+                        top: '48%',
+                        opacity: opticalSettings.anamorphicFlare / 100,
+                        boxShadow: `0 0 24px rgba(45, 212, 191, ${opticalSettings.anamorphicFlare / 100})`,
+                      }}
+                    />
+                  )}
+
+                  {/* Dynamic Waterline Ripple Mesh Simulation */}
+                  <div className="w-56 h-56 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/20 blur-3xl animate-pulse" />
+
+                  {/* Scene Title Overlay */}
+                  <div className="relative z-10 space-y-2">
+                    <span className="text-[11px] font-mono tracking-widest uppercase text-teal-300 px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-teal-500/40">
+                      SCENE #{activeScene?.order}: {activeScene?.model.toUpperCase()} • 60 FPS
+                    </span>
+                    <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-md">
+                      {activeScene?.title}
+                    </h3>
+                    <p className="text-xs text-slate-300/90 max-w-md line-clamp-2 italic px-2">
+                      "{activeScene?.prompt}"
+                    </p>
+                  </div>
+
+                  {/* Submersion Waterline Badge */}
+                  <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur-md border border-teal-500/40 px-3 py-1.5 rounded-xl text-left shadow-lg">
+                    <div className="text-[10px] text-teal-400 font-mono flex items-center gap-1.5">
+                      <Compass className="w-3 h-3" />
+                      FLIGHT: {activeScene?.cameraFlight.toUpperCase()}
+                    </div>
+                    <div className="text-xs font-semibold text-white">
+                      Motion Scale: {activeScene?.motionScale}/10 • {activeScene?.durationSeconds.toFixed(1)}s
+                    </div>
+                  </div>
+
+                  {/* First Frame I2V Indicator */}
+                  {activeScene?.firstFrameImageUrl && (
+                    <div className="absolute top-4 right-4 bg-emerald-950/80 border border-emerald-500/50 px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-300">
+                      I2V ANCHOR ACTIVE
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </footer>
 
-      {/* Export Modal */}
-      {isExportOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-[#151924] border border-stone-700 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl animate-in fade-in">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-              <h3 className="font-bold text-sm text-white flex items-center space-x-2">
-                <Download className="w-4 h-4 text-indigo-400" />
-                <span>Export Hyperframe Video</span>
-              </h3>
-              <button onClick={() => setIsExportOpen(false)} className="text-stone-400 hover:text-white font-bold">
-                ✕
-              </button>
+              {/* Viewport Meta Bar */}
+              <div className="w-full mt-3 flex items-center justify-between text-xs text-slate-400 px-2 font-mono">
+                <span>Color LUT: {activeLut.name}</span>
+                <span>Submersion Vector Grid: Connected</span>
+              </div>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="font-semibold text-stone-300 block mb-1">Target Format</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'mp4', label: 'MP4 (H.264 / 60fps)' },
-                    { id: 'webm', label: 'WebM (VP9 / Alpha)' },
-                    { id: 'gif', label: 'Animated GIF' },
-                    { id: 'png_seq', label: 'PNG Image Sequence' },
-                  ].map((fmt) => (
+            {/* Right Director Conditioning Controls (5 Cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sliders className="w-4 h-4 text-teal-400" />
+                  <h3 className="text-sm font-semibold text-white">Shot Conditioning & Latent Dynamics</h3>
+                </div>
+
+                {/* Prompt editing */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">Cinematic Prompt</label>
+                    <textarea
+                      rows={3}
+                      value={activeScene?.prompt || ''}
+                      onChange={e => handleUpdateScene(activeScene.id, { prompt: e.target.value })}
+                      className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-teal-400 font-mono resize-none"
+                    />
+                  </div>
+
+                  {/* Negative Prompt */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Negative Conditioning</label>
+                    <input
+                      type="text"
+                      value={activeScene?.negativePrompt || ''}
+                      onChange={e => handleUpdateScene(activeScene.id, { negativePrompt: e.target.value })}
+                      placeholder="blurry, jitter, low resolution, artifacts"
+                      className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-teal-400 font-mono"
+                    />
+                  </div>
+
+                  {/* Model & Camera Flight Quick Select */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Video Engine</label>
+                      <select
+                        value={activeScene?.model}
+                        onChange={e => handleUpdateScene(activeScene.id, { model: e.target.value as VideoModelId })}
+                        className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-teal-300 font-mono focus:outline-none"
+                      >
+                        <option value="veo-2">Veo-2 (DeepMind)</option>
+                        <option value="sora-2">Sora-2 (OpenAI)</option>
+                        <option value="wan-2.1">Wan 2.1 (Cinematic)</option>
+                        <option value="luma-dream">Luma Dream Machine</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Camera Flight</label>
+                      <select
+                        value={activeScene?.cameraFlight}
+                        onChange={e =>
+                          handleUpdateScene(activeScene.id, { cameraFlight: e.target.value as CameraFlightType })
+                        }
+                        className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-teal-300 font-mono focus:outline-none"
+                      >
+                        <option value="orbital-descent">Orbital Descent</option>
+                        <option value="waterline-breach">Waterline Breach</option>
+                        <option value="hourglass-zoom">Hourglass Core</option>
+                        <option value="archimedean-ascent">Spiral Ascent</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Motion Strength & Pacing */}
+                  <div className="pt-2">
+                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                      <span>Motion Energy Scale</span>
+                      <span className="font-mono text-teal-400">{activeScene?.motionScale}/10</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={activeScene?.motionScale || 6}
+                      onChange={e => handleUpdateScene(activeScene.id, { motionScale: Number(e.target.value) })}
+                      className="w-full h-1.5 bg-slate-700 rounded-lg accent-teal-400 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Dispatch Quick Render */}
+                  <div className="pt-3">
                     <button
-                      key={fmt.id}
-                      onClick={() => setExportFormat(fmt.id as any)}
-                      className={`p-2 rounded-lg border text-left cursor-pointer ${
-                        exportFormat === fmt.id
-                          ? 'bg-indigo-600/30 border-indigo-500 text-white font-bold'
-                          : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
-                      }`}
+                      onClick={() => setIsRenderModalOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20"
                     >
-                      {fmt.label}
+                      <Sparkles className="w-4 h-4" />
+                      Configure & Batch Render Storyboard
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
-
-              <div className="p-3 bg-stone-900/80 rounded-xl border border-stone-800 space-y-1 font-mono text-[11px] text-stone-400">
-                <div>Dimensions: {aspectRatio === '16:9' ? '1920x1080 (Full HD)' : '1080x1920 (Vertical)'}</div>
-                <div>Interpolation: {hyperframeRate} FPS Optical Flow</div>
-                <div>Duration: {totalDurationSec}s ({Math.round(totalDurationSec * hyperframeRate)} frames)</div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-stone-800">
-              <button
-                onClick={() => setIsExportOpen(false)}
-                className="px-3 py-1.5 text-xs text-stone-400 hover:text-white cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExport}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer shadow-xs"
-              >
-                Start Export
-              </button>
             </div>
           </div>
+        )}
+
+        {/* TAB 2: MULTI-SCENE STORYBOARD & KEYFRAMING */}
+        {activeTab === 'storyboard' && (
+          <SceneStoryboardDrawer
+            scenes={scenes}
+            activeSceneId={activeSceneId}
+            onSelectScene={handleSelectScene}
+            onAddScene={handleAddScene}
+            onUpdateScene={handleUpdateScene}
+            onDeleteScene={handleDeleteScene}
+            onMoveScene={handleMoveScene}
+          />
+        )}
+
+        {/* TAB 3: 3D SUBMERSION CAMERA FLIGHTS */}
+        {activeTab === 'camera' && (
+          <SubmersionFlightStudio
+            currentFlight={activeScene?.cameraFlight || 'orbital-descent'}
+            onSelectFlight={flight => handleUpdateScene(activeScene.id, { cameraFlight: flight })}
+            motionScale={activeScene?.motionScale || 6}
+          />
+        )}
+
+        {/* TAB 4: CINEMATIC COLOR GRADING & SHADERS */}
+        {activeTab === 'color' && (
+          <ColorGradingLUTCenter
+            activeLut={activeLut}
+            onSelectLUT={handleSelectLUT}
+            opticalSettings={opticalSettings}
+            onUpdateOptical={handleUpdateOptical}
+          />
+        )}
+
+        {/* PERSISTENT ANCHOR: MULTI-TRACK NON-LINEAR TIMELINE */}
+        <div className="pt-2">
+          <MultiTrackTimeline
+            scenes={scenes}
+            activeSceneId={activeSceneId}
+            onSelectScene={handleSelectScene}
+            lutName={activeLut.name}
+          />
         </div>
-      )}
+      </div>
+
+      {/* Render Queue Modal */}
+      <RenderQueueModal
+        isOpen={isRenderModalOpen}
+        onClose={() => setIsRenderModalOpen(false)}
+        jobs={renderJobs}
+        onSubmitRender={handleSubmitRender}
+        scenesCount={scenes.length}
+        totalDuration={totalDuration}
+      />
     </div>
   );
 };
