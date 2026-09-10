@@ -24,6 +24,9 @@ import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
+import { MobileBottomNav } from './components/mobile/MobileBottomNav';
+import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
+import { useIsMobile } from './hooks/useIsMobile';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
@@ -43,6 +46,8 @@ export function App() {
   const [currentView, setCurrentView] = useState<PetriViewMode>('board');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
+  const isMobile = useIsMobile(768);
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
 
   // 3-Tier Enterprise Users & Identity State (SuperAdmin, Control, Consumer Personas)
   const [users, setUsers] = useState<UserProfile[]>(STANDARD_TIER_PERSONAS);
@@ -520,7 +525,7 @@ function inferPetriKind(text: string): PetriItemKind {
         />
 
         {/* Main Workspace Body with Optional Side-by-Side Agentation Live Preview */}
-        <div className="flex-1 flex overflow-hidden relative min-w-0">
+        <div className="flex-1 flex overflow-hidden relative min-w-0 pb-16 md:pb-0">
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             {/* View -1: Consumer Portal (Primary Surface for Consumer Tier) */}
             {currentView === 'consumer' && (
@@ -721,6 +726,30 @@ function inferPetriKind(text: string): PetriItemKind {
           )}
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (< 768px touch ergonomics) */}
+      {isMobile && (
+        <MobileBottomNav
+          currentView={currentView}
+          onSelectView={(view) => setCurrentView(view)}
+          onOpenMore={() => setIsMobileMoreOpen(true)}
+          isCognitionActive={isCognitionOpen}
+        />
+      )}
+
+      {/* Mobile Action Drawer for Secondary Views and Modals */}
+      <MobileMoreDrawer
+        isOpen={isMobileMoreOpen}
+        onClose={() => setIsMobileMoreOpen(false)}
+        currentView={currentView}
+        onSelectView={(view) => setCurrentView(view)}
+        activeUser={activeUser}
+        activeWorkspace={activeWorkspace}
+        onOpenUserModal={() => setIsUserModalOpen(true)}
+        onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+        onOpenDwdModal={() => setIsDwdModalOpen(true)}
+        onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
+      />
 
       {/* User Switcher & Identity Modal */}
       <UserProfileModal

@@ -76,6 +76,7 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
   const [branchingParentItem, setBranchingParentItem] = useState<PetriItem | null>(null);
   const [branchNameInput, setBranchNameInput] = useState('');
   const [subGoalInput, setSubGoalInput] = useState('');
+  const [activeMobileStage, setActiveMobileStage] = useState<PetriStage>('backlog');
 
   const toggleCoT = (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,24 +108,55 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-x-auto p-6 sm:p-8 font-sans">
-      <div className="flex space-x-6 min-w-[1500px] h-full items-stretch pb-6">
-        {STAGES.map((col, colIdx) => {
-          const columnItems = items.filter((item) => item.stage === col.stage);
-          const isMergedCol = col.stage === 'merged';
-          const isInFlightCol = col.stage === 'in_flight';
-
+    <div className="flex-1 w-full flex flex-col overflow-hidden font-sans">
+      {/* Mobile Segmented Stage Selector */}
+      <div className="md:hidden px-3 py-2 bg-white/90 backdrop-blur-md border-b border-stone-200/80 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
+        {STAGES.map((s) => {
+          const count = items.filter((item) => item.stage === s.stage).length;
+          const isActive = activeMobileStage === s.stage;
           return (
-            <div
-              key={col.stage}
-              className={`w-[360px] flex-shrink-0 flex flex-col rounded-2xl transition-all duration-300 ${
-                isMergedCol
-                  ? 'border border-emerald-200/80 bg-emerald-50/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_2px_12px_rgba(0,0,0,0.02)]'
-                  : isInFlightCol
-                  ? 'subtle-depth border-stone-300/90'
-                  : 'subtle-depth'
+            <button
+              key={s.stage}
+              type="button"
+              onClick={() => setActiveMobileStage(s.stage)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center space-x-1.5 cursor-pointer ${
+                isActive
+                  ? 'bg-stone-900 text-white shadow-2xs'
+                  : 'bg-stone-100 hover:bg-stone-200/70 text-stone-600'
               }`}
             >
+              <span>{s.label}</span>
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-700'
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex-1 w-full overflow-x-auto p-3 sm:p-6 md:p-8">
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 md:min-w-[1500px] h-full items-stretch pb-6">
+          {STAGES.map((col, colIdx) => {
+            const columnItems = items.filter((item) => item.stage === col.stage);
+            const isMergedCol = col.stage === 'merged';
+            const isInFlightCol = col.stage === 'in_flight';
+            const isVisibleOnMobile = activeMobileStage === col.stage;
+
+            return (
+              <div
+                key={col.stage}
+                className={`${isVisibleOnMobile ? 'flex' : 'hidden md:flex'} w-full md:w-[360px] flex-shrink-0 flex-col rounded-2xl transition-all duration-300 ${
+                  isMergedCol
+                    ? 'border border-emerald-200/80 bg-emerald-50/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_2px_12px_rgba(0,0,0,0.02)]'
+                    : isInFlightCol
+                    ? 'subtle-depth border-stone-300/90'
+                    : 'subtle-depth'
+                }`}
+              >
               {/* Column Header */}
               <div className="px-5 py-3.5 border-b border-stone-200/60 flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
@@ -455,6 +487,7 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* View More Details Modal */}

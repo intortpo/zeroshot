@@ -26,6 +26,8 @@ import {
   StepForward,
   Pencil,
   Trash2,
+  Maximize2,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   PySpurWorkflow,
@@ -44,6 +46,8 @@ interface PySpurNodeCanvasProps {
   onResetWorkflow?: () => void;
   onDeleteNode?: (nodeId: string) => void;
   onEditNode?: (nodeId: string) => void;
+  onAddEdge?: (sourceNodeId: string, sourceHandle: string, targetNodeId: string, targetHandle: string) => void;
+  onAutoLayout?: () => void;
 }
 
 // Icon mapper for nodes
@@ -79,6 +83,8 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
   onResetWorkflow,
   onDeleteNode,
   onEditNode,
+  onAddEdge,
+  onAutoLayout,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = useState<number>(0.92);
@@ -90,15 +96,38 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Interactive Wire Creation State
+  const [connectingSource, setConnectingSource] = useState<{ nodeId: string; handle: string } | null>(null);
+  const [mouseCanvasPos, setMouseCanvasPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Escape key cancels active wire creation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConnectingSource(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handle Canvas Pan Mouse Events
   const handleMouseDownCanvas = (e: React.MouseEvent) => {
-    // Only pan if clicking canvas background (not a node card)
-    if ((e.target as HTMLElement).closest('.pyspur-node-card')) return;
+    if ((e.target as HTMLElement).closest('.pyspur-node-card') || (e.target as HTMLElement).closest('.pyspur-port-handle')) return;
+    if (connectingSource) {
+      setConnectingSource(null);
+      return;
+    }
     setIsPanning(true);
     setStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const canvasX = (e.clientX - rect.left - pan.x) / zoom;
+      const canvasY = (e.clientY - rect.top - pan.y) / zoom;
+      setMouseCanvasPos({ x: canvasX, y: canvasY });
+    }
+
     if (isPanning) {
       setPan({
         x: e.clientX - startPan.x,
@@ -124,6 +153,81 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
+
+  // Zoom to Fit all nodes inside current canvas viewport
+  const handleZoomToFit = useCallback(() => {
+    if (!workflow.nodes.length || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const minX = Math.min(...workflow.nodes.map((n) => n.position.x));
+    const maxX = Math.max(...workflow.nodes.map((n) => n.position.x + 250));
+    const minY = Math.min(...workflow.nodes.map((n) => n.position.y));
+    const maxY = Math.max(...workflow.nodes.map((n) => n.position.y + 130));
+
+    const contentWidth = Math.max(280, maxX - minX);
+    const contentHeight = Math.max(180, maxY - minY);
+
+    const fitZoom = Math.max(0.4, Math.min(1.1, Math.min((rect.width - 80) / contentWidth, (rect.height - 80) / contentHeight)));
+    setZoom(fitZoom);
+    setPan({
+      x: (rect.width - contentWidth * fitZoom) / 2 - minX * fitZoom,
+      y: (rect.height - contentHeight * fitZoom) / 2 - minY * fitZoom,
+    });
+  }, [workflow.nodes]);
+
+  // Hierarchical Topological Auto-Layout
+  const handleAutoLayout = useCallback(() => {
+    if (onAutoLayout) {
+      onAutoLayout();
+      return;
+    }
+    const cols: Record<number, string[]> = {};
+    const inDegree: Record<string, number> = {};
+    const adj: Record<string, string[]> = {};
+
+    workflow.nodes.forEach((n) => {
+      inDegree[n.id] = 0;
+      adj[n.id] = [];
+    });
+
+    workflow.edges.forEach((e) => {
+      if (adj[e.sourceNodeId]) adj[e.sourceNodeId].push(e.targetNodeId);
+      if (inDegree[e.targetNodeId] !== undefined) inDegree[e.targetNodeId]++;
+    });
+
+    const depth: Record<string, number> = {};
+    const queue = workflow.nodes.filter((n) => inDegree[n.id] === 0).map((n) => n.id);
+    queue.forEach((id) => { depth[id] = 0; });
+
+    while (queue.length > 0) {
+      const u = queue.shift()!;
+      const d = depth[u] || 0;
+      if (!cols[d]) cols[d] = [];
+      if (!cols[d].includes(u)) cols[d].push(u);
+
+      for (const v of adj[u] || []) {
+        inDegree[v]--;
+        depth[v] = Math.max(depth[v] || 0, d + 1);
+        if (inDegree[v] === 0) queue.push(v);
+      }
+    }
+
+    workflow.nodes.forEach((n) => {
+      if (depth[n.id] === undefined) {
+        const lastCol = Math.max(0, ...Object.keys(cols).map(Number)) + 1;
+        if (!cols[lastCol]) cols[lastCol] = [];
+        cols[lastCol].push(n.id);
+      }
+    });
+
+    Object.entries(cols).forEach(([colIdxStr, nodeIds]) => {
+      const colIdx = Number(colIdxStr);
+      nodeIds.forEach((nodeId, rowIdx) => {
+        const x = 50 + colIdx * 290;
+        const y = 80 + rowIdx * 170;
+        onUpdateNodePosition(nodeId, { x, y });
+      });
+    });
+  }, [workflow.nodes, workflow.edges, onAutoLayout, onUpdateNodePosition]);
 
   // Handle Node Card Mouse Down for Dragging
   const handleNodeMouseDown = (e: React.MouseEvent, node: PySpurNode) => {
@@ -155,7 +259,13 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
 
       // Approximate handle positions based on typical card size (w: 240, h: 90)
       const startX = source.position.x + 240;
-      const startY = source.position.y + 44;
+      let startY = source.position.y + 44;
+      if (edge.sourceHandle === 'true') {
+        startY = source.position.y + 28;
+      } else if (edge.sourceHandle === 'false') {
+        startY = source.position.y + 60;
+      }
+
       const endX = target.position.x;
       const endY = target.position.y + 44;
 
@@ -181,6 +291,23 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
     }).filter(Boolean);
   }, [workflow.edges, nodeMap, selectedNodeId]);
 
+  // Connecting line calculation
+  const connectingLinePath = useMemo(() => {
+    if (!connectingSource) return null;
+    const source = nodeMap.get(connectingSource.nodeId);
+    if (!source) return null;
+
+    const startX = source.position.x + 240;
+    let startY = source.position.y + 44;
+    if (connectingSource.handle === 'true') startY = source.position.y + 28;
+    if (connectingSource.handle === 'false') startY = source.position.y + 60;
+
+    const endX = mouseCanvasPos.x;
+    const endY = mouseCanvasPos.y;
+    const deltaX = Math.max(40, Math.abs(endX - startX) * 0.4);
+    return `M ${startX} ${startY} C ${startX + deltaX} ${startY}, ${endX - deltaX} ${endY}, ${endX} ${endY}`;
+  }, [connectingSource, nodeMap, mouseCanvasPos]);
+
   return (
     <div
       ref={containerRef}
@@ -192,12 +319,12 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
         backgroundPosition: `${pan.x}px ${pan.y}px`,
       }}
     >
-      {/* Zoom / Pan Controls Overlay */}
-      <div className="absolute bottom-6 left-6 z-20 flex items-center space-x-1.5 p-1.5 rounded-xl bg-white/90 backdrop-blur-md border border-stone-200 shadow-sm">
+      {/* Zoom / Pan / Layout Controls Overlay */}
+      <div className="absolute bottom-6 left-6 z-20 flex items-center space-x-1.5 p-1.5 rounded-xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-sm">
         <button
           type="button"
           onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))}
-          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors"
+          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors cursor-pointer"
           title="Zoom In"
         >
           <ZoomIn className="w-3.5 h-3.5" />
@@ -208,7 +335,7 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
         <button
           type="button"
           onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
-          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors"
+          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors cursor-pointer"
           title="Zoom Out"
         >
           <ZoomOut className="w-3.5 h-3.5" />
@@ -216,16 +343,40 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
         <div className="w-[1px] h-3.5 bg-stone-200 mx-0.5" />
         <button
           type="button"
+          onClick={handleZoomToFit}
+          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors cursor-pointer"
+          title="Zoom to Fit All Nodes"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleAutoLayout}
+          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors cursor-pointer"
+          title="Hierarchical Auto-Layout"
+        >
+          <LayoutGrid className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
           onClick={() => {
             setZoom(0.92);
             setPan({ x: 30, y: 30 });
           }}
-          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors"
+          className="p-1.5 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors cursor-pointer"
           title="Reset Canvas View"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Interactive Wire Notice */}
+      {connectingSource && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs shadow-lg flex items-center space-x-2 animate-bounce">
+          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+          <span>Click target node's input port to wire connection (or ESC to cancel)</span>
+        </div>
+      )}
 
       {/* Floating Step Debugger Toolbar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-md font-sans text-xs">
@@ -352,6 +503,18 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
             </g>
           );
         })}
+
+        {/* In-progress wire being drawn by operator */}
+        {connectingLinePath && (
+          <path
+            d={connectingLinePath}
+            fill="none"
+            stroke="#6366f1"
+            strokeWidth={3}
+            strokeDasharray="6,4"
+            className="animate-pulse"
+          />
+        )}
       </svg>
 
       {/* Nodes Container */}
@@ -525,21 +688,105 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
               {/* Left Input Port */}
               {node.inputs && node.inputs.length > 0 && (
                 <div
-                  className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 shadow-xs"
-                  title="Input Port"
-                />
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (connectingSource && connectingSource.nodeId !== node.id) {
+                      onAddEdge?.(connectingSource.nodeId, connectingSource.handle, node.id, 'in');
+                      setConnectingSource(null);
+                    }
+                  }}
+                  className={`pyspur-port-handle absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow-md flex items-center justify-center transition-transform hover:scale-125 cursor-pointer ${
+                    connectingSource && connectingSource.nodeId !== node.id
+                      ? 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse'
+                      : 'bg-emerald-500'
+                  }`}
+                  title="Input Port (Click to connect)"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                </div>
               )}
 
-              {/* Right Output Port */}
+              {/* Right Output Port(s) */}
               {node.outputs && node.outputs.length > 0 && (
-                <div
-                  className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-teal-500 shadow-xs"
-                  title="Output Port"
-                />
+                node.type === 'branch' || node.type === 'router' ? (
+                  <>
+                    {/* True Port */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConnectingSource({ nodeId: node.id, handle: 'true' });
+                      }}
+                      className={`pyspur-port-handle absolute -right-2 top-7 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center transition-transform hover:scale-125 cursor-pointer ${
+                        connectingSource?.nodeId === node.id && connectingSource?.handle === 'true'
+                          ? 'ring-2 ring-emerald-400'
+                          : ''
+                      }`}
+                      title="Route True (Click to start wire)"
+                    >
+                      <span className="text-[8px] font-bold text-white font-mono leading-none">T</span>
+                    </div>
+
+                    {/* False Port */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConnectingSource({ nodeId: node.id, handle: 'false' });
+                      }}
+                      className={`pyspur-port-handle absolute -right-2 top-14 w-4 h-4 rounded-full bg-rose-500 border-2 border-white shadow-md flex items-center justify-center transition-transform hover:scale-125 cursor-pointer ${
+                        connectingSource?.nodeId === node.id && connectingSource?.handle === 'false'
+                          ? 'ring-2 ring-rose-400'
+                          : ''
+                      }`}
+                      title="Route False (Click to start wire)"
+                    >
+                      <span className="text-[8px] font-bold text-white font-mono leading-none">F</span>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConnectingSource({ nodeId: node.id, handle: 'out' });
+                    }}
+                    className={`pyspur-port-handle absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow-md flex items-center justify-center transition-transform hover:scale-125 cursor-pointer ${
+                      connectingSource?.nodeId === node.id ? 'bg-indigo-600 ring-2 ring-indigo-300' : 'bg-indigo-500'
+                    }`}
+                    title="Output Port (Click to start wire)"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </div>
+                )
               )}
             </div>
           );
         })}
+      </div>
+
+      {/* Floating Minimap Overlay */}
+      <div className="absolute bottom-6 right-6 z-20 w-36 h-24 rounded-xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-sm p-1.5 flex flex-col justify-between pointer-events-none hidden sm:flex">
+        <div className="flex items-center justify-between text-[9px] font-mono text-stone-400 font-semibold px-0.5">
+          <span>MINIMAP</span>
+          <span>{workflow.nodes.length} nodes</span>
+        </div>
+        <div className="relative flex-1 rounded bg-stone-100/70 border border-stone-200/50 overflow-hidden">
+          {workflow.nodes.map((n) => {
+            const leftPct = Math.min(85, Math.max(5, (n.position.x / 1400) * 85));
+            const topPct = Math.min(80, Math.max(5, (n.position.y / 600) * 80));
+            return (
+              <div
+                key={n.id}
+                className={`absolute w-3 h-1.5 rounded-xs transition-colors ${
+                  n.id === selectedNodeId
+                    ? 'bg-indigo-600 ring-1 ring-indigo-300'
+                    : n.status === 'completed'
+                    ? 'bg-emerald-500'
+                    : 'bg-stone-400'
+                }`}
+                style={{ left: `${leftPct}%`, top: `${topPct}%` }}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -30,6 +30,7 @@ import {
   ChevronDown,
   CornerDownRight,
   Network,
+  BookOpen,
 } from 'lucide-react';
 import {
   Workspace,
@@ -44,6 +45,8 @@ import {
 import { EccTerminalConsole } from '../ecc/EccTerminalConsole';
 import { executeEccCli } from '../ecc/eccCliEngine';
 import { executeAiTurn } from '../services/aiProviderService';
+import { zenNotesService } from '../services/zenNotesService';
+import { triggerLightHaptic, triggerSuccessHaptic } from '../utils/haptics';
 
 export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
 
@@ -87,7 +90,7 @@ const INITIAL_DEFAULT_ECC_STATE: EccOptimizationState = {
   ],
 };
 
-const INITIAL_DEFAULT_PLAN: PlanCanvasDoc = {
+const SAMPLE_SQLITE_BLUEPRINT_PLAN: PlanCanvasDoc = {
   id: 'plan-ecc-01',
   title: 'Bounded SQLite Event Ledger & Concurrent Review Pipeline',
   goalPrompt: 'Implement bounded SQLite retry queues with backpressure and acceptance test suite',
@@ -261,8 +264,16 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
     }
   }, [initialMode]);
 
-  // Plan Canvas Document State
-  const [plan, setPlan] = useState<PlanCanvasDoc>(INITIAL_DEFAULT_PLAN);
+  // Plan Canvas Document State (Persistent from localStorage or clean starter canvas)
+  const [plan, setPlan] = useState<PlanCanvasDoc | null>(() => {
+    try {
+      const saved = localStorage.getItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   // Annotation Creation Popover State
@@ -276,10 +287,9 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
       id: 'msg-1',
       role: 'assistant',
       sender: '@orchestrator',
-      thought: `Ingested goal requirements from workspace ${activeWorkspace?.name || 'zero-petri'}. Analyzing invariant boundaries and synthesizing initial Plan Canvas...`,
-      content: `Hello ${activeUser?.name || 'Hideo'}! I have synthesized an autonomous engineering plan for **${INITIAL_DEFAULT_PLAN.title}** on the **Plan Canvas** to the right.\n\nYou can review each phase, click **[+ Pin Note]** to point-and-annotate specific sections, or hit **✓ Approve Plan** when you are ready to dispatch the agents!`,
-      timestamp: Date.now() - 1000 * 60 * 12,
-      planRef: 'plan-ecc-01',
+      thought: `Ingested goal requirements from workspace ${activeWorkspace?.name || 'zero-petri'}. Preparing autonomous Plan Canvas...`,
+      content: `Hello ${activeUser?.name || 'Hideo'}! Welcome to the **Autonomous Plan Canvas**.\n\nYou can enter an engineering goal or prompt with \`/ecc:plan <goal>\` to synthesize an implementation plan, or import concepts directly from your **Zen Notes**!`,
+      timestamp: Date.now() - 1000 * 60 * 2,
     },
   ]);
 
@@ -303,7 +313,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         sender: '@orchestrator',
         content: `Switched context to thread **"${thread.title}"** (Active Model: ${thread.activeModel || 'Claude 3.7 Sonnet'}). What would you like to explore or plan?`,
         timestamp: Date.now(),
-        planRef: plan.id,
+        planRef: plan?.id,
       },
     ]);
   };
@@ -354,23 +364,27 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
 
   // Helper to generate a Plan Canvas for a given goal
   const generatePlanForGoal = (goalTopic: string) => {
-    setPlan((prev) => ({
-      ...prev,
+    const newPlan: PlanCanvasDoc = {
       id: `plan-${Date.now()}`,
       title: goalTopic.length > 50 ? `${goalTopic.slice(0, 50)}...` : goalTopic,
       goalPrompt: goalTopic,
       status: 'review_required',
-      version: prev.version + 1,
+      version: (plan?.version || 0) + 1,
       summary: `Comprehensive engineering plan for ${goalTopic}. Structured with test-first reproduction loops, invariant checks, and bounded execution boundaries.`,
       objectives: [
         `Implement core requirements for ${goalTopic.slice(0, 40)}.`,
         'Enforce bounded memory ceilings and backpressure safety.',
         'Construct isolated acceptance test suite before code modification.',
       ],
+      invariants: [
+        'Bounded Memory: Maximum 64 MiB allocated per concurrent provider turn.',
+        'Fail-Closed Recovery: Disable MCP and approval bypass during recovery turns.',
+        'Safe Timestamps: Produced as positive Unix epoch milliseconds at ingestion boundary.',
+      ],
       phases: [
         {
           id: 'phase-1',
-          name: 'Phase 1: Invariant Specification & Preconditions',
+          name: 'Phase 1: Invariant Contract & Test Fixtures',
           description: 'Map boundary constraints and author test fixtures.',
           tasks: [
             { id: `t-${Date.now()}-1`, text: 'Validate clean baseline worktree & SQLite schema', completed: true, role: '@orchestrator' },
@@ -391,13 +405,47 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
           name: 'Phase 3: Verification & Invariant Proof',
           description: 'Independent dual review and consensus evaluation.',
           tasks: [
-            { id: `t-${Date.now()}-5`, text: '14/14 automated acceptance tests matrix pass', completed: false, role: '@acceptance-verifier' },
+            { id: `t-${Date.now()}-5`, text: 'Automated acceptance tests matrix pass', completed: false, role: '@acceptance-verifier' },
             { id: `t-${Date.now()}-6`, text: 'Zero compiler warnings, 0 lint defects', completed: false, role: '@security-auditor' },
           ],
         },
       ],
+      testMatrix: [
+        'test_acceptance_reproduction_suite',
+        'test_invariant_bounds_and_backpressure',
+      ],
+      annotations: [],
       updatedAt: Date.now(),
-    }));
+    };
+
+    setPlan(newPlan);
+    try {
+      localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(newPlan));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleClearPlan = () => {
+    triggerLightHaptic();
+    setPlan(null);
+    try {
+      localStorage.removeItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`);
+    } catch {
+      // ignore
+    }
+    showEccToast('Cleared Plan Canvas');
+  };
+
+  const handleLoadTemplate = (template: PlanCanvasDoc) => {
+    triggerSuccessHaptic();
+    setPlan(template);
+    try {
+      localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(template));
+    } catch {
+      // ignore
+    }
+    showEccToast(`Loaded blueprint: ${template.title}`);
   };
 
   // Handle Chat Submission
@@ -438,7 +486,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
             thought: `Executed bundled ECC CLI command: "${rawEccCmd}" (exit code: ${result.exit_code})`,
             content: `\`\`\`bash\n$ ${rawEccCmd}\n${result.stdout}${result.stderr ? '\n' + result.stderr : ''}\n\`\`\``,
             timestamp: Date.now(),
-            planRef: plan.id,
+            planRef: plan?.id,
           };
           setMessages((prev) => [...prev, eccMsg]);
           setIsAgentThinking(false);
@@ -487,7 +535,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
             thought: `[AGY CLI // ${turnRes.modelUsed}] Processed in ${turnRes.durationMs}ms (~${turnRes.tokensUsed} tokens, effort: ${effort}) via /home/hideo/.local/bin/agy`,
             content: turnRes.responseText,
             timestamp: Date.now(),
-            planRef: plan.id,
+            planRef: plan?.id,
           };
           setMessages((prev) => [...prev, agentMsg]);
           setIsAgentThinking(false);
@@ -519,16 +567,16 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         // Dynamically update the Plan Canvas
         generatePlanForGoal(goalTopic);
 
-        replyContent = `I have generated a new **Plan Canvas** (v${plan.version + 1}) for **"${goalTopic}"**!\n\nPlease inspect the sections on the canvas to your right. You can add point-and-annotate review notes or hit **✓ Approve Plan** when you are satisfied.`;
+        replyContent = `I have generated a new **Plan Canvas** (v${(plan?.version || 0) + 1}) for **"${goalTopic}"**!\n\nPlease inspect the sections on the canvas to your right. You can add point-and-annotate review notes or hit **✓ Approve Plan** when you are satisfied.`;
       } else if (lower.includes('feedback') || lower.includes('annotation') || lower.includes('revise')) {
         replyThought = 'Ingesting operator annotations from Plan Canvas. Revising plan constraints and adjusting phase tasks...';
         replyContent = `Acknowledged! I have reviewed your pinned annotations and updated the plan accordingly. The invariant guardrails and test matrix have been updated on the canvas.`;
-        setPlan((prev) => ({
+        setPlan((prev) => (prev ? {
           ...prev,
           status: 'review_required',
           version: prev.version + 1,
           updatedAt: Date.now(),
-        }));
+        } : null));
       } else {
         replyThought = 'Evaluating user directive against active plan state...';
         replyContent = `Understood! I've noted: "${text}". I can adapt the Plan Canvas on the right, or you can use \`/plan <goal>\` or \`ecc <command>\` to draft a complete new engineering specification.`;
@@ -541,7 +589,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         thought: replyThought,
         content: replyContent,
         timestamp: Date.now(),
-        planRef: plan.id,
+        planRef: plan?.id,
       };
 
       setMessages((prev) => [...prev, agentMsg]);
@@ -551,25 +599,33 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
 
   // Toggle task completion
   const handleToggleTask = (phaseId: string, taskId: string) => {
-    setPlan((prev) => ({
-      ...prev,
-      phases: prev.phases.map((phase) => {
-        if (phase.id !== phaseId) return phase;
-        return {
-          ...phase,
-          tasks: phase.tasks.map((task) => {
-            if (task.id !== taskId) return task;
-            return { ...task, completed: !task.completed };
-          }),
-        };
-      }),
-      updatedAt: Date.now(),
-    }));
+    if (!plan) return;
+    setPlan((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        phases: prev.phases.map((phase) => {
+          if (phase.id !== phaseId) return phase;
+          return {
+            ...phase,
+            tasks: phase.tasks.map((task) => {
+              if (task.id !== taskId) return task;
+              return { ...task, completed: !task.completed };
+            }),
+          };
+        }),
+        updatedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   // Add Annotation Pin
   const handleAddAnnotation = () => {
-    if (!annotationInput.trim() || !targetSectionForPin) return;
+    if (!plan || !annotationInput.trim() || !targetSectionForPin) return;
 
     const newPinNumber = plan.annotations.length + 1;
     const newAnnotation: PlanAnnotation = {
@@ -581,11 +637,18 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
       createdAt: Date.now(),
     };
 
-    setPlan((prev) => ({
-      ...prev,
-      annotations: [...prev.annotations, newAnnotation],
-      updatedAt: Date.now(),
-    }));
+    setPlan((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        annotations: [...prev.annotations, newAnnotation],
+        updatedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     setAnnotationInput('');
     setTargetSectionForPin(null);
@@ -594,16 +657,24 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
 
   // Delete Annotation Pin
   const handleDeleteAnnotation = (annotationId: string) => {
-    setPlan((prev) => ({
-      ...prev,
-      annotations: prev.annotations.filter((a) => a.id !== annotationId),
-      updatedAt: Date.now(),
-    }));
+    if (!plan) return;
+    setPlan((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        annotations: prev.annotations.filter((a) => a.id !== annotationId),
+        updatedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   // Submit Annotations Back to Chat as Feedback
   const handleSubmitAnnotationsToChat = () => {
-    if (plan.annotations.length === 0) return;
+    if (!plan || plan.annotations.length === 0) return;
 
     const feedbackText = `I have reviewed the plan canvas and added ${plan.annotations.length} annotation pin(s):\n\n` +
       plan.annotations
@@ -616,14 +687,19 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
 
   // Approve Plan Gate
   const handleApprovePlan = () => {
-    setPlan((prev) => ({
-      ...prev,
-      status: 'approved',
+    if (!plan) return;
+    const approvedPlan = {
+      ...plan,
+      status: 'approved' as const,
       updatedAt: Date.now(),
-    }));
+    };
+    setPlan(approvedPlan);
+    try {
+      localStorage.setItem(`petri_active_plan_${activeWorkspace?.id || 'default'}`, JSON.stringify(approvedPlan));
+    } catch {}
 
     // Trigger callback to parent App
-    onApprovePlan?.(plan);
+    onApprovePlan?.(approvedPlan);
 
     // Add confirmation message to chat
     const approvalMsg: AgentChatMessage = {
@@ -643,11 +719,11 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
       {/* Top View Mode & ECC Optimization Header */}
       <div className="px-5 py-2.5 bg-white/95 border-b border-stone-200/90 flex flex-wrap items-center justify-between gap-3 shrink-0 backdrop-blur-md">
         {/* Left: View Mode Segmented Switcher */}
-        <div className="flex items-center space-x-1 bg-stone-100/90 p-1 rounded-xl border border-stone-200/80 text-xs">
+        <div className="flex items-center space-x-1 bg-stone-100/90 p-1 rounded-xl border border-stone-200/80 text-xs overflow-x-auto no-scrollbar max-w-full">
           <button
             type="button"
             onClick={() => setDisplayMode('canvas')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${
               displayMode === 'canvas'
                 ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
                 : 'text-stone-500 hover:text-stone-800'
@@ -660,7 +736,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
           <button
             type="button"
             onClick={() => setDisplayMode('split')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+            className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${
               displayMode === 'split'
                 ? 'bg-white text-stone-950 shadow-xs border border-stone-200/80 font-semibold'
                 : 'text-stone-500 hover:text-stone-800'
@@ -971,7 +1047,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                         <Workflow className="w-3 h-3" />
                         <span>Linked to Plan Canvas</span>
                       </span>
-                      <span className="text-stone-400 font-mono text-[10px]">v{plan.version}</span>
+                      <span className="text-stone-400 font-mono text-[10px]">v{plan?.version || 1}</span>
                     </div>
                   )}
                 </div>
@@ -1047,70 +1123,152 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
         <div className={`h-full flex flex-col bg-white overflow-hidden ${
           displayMode === 'canvas' ? 'w-full max-w-5xl mx-auto flex-1 shadow-sm' : 'flex-1 min-w-0'
         }`}>
-          {/* Plan Canvas Header Bar */}
-          <div className="px-6 py-3.5 border-b border-stone-200/90 bg-stone-50/70 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
-          <div className="space-y-0.5">
-            <div className="flex items-center space-x-2 text-xs font-mono">
-              <span className="text-[#FF5F1F] font-bold">PLAN CANVAS</span>
-              <span className="text-stone-300">·</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-amber-500/10 border-amber-500/30 text-amber-600">
-                {plan.status.replace('_', ' ')}
-              </span>
-              <span className="text-stone-400 text-[10px]">v{plan.version}</span>
+          {!plan ? (
+            /* Clean Minimalist Starter Canvas */
+            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center max-w-xl mx-auto space-y-6 animate-in fade-in duration-200 select-none">
+              <div className="w-14 h-14 rounded-3xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-sm">
+                <Sparkles className="w-7 h-7" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-stone-900">Autonomous Plan Canvas</h2>
+                <p className="text-xs text-stone-500 leading-relaxed max-w-md">
+                  Synthesize structured engineering roadmaps with invariants, test matrices, and subagent worktrees before code execution.
+                </p>
+              </div>
+
+              {/* Starter Action Cards */}
+              <div className="w-full space-y-3 pt-2 text-left">
+                <div
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setInputPrompt('/ecc:plan ');
+                  }}
+                  className="p-4 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-2 text-xs font-bold text-stone-900 group-hover:text-indigo-600">
+                    <Send className="w-4 h-4 text-indigo-600" />
+                    <span>Synthesize Plan from Prompt</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    Enter <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.5 rounded">/ecc:plan &lt;objective&gt;</code> in the prompt bar to generate a multi-phase implementation roadmap.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => {
+                    triggerLightHaptic();
+                    const notes = zenNotesService.getNotes('workspace');
+                    if (notes.length > 0) {
+                      generatePlanForGoal(notes[0].title + ': ' + notes[0].content);
+                      showEccToast(`Imported plan from Zen Note: "${notes[0].title}"`);
+                    } else {
+                      generatePlanForGoal('Implement feature from Zen Notes backlog');
+                    }
+                  }}
+                  className="p-4 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-2 text-xs font-bold text-stone-900 group-hover:text-purple-600">
+                    <BookOpen className="w-4 h-4 text-purple-600" />
+                    <span>Import from Zen Notes</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    Load your recent thoughts or architectural notes from Zen Focus Chat into an executable engineering plan.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => {
+                    triggerLightHaptic();
+                    handleLoadTemplate(SAMPLE_SQLITE_BLUEPRINT_PLAN);
+                  }}
+                  className="p-4 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-2 text-xs font-bold text-stone-900 group-hover:text-emerald-600">
+                    <Layers className="w-4 h-4 text-emerald-600" />
+                    <span>Load Example Blueprint (SQLite Event Ledger)</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    Load the sample bounded SQLite event ledger and concurrent review pipeline template on-demand.
+                  </p>
+                </div>
+              </div>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-stone-900 truncate max-w-lg">
-              {plan.title}
-            </h2>
-          </div>
+          ) : (
+            <>
+              {/* Plan Canvas Header Bar */}
+              <div className="px-6 py-3.5 border-b border-stone-200/90 bg-stone-50/70 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
+                <div className="space-y-0.5">
+                  <div className="flex items-center space-x-2 text-xs font-mono">
+                    <span className="text-[#FF5F1F] font-bold">PLAN CANVAS</span>
+                    <span className="text-stone-300">·</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-amber-500/10 border-amber-500/30 text-amber-600">
+                      {plan.status.replace('_', ' ')}
+                    </span>
+                    <span className="text-stone-400 text-[10px]">v{plan.version}</span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-stone-900 truncate max-w-lg">
+                    {plan.title}
+                  </h2>
+                </div>
 
-          {/* Action Buttons Toolbar */}
-          <div className="flex items-center space-x-2">
-            {onSelectView && (
-              <button
-                type="button"
-                onClick={() => onSelectView('graph')}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors"
-                title="View in Orchestration Graph"
-              >
-                <Workflow className="w-3.5 h-3.5 text-[#0ABAB5]" />
-                <span className="hidden sm:inline">Graph</span>
-              </button>
-            )}
+                {/* Action Buttons Toolbar */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={handleClearPlan}
+                    className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 hover:text-stone-900 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer"
+                    title="Clear plan and return to clean canvas"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Clear</span>
+                  </button>
 
-            <button
-              type="button"
-              onClick={() => setIsEditMode(!isEditMode)}
-              className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors"
-            >
-              {isEditMode ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-              <span>{isEditMode ? 'Visual Preview' : 'Edit Markdown'}</span>
-            </button>
+                  {onSelectView && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectView('graph')}
+                      className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors"
+                      title="View in Orchestration Graph"
+                    >
+                      <Workflow className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                      <span className="hidden sm:inline">Graph</span>
+                    </button>
+                  )}
 
-            <button
-              type="button"
-              onClick={handleSubmitAnnotationsToChat}
-              disabled={plan.annotations.length === 0}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center space-x-1.5 transition-colors ${
-                plan.annotations.length > 0
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 hover:bg-amber-500/20 cursor-pointer'
-                  : 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
-              }`}
-              title="Send pinned review annotations back to agent"
-            >
-              <Pin className="w-3.5 h-3.5" />
-              <span>Feedback ({plan.annotations.length})</span>
-            </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors"
+                  >
+                    {isEditMode ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                    <span>{isEditMode ? 'Visual Preview' : 'Edit Markdown'}</span>
+                  </button>
 
-            <button
-              type="button"
-              onClick={handleApprovePlan}
-              className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Approve Plan</span>
-            </button>
-          </div>
-        </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmitAnnotationsToChat}
+                    disabled={plan.annotations.length === 0}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center space-x-1.5 transition-colors ${
+                      plan.annotations.length > 0
+                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 hover:bg-amber-500/20 cursor-pointer'
+                        : 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                    }`}
+                    title="Send pinned review annotations back to agent"
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                    <span>Feedback ({plan.annotations.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleApprovePlan}
+                    className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Approve Plan</span>
+                  </button>
+                </div>
+              </div>
 
         {/* Plan Canvas Body */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
@@ -1127,7 +1285,7 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                   `# ${plan.title}\n\n## Summary\n${plan.summary}\n\n## Objectives\n${plan.objectives.map((o) => `- ${o}`).join('\n')}\n\n## Invariants\n${plan.invariants.map((i) => `- ${i}`).join('\n')}`
                 }
                 onChange={(e) => {
-                  setPlan((prev) => ({ ...prev, rawMarkdown: e.target.value }));
+                  setPlan((prev) => (prev ? { ...prev, rawMarkdown: e.target.value } : null));
                 }}
                 rows={22}
                 className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-200 font-mono text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0ABAB5]/30 leading-relaxed"
@@ -1505,6 +1663,8 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
               ))}
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
       )}

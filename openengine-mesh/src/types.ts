@@ -649,6 +649,10 @@ export interface PySpurNodeConfig {
   evaluatorAssertions?: string[];
   structuredOutputSchema?: string;
   subworkflowId?: string;
+  inputVariables?: { name: string; type: 'string' | 'number' | 'json' | 'file'; defaultValue?: any }[];
+  httpConfig?: { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; url: string; headers?: Record<string, string>; body?: string };
+  loopConfig?: { inputKey: string; concurrency: number; itemAlias: string };
+  evaluatorConfig?: { mode: 'llm_judge' | 'assertion' | 'similarity'; rubricPrompt?: string; assertions?: string[]; threshold?: number };
 }
 
 export interface PySpurNode {
@@ -664,6 +668,7 @@ export interface PySpurNode {
   outputTrace?: PySpurNodeOutputTrace;
   inputs?: string[];
   outputs?: string[];
+  handles?: { inputs: string[]; outputs: string[] };
 }
 
 export interface PySpurEdge {
@@ -681,7 +686,7 @@ export interface PySpurWorkflow {
   id: string;
   name: string;
   description: string;
-  templateKey: 'petri_orchestration' | 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'custom';
+  templateKey: 'petri_orchestration' | 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'multi_agent_debate' | 'custom';
   nodes: PySpurNode[];
   edges: PySpurEdge[];
   updatedAt: number;

@@ -92,7 +92,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   return (
     <header
       data-tauri-drag-region
-      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-6 sm:px-10 py-3.5 flex items-center justify-between text-sm z-30 font-sans"
+      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-3 sm:px-10 py-2.5 sm:py-3.5 flex items-center justify-between text-sm z-30 font-sans"
     >
       {/* Left: Brand, Breadcrumbs, User, Tier & Workspace */}
       <div className="flex items-center space-x-3.5">
@@ -233,8 +233,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </div>
       </div>
 
-      {/* Center: Main Enterprise View Navigation (Tier-Adapted) */}
-      <nav className="flex items-center space-x-6 sm:space-x-8">
+      {/* Center: Main Enterprise View Navigation (Tier-Adapted, Desktop Only) */}
+      <nav className="hidden md:flex items-center space-x-6 sm:space-x-8">
         {/* CONSUMER TIER: Shows Consumer Portal Only */}
         {activeTier === 'consumer' ? (
           <button
@@ -502,10 +502,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           </button>
         )}
 
-        {/* Google Workspace DWD Trigger */}
+        {/* Google Workspace DWD Trigger (Desktop Only, Available in Mobile Drawer) */}
         <button
           onClick={onOpenDwdModal}
-          className="flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-medium"
+          className="hidden md:flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-medium"
           title="Google Workspace Domain-Wide Delegation (.json)"
         >
           <span

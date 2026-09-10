@@ -1,21 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles,
   ArrowUp,
   Brain,
-  Layers,
   Compass,
   Zap,
   CheckCircle2,
   RefreshCw,
   Copy,
-  ExternalLink,
-  Cpu,
+  BookOpen,
+  Send,
+  Trash2,
+  FolderGit2,
+  Globe2,
+  X,
+  Plus,
   Mic,
   MicOff,
 } from 'lucide-react';
 import { Workspace, UserProfile, SteerableConceptWord, PlanCanvasDoc } from '../../types';
 import { agentCognitionService } from '../../services/agentCognitionService';
+import { zenNotesService, ZenNote } from '../../services/zenNotesService';
+import { triggerLightHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 
 interface CentricFocusChatViewProps {
   activeWorkspace?: Workspace;
@@ -25,7 +31,7 @@ interface CentricFocusChatViewProps {
   onNavigateToView?: (view: 'plan' | 'node' | 'board') => void;
 }
 
-// Conceptual domain knowledge matrix with steerable children
+// Conceptual domain knowledge dictionary for steerable thought direction
 const DOMAIN_CONCEPT_DICTIONARY: Record<string, { category: SteerableConceptWord['category']; children: string[] }> = {
   'fail-closed-boundary': {
     category: 'security',
@@ -33,23 +39,23 @@ const DOMAIN_CONCEPT_DICTIONARY: Record<string, { category: SteerableConceptWord
   },
   'tailscale-mesh-vpn': {
     category: 'networking',
-    children: ['magic-dns-routing', 'wireguard-peer-tunnel', 'private-100-ip'],
+    children: ['magic-dns-routing', 'wireguard-peer-tunnel', 'exit-node-routing'],
   },
-  'docker-socket-ipc': {
+  'touch-ergonomics': {
     category: 'runtime',
-    children: ['non-interactive-exec', 'volume-bind-mount', 'container-log-tail'],
+    children: ['haptic-feedback', 'safe-area-insets', 'single-pane-navigation'],
   },
   'bounded-queue-backpressure': {
     category: 'architecture',
     children: ['tokio-async-channel', '64-mib-guard', 'cas-compare-swap'],
   },
+  'gemini-thought-stream': {
+    category: 'architecture',
+    children: ['conversational-notes', 'auto-categorization', 'pattern-matching'],
+  },
   'rubric-assertion-grader': {
     category: 'eval',
     children: ['pass-at-k-metric', 'isolated-test-reproduction', 'latency-budget'],
-  },
-  'ast-code-rewrite': {
-    category: 'architecture',
-    children: ['in-memory-ast', 'deterministic-patch', 'zero-regression-test'],
   },
   'smartshield-anti-bot': {
     category: 'security',
@@ -59,27 +65,30 @@ const DOMAIN_CONCEPT_DICTIONARY: Record<string, { category: SteerableConceptWord
     category: 'architecture',
     children: ['parallel-agent-pool', 'bounded-concurrency', 'safe-epoch-timestamp'],
   },
-  'ollama-local-llm': {
-    category: 'runtime',
-    children: ['zero-data-egress', 'gguf-quantization', 'gpu-vram-allocation'],
-  },
 };
 
 export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
   activeWorkspace,
   activeUser: _activeUser,
-  onHandoffPlan,
+  onHandoffPlan: _onHandoffPlan,
   onLogGoal,
-  onNavigateToView,
+  onNavigateToView: _onNavigateToView,
 }) => {
   const [prompt, setPrompt] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [words, setWords] = useState<SteerableConceptWord[]>([]);
   const [steeredHistory, setSteeredHistory] = useState<string[]>([]);
-  const [synthesizedAnswer, setSynthesizedAnswer] = useState<string | null>(null);
+  const [conversationalResponse, setConversationalResponse] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+
+  // Zen Notes Scope and State
+  const [noteScope, setNoteScope] = useState<'workspace' | 'global'>('workspace');
+  const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
+  const [notesList, setNotesList] = useState<ZenNote[]>(() => zenNotesService.getAllNotes());
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
+  const [matchedPatterns, setMatchedPatterns] = useState<{ note: ZenNote; matchedTags: string[]; score: number }[]>([]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -87,6 +96,10 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const refreshNotes = () => {
+    setNotesList(zenNotesService.getAllNotes());
   };
 
   // Subtle Interactive WebGL Fluid Shader Background
@@ -99,6 +112,7 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
       antialias: true,
       powerPreference: 'high-performance',
     });
+
     if (!gl) return;
 
     let animationFrameId: number;
@@ -114,85 +128,50 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    const vsSource = `
+    const vertexShaderSource = `
       attribute vec2 a_position;
-      varying vec2 v_uv;
       void main() {
-        v_uv = (a_position + 1.0) * 0.5;
         gl_Position = vec4(a_position, 0.0, 1.0);
       }
     `;
 
-    const fsSource = `
+    const fragmentShaderSource = `
       precision highp float;
-      varying vec2 v_uv;
       uniform float u_time;
       uniform vec2 u_resolution;
 
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-      }
-
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
-                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-      }
-
-      float fbm(vec2 p) {
-        float v = 0.0;
-        float a = 0.5;
-        mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-        for (int i = 0; i < 4; ++i) {
-          v += a * noise(p);
-          p = rot * p * 2.0 + vec2(10.0);
-          a *= 0.5;
-        }
-        return v;
-      }
-
       void main() {
-        vec2 st = (gl_FragCoord.xy - u_resolution * 0.5) / min(u_resolution.x, u_resolution.y);
-        float t = u_time * 0.12;
+        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+        vec2 p = uv * 2.0 - 1.0;
+        p.x *= u_resolution.x / u_resolution.y;
 
-        vec2 q = vec2(fbm(st + vec2(0.0, t * 0.2)), fbm(st + vec2(5.2, 1.3)));
-        vec2 r = vec2(fbm(st + 4.0 * q + vec2(1.7, 9.2) + t * 0.15),
-                      fbm(st + 4.0 * q + vec2(8.3, 2.8) + t * 0.1));
+        float t = u_time * 0.18;
+        float wave1 = sin(p.x * 1.8 + t + cos(p.y * 1.4 + t)) * 0.5 + 0.5;
+        float wave2 = cos(p.y * 2.2 - t + sin(p.x * 1.6 - t)) * 0.5 + 0.5;
+        float blend = mix(wave1, wave2, 0.5);
 
-        float f = fbm(st + 4.0 * r);
+        // Tiffany / Lavender soft tones
+        vec3 colBg = vec3(0.985, 0.988, 0.992);
+        vec3 colCyan = vec3(0.88, 0.96, 0.95);
+        vec3 colIndigo = vec3(0.92, 0.91, 0.98);
 
-        // Soft Tiffany pastel palette
-        vec3 colorBg = vec3(0.98, 0.985, 0.99); // Crisp porcelain
-        vec3 colorMint = vec3(0.88, 0.96, 0.95); // Subtle Tiffany mint
-        vec3 colorLavender = vec3(0.94, 0.92, 0.98); // Soft lilac
-        vec3 colorCyan = vec3(0.85, 0.94, 0.98); // Sky mist
+        vec3 col = mix(colBg, colCyan, blend * 0.45);
+        col = mix(col, colIndigo, (1.0 - blend) * 0.35);
 
-        vec3 color = mix(colorBg, colorMint, clamp(f * f * 2.0, 0.0, 1.0));
-        color = mix(color, colorLavender, clamp(length(q) * 0.6, 0.0, 1.0));
-        color = mix(color, colorCyan, clamp(length(r.x) * 0.5, 0.0, 1.0));
-
-        gl_FragColor = vec4(color, 0.94);
+        gl_FragColor = vec4(col, 0.92);
       }
     `;
 
-    const createShader = (type: number, source: string) => {
-      const s = gl.createShader(type);
-      if (!s) return null;
-      gl.shaderSource(s, source);
+    const compileShader = (type: number, src: string) => {
+      const s = gl.createShader(type)!;
+      gl.shaderSource(s, src);
       gl.compileShader(s);
       return s;
     };
 
-    const vs = createShader(gl.VERTEX_SHADER, vsSource);
-    const fs = createShader(gl.FRAGMENT_SHADER, fsSource);
-    if (!vs || !fs) return;
-
-    const program = gl.createProgram();
-    if (!program) return;
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
+    const program = gl.createProgram()!;
+    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderSource));
+    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource));
     gl.linkProgram(program);
     gl.useProgram(program);
 
@@ -234,48 +213,48 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
     textareaRef.current?.focus();
   }, []);
 
-  // Handle User Prompt Submission
+  // Handle User Prompt Submission (Gemini-Style Conversational Note Taking)
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanPrompt = prompt.trim();
     if (!cleanPrompt || isThinking) return;
 
+    triggerLightHaptic();
     setHasStarted(true);
     setIsThinking(true);
-    setSynthesizedAnswer(null);
+    setConversationalResponse(null);
     setSteeredHistory([]);
 
-    // Trigger agent deliberation
+    // Check pattern matches against existing notes
+    const matches = zenNotesService.findMatchingPatterns(cleanPrompt);
+    setMatchedPatterns(matches);
+
+    // Trigger agent cognition simulation
     agentCognitionService.simulateDeliberation(cleanPrompt);
 
-    // Generate contextually relevant seed words
+    // Generate contextually relevant steerable words
     const allDictKeys = Object.keys(DOMAIN_CONCEPT_DICTIONARY);
     const selectedKeys: string[] = [];
 
-    // Keyword heuristics based on prompt
     const lower = cleanPrompt.toLowerCase();
-    if (lower.includes('docker') || lower.includes('container') || lower.includes('runner')) {
-      selectedKeys.push('docker-socket-ipc', 'ollama-local-llm');
+    if (lower.includes('network') || lower.includes('mesh') || lower.includes('tailscale')) {
+      selectedKeys.push('tailscale-mesh-vpn', 'fail-closed-boundary');
     }
-    if (lower.includes('network') || lower.includes('mesh') || lower.includes('tailscale') || lower.includes('proxy')) {
-      selectedKeys.push('tailscale-mesh-vpn', 'smartshield-anti-bot');
+    if (lower.includes('mobile') || lower.includes('touch') || lower.includes('haptic')) {
+      selectedKeys.push('touch-ergonomics');
     }
-    if (lower.includes('test') || lower.includes('grade') || lower.includes('eval') || lower.includes('benchmark')) {
-      selectedKeys.push('rubric-assertion-grader');
+    if (lower.includes('note') || lower.includes('memory') || lower.includes('gemini')) {
+      selectedKeys.push('gemini-thought-stream');
     }
-    if (lower.includes('security') || lower.includes('shield') || lower.includes('gate') || lower.includes('safe')) {
-      selectedKeys.push('fail-closed-boundary');
+    if (lower.includes('security') || lower.includes('shield') || lower.includes('safe')) {
+      selectedKeys.push('fail-closed-boundary', 'smartshield-anti-bot');
     }
 
-    // Fill remaining up to 6 seed concepts
     for (const k of allDictKeys) {
-      if (selectedKeys.length >= 6) break;
-      if (!selectedKeys.includes(k)) {
-        selectedKeys.push(k);
-      }
+      if (selectedKeys.length >= 5) break;
+      if (!selectedKeys.includes(k)) selectedKeys.push(k);
     }
 
-    // Initialize words with fadedIn: false
     const initialWords: SteerableConceptWord[] = selectedKeys.map((k, idx) => ({
       id: `w-${Date.now()}-${idx}`,
       word: k,
@@ -288,7 +267,7 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
 
     setWords(initialWords);
 
-    // Staggered fade-in of words
+    // Staggered fade-in
     initialWords.forEach((_, idx) => {
       setTimeout(() => {
         setWords((prev) =>
@@ -297,20 +276,20 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
       }, 250 + idx * 280);
     });
 
-    // Synthesize final response after thinking duration
+    // Synthesize Gemini-style conversational note reflection
     setTimeout(() => {
       setIsThinking(false);
-      synthesizeResponse(cleanPrompt, []);
-    }, 2800);
+      synthesizeConversationalResponse(cleanPrompt, []);
+    }, 2200);
   };
 
-  // User Clicks a Concept Word to Drive Direction
+  // User Clicks a Concept Word to Steer Conversational Direction
   const handleSelectWord = (wordId: string) => {
+    triggerLightHaptic();
     const target = words.find((w) => w.id === wordId);
     if (!target) return;
 
     const willBeSelected = !target.selected;
-
     setWords((prev) =>
       prev.map((w) => (w.id === wordId ? { ...w, selected: willBeSelected } : w))
     );
@@ -319,13 +298,6 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
       const newHistory = [...steeredHistory, target.word];
       setSteeredHistory(newHistory);
       showToast(`🎯 Steered Direction: Anchoring "${target.word}"`);
-
-      // Steer Agent Cognition hypothesis
-      agentCognitionService.steerConcept({
-        title: `Steered Intent: ${target.word}`,
-        summary: `Actively orienting synthesis around ${target.word} invariants.`,
-        workingHypothesis: `Prioritizing ${target.word} as the dominant architectural anchor for "${prompt}".`,
-      });
 
       // Spawn child derivative words if available
       if (target.children && target.children.length > 0) {
@@ -339,8 +311,6 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
         }));
 
         setWords((prev) => [...prev, ...newChildWords]);
-
-        // Stagger fade-in of child words
         newChildWords.forEach((_, idx) => {
           setTimeout(() => {
             setWords((prev) =>
@@ -350,109 +320,84 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
         });
       }
 
-      // Re-synthesize answer to reflect user's steering
-      synthesizeResponse(prompt, newHistory);
+      synthesizeConversationalResponse(prompt, newHistory);
     } else {
       const newHistory = steeredHistory.filter((w) => w !== target.word);
       setSteeredHistory(newHistory);
-      synthesizeResponse(prompt, newHistory);
+      synthesizeConversationalResponse(prompt, newHistory);
     }
   };
 
-  // Synthesize answer integrating user's steered trajectory
-  const synthesizeResponse = (userPrompt: string, steeredConcepts: string[]) => {
-    const conceptsMentioned =
-      steeredConcepts.length > 0
-        ? steeredConcepts.join(', ')
-        : 'fail-closed-boundary, deterministic execution';
+  // Synthesize regular conversational response (No code execution/builds)
+  const synthesizeConversationalResponse = (userPrompt: string, steered: string[]) => {
+    const anchors = steered.length > 0 ? steered.join(', ') : 'core domain invariants';
+    const workspaceName = activeWorkspace?.name || 'zero-petri';
 
-    const solution = `### Proposed Architecture: ${userPrompt}
+    const response = `I've analyzed and reflected on your note: **"${userPrompt}"**
 
-**Steered Directive**: Focused on **${conceptsMentioned}**
+**Conceptual Anchors**: ${anchors}
 
-1. **System Invariant & Guardrail**:
-   - Execution is bounded by fail-closed invariants and positive Unix epoch timestamps.
-   - Dedicated Docker socket IPC isolation mounted at \`/var/run/docker.sock\`.
+### Thought Synthesis & Takeaways
+- **Context**: Captured within **${noteScope === 'global' ? 'Global Notes (Cross-Project)' : `Workspace Notes (${workspaceName})`}**.
+- **Key Insight**: Breaking down this concept into high-fidelity notes gives the autonomous agents clear boundaries when ready to dispatch.
+- **Pattern Match**: Automatically mapped against related invariants in your memory ledger.
 
-2. **Network & Cluster Routing**:
-   - Zero-trust ingress routed across private Tailscale WireGuard mesh (\`100.81.151.110\`).
-   - Automated rate-limiting and anti-bot mitigation governed by Petri SmartShield.
+*You can save this reflection directly as a categorized note, or push it to your engineering agent workforce when ready to build.*`;
 
-3. **Execution Plan**:
-   - Isolated reproduction test in \`.devcontainer\` sandbox before applying changes.
-   - Automated verification using rubric assertion grader.
-`;
-
-    setSynthesizedAnswer(solution);
+    setConversationalResponse(response);
   };
 
-  const handleSendToPlan = () => {
-    if (!synthesizedAnswer) return;
-    const plan: PlanCanvasDoc = {
-      id: `plan-focus-${Date.now().toString().slice(-4)}`,
-      title: prompt.trim() || 'Focus Steered Plan',
-      goalPrompt: prompt.trim() || 'Autonomous Objective',
-      status: 'drafting',
-      version: 1,
-      summary: `Implementing steered focus components: ${steeredHistory.join(', ') || 'Invariants'}`,
-      objectives: [
-        'Establish isolated reproduction test in DevContainer sandbox',
-        'Enforce fail-closed boundaries and zero regression',
-        ...steeredHistory.map((w) => `Anchor: ${w}`),
-      ],
-      invariants: [
-        'Ceiling: 64 MiB buffer guard',
-        'Assert: deterministic exit code 0',
-        'Fail-closed boundary on untrusted input',
-      ],
-      phases: [
-        {
-          id: 'phase-1',
-          name: 'Core System Engine',
-          description: `Implementing steered focus components: ${steeredHistory.join(', ') || 'Invariants'}`,
-          tasks: [
-            {
-              id: 'th-1',
-              text: 'Create repeatable failing test in DevContainer sandbox',
-              completed: false,
-              role: '@architect',
-            },
-            {
-              id: 'th-2',
-              text: 'Assert fail-closed boundary and zero memory leak',
-              completed: false,
-              role: '@security-auditor',
-            },
-          ],
-        },
-      ],
-      testMatrix: ['Isolated DevContainer pass-at-1 reproduction', 'Invariant rubric verification'],
-      annotations: [],
-      rawMarkdown: synthesizedAnswer,
-      updatedAt: Date.now(),
-    };
-
-    onHandoffPlan?.(plan);
-    showToast('🚀 Plan created! Opening Plan Canvas...');
-    onNavigateToView?.('plan');
-  };
-
-  const handleSendToBoard = () => {
+  // Save conversation / prompt as Zen Note
+  const handleSaveCurrentAsNote = () => {
     if (!prompt.trim()) return;
-    onLogGoal?.(`[Focus] ${prompt.trim()}`);
-    showToast('📋 Logged goal to Petri Kanban Board!');
-    onNavigateToView?.('board');
+    triggerSuccessHaptic();
+
+    zenNotesService.saveNote({
+      title: prompt.trim().slice(0, 48),
+      content: prompt.trim(),
+      scope: noteScope,
+      workspaceId: noteScope === 'global' ? 'global' : activeWorkspace?.id || 'ws-petri',
+    });
+
+    refreshNotes();
+    showToast(`📝 Note saved to ${noteScope === 'global' ? 'Global Notes' : 'Workspace Notes'}!`);
+  };
+
+  // Push Note to Agents to Build
+  const handlePushNoteToBuild = (note: ZenNote) => {
+    triggerSuccessHaptic();
+
+    // Mark as pushed
+    zenNotesService.markPushedToAgent(note.id);
+    refreshNotes();
+
+    // Log goal to Kanban board
+    onLogGoal?.(`[Zen Note: ${note.category.toUpperCase()}] ${note.title}: ${note.content}`);
+
+    showToast(`🚀 Pushed "${note.title}" to Agent Backlog!`);
   };
 
   const handleReset = () => {
+    triggerLightHaptic();
     setPrompt('');
     setHasStarted(false);
     setIsThinking(false);
     setWords([]);
     setSteeredHistory([]);
-    setSynthesizedAnswer(null);
+    setConversationalResponse(null);
+    setMatchedPatterns([]);
     textareaRef.current?.focus();
   };
+
+  // Filtered Notes
+  const filteredNotes = useMemo(() => {
+    return notesList.filter((note) => {
+      if (noteScope === 'workspace' && note.scope !== 'workspace') return false;
+      if (noteScope === 'global' && note.scope !== 'global') return false;
+      if (activeCategoryFilter !== 'all' && note.category !== activeCategoryFilter) return false;
+      return true;
+    });
+  }, [notesList, noteScope, activeCategoryFilter]);
 
   return (
     <div className="relative flex-1 flex flex-col h-full w-full overflow-hidden font-sans select-none">
@@ -470,20 +415,90 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
         </div>
       )}
 
+      {/* Top Header Bar with Scope Toggle and Notes Ledger Trigger */}
+      <div className="relative z-20 px-4 sm:px-8 py-3 flex items-center justify-between border-b border-stone-200/60 bg-white/40 backdrop-blur-md">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-stone-900 flex items-center space-x-1.5">
+              <span>Petri Zen Chat</span>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.2 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Notes & Synthesis
+              </span>
+            </div>
+            <div className="text-[10px] text-stone-500 font-mono">
+              Captures, categorizes, and pattern-matches thoughts before agent build
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {/* Notes Scope Selector */}
+          <div className="flex items-center bg-white/80 p-0.5 rounded-xl border border-stone-200 text-xs font-medium shadow-2xs">
+            <button
+              type="button"
+              onClick={() => {
+                triggerLightHaptic();
+                setNoteScope('workspace');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs transition-colors flex items-center space-x-1 cursor-pointer ${
+                noteScope === 'workspace'
+                  ? 'bg-stone-900 text-white font-semibold'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <FolderGit2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Workspace ({activeWorkspace?.name || 'zero-petri'})</span>
+              <span className="sm:hidden">Repo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerLightHaptic();
+                setNoteScope('global');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs transition-colors flex items-center space-x-1 cursor-pointer ${
+                noteScope === 'global'
+                  ? 'bg-stone-900 text-white font-semibold'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Globe2 className="w-3.5 h-3.5" />
+              <span>Global</span>
+            </button>
+          </div>
+
+          {/* Open Notes Drawer Button */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerLightHaptic();
+              setIsNotesDrawerOpen(true);
+            }}
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-medium flex items-center space-x-1.5 shadow-2xs cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Zen Notes ({notesList.length})</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Interactive Stage */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 sm:p-10 overflow-y-auto">
-        <div className="w-full max-w-2xl flex flex-col items-center space-y-6 transition-all duration-300">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-10 pt-4 sm:pt-6 pb-28 sm:pb-10 overflow-y-auto">
+        <div className="w-full max-w-2xl flex flex-col items-center space-y-5 transition-all duration-300">
           {/* Header Title (Centered, Fades subtly when prompt submitted) */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-1.5">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-stone-200/80 shadow-2xs text-[11px] font-mono text-stone-700">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Petri Zero Focus</span>
+              <span>Gemini Thought Companion</span>
               <span className="text-stone-300">·</span>
-              <span className="text-emerald-700 font-semibold">Gemini 3.8 Flash High</span>
+              <span className="text-emerald-700 font-semibold">Conversational Ideas & Notes</span>
             </div>
             {!hasStarted && (
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
-                What should we orchestrate today?
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+                What concept or note would you like to capture?
               </h1>
             )}
           </div>
@@ -505,30 +520,35 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                   }
                 }}
                 rows={hasStarted ? 2 : 3}
-                placeholder="Ask Petri Zero anything, or describe an autonomous software intent..."
+                placeholder="Brainstorm an architectural pattern, write a note, or explore an idea with Gemini..."
                 className="w-full bg-transparent text-sm sm:text-base text-stone-900 placeholder:text-stone-400 focus:outline-none resize-none pr-10 font-sans leading-relaxed"
               />
             </div>
 
-            {/* Input Footer: Model, Voice, Token, Submit */}
+            {/* Input Footer */}
             <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
               <div className="flex items-center space-x-2 text-stone-500 font-mono text-[11px]">
-                <span className="hidden sm:inline">Workspace:</span>
-                <span className="font-semibold text-stone-800 font-sans">{activeWorkspace?.name || 'zero-petri'}</span>
+                <span>Saving to:</span>
+                <span className="font-semibold text-stone-800 font-sans">
+                  {noteScope === 'global' ? 'Global' : activeWorkspace?.name || 'zero-petri'}
+                </span>
                 <span className="text-stone-300">·</span>
-                <span>Enter ↵ to send</span>
+                <span>Enter ↵</span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
-                  onClick={() => setIsListening(!isListening)}
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setIsListening(!isListening);
+                  }}
                   className={`p-2 rounded-xl transition-colors ${
                     isListening
                       ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse'
                       : 'bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800'
                   }`}
-                  title="Voice dictation (Mock / Status)"
+                  title="Voice dictation"
                 >
                   {isListening ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
                 </button>
@@ -552,42 +572,41 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
             </div>
           </form>
 
-          {/* Prompt Inspiration Chips (When Idle) */}
-          {!hasStarted && (
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs">
-              {[
-                'Synthesize DevContainer for Rust engine & Tailscale mesh',
-                'Audit SmartShield zero-trust edge policies and rate limits',
-                'Design high-assurance DAG pipeline with rubric grading',
-                'Benchmark Pass@k metrics on in-memory AST patches',
-              ].map((suggestion, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    setPrompt(suggestion);
-                    textareaRef.current?.focus();
-                  }}
-                  className="px-3.5 py-1.5 rounded-full bg-white/70 hover:bg-white border border-stone-200/80 text-stone-700 hover:text-stone-950 transition-all text-xs font-sans shadow-2xs hover:shadow-xs cursor-pointer"
-                >
-                  {suggestion}
-                </button>
-              ))}
+          {/* Pattern Matching Preview Badge */}
+          {matchedPatterns.length > 0 && (
+            <div className="w-full p-3 rounded-2xl bg-indigo-50/80 border border-indigo-200/70 text-xs text-indigo-900 space-y-1.5 animate-in fade-in duration-150">
+              <div className="font-semibold flex items-center space-x-1.5 text-indigo-800">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Pattern Matcher: {matchedPatterns.length} related notes found in memory</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {matchedPatterns.map((m) => (
+                  <span
+                    key={m.note.id}
+                    onClick={() => {
+                      triggerLightHaptic();
+                      setIsNotesDrawerOpen(true);
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-white/90 border border-indigo-200 text-[11px] font-sans font-medium hover:bg-indigo-100/60 cursor-pointer"
+                  >
+                    🔗 {m.note.title}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Steerable Concept Cloud (Fade-in words as AI thinks) */}
+          {/* Steerable Concept Cloud */}
           {hasStarted && (
-            <div className="w-full space-y-4 pt-2 animate-in fade-in duration-200">
-              {/* Deliberation Status Indicator */}
+            <div className="w-full space-y-4 pt-1 animate-in fade-in duration-200">
               <div className="flex items-center justify-between text-xs text-stone-600 px-2">
                 <div className="flex items-center space-x-2">
                   <Brain className={`w-4 h-4 ${isThinking ? 'text-indigo-600 animate-pulse' : 'text-emerald-600'}`} />
                   <span className="font-semibold text-stone-800">
-                    {isThinking ? 'AI Deliberating...' : 'Cognitive Synthesis Complete'}
+                    {isThinking ? 'Gemini Reflecting...' : 'Thought Stream Synced'}
                   </span>
-                  <span className="text-stone-400 font-normal">
-                    · Click fading concept pills to steer direction
+                  <span className="text-stone-400 font-normal hidden sm:inline">
+                    · Tap fading concept chips to steer reflection
                   </span>
                 </div>
                 {steeredHistory.length > 0 && (
@@ -598,7 +617,7 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
               </div>
 
               {/* Dynamic Concept Words Container */}
-              <div className="p-4 rounded-3xl bg-white/60 backdrop-blur-md border border-stone-200/80 shadow-2xs flex flex-wrap gap-2.5 items-center justify-center min-h-[90px]">
+              <div className="p-4 rounded-3xl bg-white/60 backdrop-blur-md border border-stone-200/80 shadow-2xs flex flex-wrap gap-2.5 items-center justify-center min-h-[70px]">
                 {words.map((w) => {
                   const isFaded = w.fadedIn;
                   return (
@@ -627,19 +646,19 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                 })}
               </div>
 
-              {/* Synthesized Response Card */}
-              {synthesizedAnswer && (
+              {/* Conversational Response Card (No Code/Build Actions) */}
+              {conversationalResponse && (
                 <div className="w-full rounded-3xl bg-white/90 backdrop-blur-xl border border-stone-200/90 shadow-lg p-5 sm:p-6 space-y-4 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                     <div className="flex items-center space-x-2 text-xs font-semibold text-stone-900">
-                      <Cpu className="w-4 h-4 text-indigo-600" />
-                      <span>Synthesized Architectural Plan</span>
+                      <Brain className="w-4 h-4 text-indigo-600" />
+                      <span>Gemini Thought Reflection</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText(synthesizedAnswer);
+                          navigator.clipboard.writeText(conversationalResponse);
                           showToast('📋 Copied to clipboard!');
                         }}
                         className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500 hover:text-stone-900 transition-colors"
@@ -652,47 +671,28 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                         onClick={handleReset}
                         className="px-2.5 py-1 rounded-lg hover:bg-stone-100 text-stone-600 text-xs font-medium transition-colors"
                       >
-                        New Session
+                        New Note
                       </button>
                     </div>
                   </div>
 
-                  {/* Formatted Markdown Content */}
                   <div className="text-xs sm:text-sm text-stone-800 leading-relaxed font-sans space-y-2 whitespace-pre-wrap">
-                    {synthesizedAnswer}
+                    {conversationalResponse}
                   </div>
 
-                  {/* Action Hand-offs */}
+                  {/* Note Action Toolbar */}
                   <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs text-stone-500 font-sans">
-                      Next Actions:
+                      Categorization: <span className="font-mono text-indigo-700">#{noteScope}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
-                        onClick={handleSendToBoard}
-                        className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium transition-colors flex items-center space-x-1.5"
+                        onClick={handleSaveCurrentAsNote}
+                        className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer"
                       >
-                        <Layers className="w-3.5 h-3.5 text-stone-500" />
-                        <span>Log to Board</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => onNavigateToView?.('node')}
-                        className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium transition-colors flex items-center space-x-1.5"
-                      >
-                        <Compass className="w-3.5 h-3.5 text-stone-500" />
-                        <span>Open in Node Studio</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleSendToPlan}
-                        className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-medium transition-colors flex items-center space-x-1.5 shadow-xs"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-stone-300" />
-                        <span>Send to Plan Canvas</span>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Save to Zen Notes</span>
                       </button>
                     </div>
                   </div>
@@ -702,6 +702,152 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Zen Notes Drawer & Pattern Viewer */}
+      {isNotesDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="flex-1" onClick={() => setIsNotesDrawerOpen(false)} />
+          <div className="w-full max-w-md bg-white h-full shadow-2xl border-l border-stone-200 flex flex-col animate-in slide-in-from-right duration-200">
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-stone-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BookOpen className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-sm text-stone-900">Zen Notes Ledger</h3>
+                <span className="text-xs font-mono text-stone-400">({filteredNotes.length})</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNotesDrawerOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scope Switcher */}
+            <div className="px-4 pt-3 flex items-center justify-between gap-2">
+              <div className="flex items-center bg-stone-100 p-0.5 rounded-xl text-xs font-medium w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setNoteScope('workspace');
+                  }}
+                  className={`flex-1 py-1 rounded-lg text-center transition-colors cursor-pointer ${
+                    noteScope === 'workspace' ? 'bg-white text-stone-900 shadow-2xs font-bold' : 'text-stone-500'
+                  }`}
+                >
+                  Workspace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setNoteScope('global');
+                  }}
+                  className={`flex-1 py-1 rounded-lg text-center transition-colors cursor-pointer ${
+                    noteScope === 'global' ? 'bg-white text-stone-900 shadow-2xs font-bold' : 'text-stone-500'
+                  }`}
+                >
+                  Global
+                </button>
+              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="px-4 py-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-xs">
+              {['all', 'architecture', 'security', 'ux', 'todo', 'idea'].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setActiveCategoryFilter(cat);
+                  }}
+                  className={`px-2.5 py-0.5 rounded-full capitalize text-[11px] font-mono shrink-0 transition-colors cursor-pointer ${
+                    activeCategoryFilter === cat
+                      ? 'bg-stone-900 text-white font-bold'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
+                >
+                  #{cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Notes List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {filteredNotes.length === 0 ? (
+                <div className="text-center py-12 text-stone-400 text-xs space-y-2">
+                  <BookOpen className="w-8 h-8 mx-auto text-stone-300" />
+                  <p>No notes captured in this scope yet.</p>
+                  <p className="text-[11px]">Chat with Gemini to automatically capture and pattern match ideas.</p>
+                </div>
+              ) : (
+                filteredNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/90 shadow-2xs space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-xs text-stone-900">{note.title}</div>
+                        <div className="flex items-center space-x-1.5 mt-0.5">
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase font-bold bg-indigo-100 text-indigo-800">
+                            {note.category}
+                          </span>
+                          <span className="text-[10px] text-stone-400 font-mono">
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {note.status === 'pushed_to_agent' ? (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Pushed 🚀
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handlePushNoteToBuild(note)}
+                          className="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold flex items-center space-x-1 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>Push to Build</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-stone-700 leading-relaxed font-sans">
+                      {note.content}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between pt-1 border-t border-stone-200/60 gap-1 text-[10px] font-mono text-stone-400">
+                      <div className="flex flex-wrap gap-1">
+                        {note.tags.map((t) => (
+                          <span key={t} className="text-stone-500">#{t}</span>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          zenNotesService.deleteNote(note.id);
+                          refreshNotes();
+                        }}
+                        className="text-stone-400 hover:text-rose-600 transition-colors p-1"
+                        title="Delete note"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -21,6 +21,7 @@ import {
   Cpu,
   RotateCcw,
   Trash2,
+  Repeat,
 } from 'lucide-react';
 import {
   PySpurWorkflow,
@@ -44,8 +45,10 @@ import {
   createPetriOrchestrationWorkflow,
   createDevContainerCoderWorkflow,
   createEvaluatorSuiteWorkflow,
+  createMultiAgentDebateWorkflow,
   executePySpurNode,
   getTopologicalNodeOrder,
+  detectTemplateVariables,
 } from './pyspurExecutionEngine';
 import { PetriStageTimeline } from './PetriStageTimeline';
 import {
@@ -173,6 +176,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
       | 'human_approval'
       | 'devcontainer_coder'
       | 'evaluator_suite'
+      | 'multi_agent_debate'
   ) => {
     setIsTemplateMenuOpen(false);
     let newWf: PySpurWorkflow;
@@ -186,6 +190,12 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
       setActiveStage('input');
       setActiveGraph(buildGoalGraph(goalPrompt, false));
       showToast('Loaded Canonical Petri Orchestration Pipeline');
+    } else if (key === 'multi_agent_debate') {
+      newWf = createMultiAgentDebateWorkflow();
+      defaultSelectedId = 'node-debate-consensus';
+      defaultPrompt = 'Bounded SQLite retry queue vs In-memory channel buffer for high concurrency';
+      setSynthesizedPlan(null);
+      showToast('Loaded Multi-Agent Consensus Debate & Synthesis Pipeline');
     } else if (key === 'moe_planner') {
       newWf = createDefaultMoeWorkflow(goalPrompt);
       defaultSelectedId = 'node-moe-router';
@@ -236,6 +246,33 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
     setSelectedNodeId(defaultSelectedId);
     setGoalPrompt(defaultPrompt);
     setIsRunning(false);
+  };
+
+  // Add interactive connection edge between ports
+  const handleAddEdge = (sourceNodeId: string, sourceHandle: string, targetNodeId: string, targetHandle: string) => {
+    const exists = workflow.edges.some(
+      (e) => e.sourceNodeId === sourceNodeId && e.targetNodeId === targetNodeId && e.sourceHandle === sourceHandle
+    );
+    if (exists) {
+      showToast('Connection already exists');
+      return;
+    }
+
+    const newEdge = {
+      id: `edge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      sourceNodeId,
+      sourceHandle,
+      targetNodeId,
+      targetHandle,
+      isActive: false,
+    };
+
+    setWorkflow((prev) => ({
+      ...prev,
+      edges: [...prev.edges, newEdge],
+      updatedAt: Date.now(),
+    }));
+    showToast(`Connected ${sourceNodeId} (${sourceHandle}) → ${targetNodeId}`);
   };
 
   // Delete node and cascade all connected edges
@@ -688,6 +725,24 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
 
                 <button
                   type="button"
+                  onClick={() => handleSelectTemplate('multi_agent_debate')}
+                  className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                    workflow.templateKey === 'multi_agent_debate'
+                      ? 'bg-indigo-50 text-indigo-900 font-semibold'
+                      : 'text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                  <div>
+                    <div className="text-xs font-semibold">Multi-Agent Debate & Consensus</div>
+                    <div className="text-[10px] text-stone-500 font-normal">
+                      Architect vs Coder vs Security with Consensus Synthesizer
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleSelectTemplate('moe_planner')}
                   className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                     workflow.templateKey === 'moe_planner'
@@ -1046,6 +1101,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
                 onResetWorkflow={handleResetWorkflow}
                 onDeleteNode={handleDeleteNode}
                 onEditNode={(nodeId) => setSelectedNodeId(nodeId)}
+                onAddEdge={handleAddEdge}
               />
             </div>
 
@@ -1176,6 +1232,53 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
                         placeholder="Enter prompt directive with {{variable}} interpolation..."
                         className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 font-mono text-[11px] leading-relaxed border border-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                       />
+
+                      {/* Detected {{variable}} tags */}
+                      {(() => {
+                        const template = selectedNode.config.promptTemplate || selectedNode.config.systemPrompt || '';
+                        const vars = detectTemplateVariables(template);
+                        if (!vars.length) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1 pt-1">
+                            <span className="text-[9px] font-mono text-stone-400">Detected tags:</span>
+                            {vars.map((v) => (
+                              <span key={v} className="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-mono text-[9px] font-semibold border border-indigo-200">
+                                {`{{${v}}}`}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Sampling Temperature & Structured JSON Schema */}
+                      <div className="space-y-2 pt-2 border-t border-stone-200">
+                        <div className="flex items-center justify-between text-[10px] text-stone-500 font-medium">
+                          <span>Sampling Temperature:</span>
+                          <span className="font-mono font-bold text-stone-800">{selectedNode.config.temperature ?? 0.7}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={selectedNode.config.temperature ?? 0.7}
+                          onChange={(e) => handleUpdateNode(selectedNode.id, { config: { ...selectedNode.config, temperature: parseFloat(e.target.value) } })}
+                          className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                            Structured Output JSON Schema (Optional)
+                          </span>
+                          <textarea
+                            value={selectedNode.config.structuredOutputSchema || ''}
+                            onChange={(e) => handleUpdateNode(selectedNode.id, { config: { ...selectedNode.config, structuredOutputSchema: e.target.value } })}
+                            rows={2}
+                            placeholder='{"type": "object", "properties": {"status": {"type": "string"}}}'
+                            className="mt-1 w-full p-2 rounded-lg bg-stone-900 text-amber-300 font-mono text-[10px] border border-stone-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -1268,6 +1371,167 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
                         <Play className="w-3.5 h-3.5 fill-current" />
                         <span>Run Script in DevContainer</span>
                       </button>
+                    </div>
+                  )}
+
+                  {/* Tool Node Configuration (HTTP REST & Search) */}
+                  {selectedNode.type === 'tool' && (
+                    <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                        <span>Tool Configuration</span>
+                        <span className="text-[10px] font-mono text-amber-700">REST API / Search</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] text-stone-500 font-medium">Tool Action</div>
+                        <select
+                          value={selectedNode.config.toolName || 'web_search'}
+                          onChange={(e) => handleUpdateNode(selectedNode.id, { config: { ...selectedNode.config, toolName: e.target.value } })}
+                          className="w-full bg-white border border-stone-200 rounded-lg p-1 text-[11px] font-medium text-stone-800"
+                        >
+                          <option value="web_search">Web Search (Tavily / Google)</option>
+                          <option value="http_request">HTTP REST API Client</option>
+                          <option value="bash_command">DevContainer Bash Command</option>
+                          <option value="file_io">Workspace File I/O</option>
+                        </select>
+                      </div>
+
+                      {selectedNode.config.toolName === 'http_request' && (
+                        <div className="space-y-2 pt-1 border-t border-amber-200/60">
+                          <div className="grid grid-cols-4 gap-1.5">
+                            <select
+                              value={selectedNode.config.httpConfig?.method || 'GET'}
+                              onChange={(e) => handleUpdateNode(selectedNode.id, {
+                                config: {
+                                  ...selectedNode.config,
+                                  httpConfig: {
+                                    ...(selectedNode.config.httpConfig || { url: 'https://api.github.com' }),
+                                    method: e.target.value as any,
+                                  }
+                                }
+                              })}
+                              className="col-span-1 bg-white border border-stone-200 rounded-lg p-1 text-[11px] font-mono font-bold"
+                            >
+                              <option value="GET">GET</option>
+                              <option value="POST">POST</option>
+                              <option value="PUT">PUT</option>
+                              <option value="DELETE">DELETE</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={selectedNode.config.httpConfig?.url || ''}
+                              onChange={(e) => handleUpdateNode(selectedNode.id, {
+                                config: {
+                                  ...selectedNode.config,
+                                  httpConfig: {
+                                    method: selectedNode.config.httpConfig?.method || 'GET',
+                                    url: e.target.value,
+                                  }
+                                }
+                              })}
+                              placeholder="https://api.example.com/endpoint"
+                              className="col-span-3 px-2 py-1 bg-white border border-stone-200 rounded-lg text-[11px] font-mono"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Branch Node Configuration */}
+                  {selectedNode.type === 'branch' && (
+                    <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold text-purple-900">
+                        <span>Conditional Branching</span>
+                        <span className="text-[10px] font-mono text-purple-700">Boolean Gate</span>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-stone-500 font-medium">Condition Expression</div>
+                        <input
+                          type="text"
+                          value={selectedNode.config.conditionExpression || ''}
+                          onChange={(e) => handleUpdateNode(selectedNode.id, {
+                            config: { ...selectedNode.config, conditionExpression: e.target.value }
+                          })}
+                          placeholder="inputs.confidence >= 0.85"
+                          className="mt-1 w-full px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg font-mono text-[11px] text-stone-800"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-mono text-stone-500 pt-1">
+                        <span className="flex items-center space-x-1 text-emerald-700 font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span>True: Upper Port (T)</span>
+                        </span>
+                        <span className="flex items-center space-x-1 text-rose-700 font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-rose-500" />
+                          <span>False: Lower Port (F)</span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Loop Node Configuration */}
+                  {selectedNode.type === 'loop' && (
+                    <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold text-teal-900">
+                        <span>Loop / Batch Map</span>
+                        <span className="text-[10px] font-mono text-teal-700">Sub-batch Iteration</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-[10px] text-stone-500 font-medium">Batch Concurrency</div>
+                          <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={selectedNode.config.loopMaxIterations || selectedNode.config.loopConfig?.concurrency || 3}
+                            onChange={(e) => handleUpdateNode(selectedNode.id, {
+                              config: { ...selectedNode.config, loopMaxIterations: parseInt(e.target.value) || 1 }
+                            })}
+                            className="mt-1 w-full px-2 py-1 bg-white border border-stone-200 rounded-lg font-mono text-[11px]"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-stone-500 font-medium">Item Variable Alias</div>
+                          <input
+                            type="text"
+                            value={selectedNode.config.loopConfig?.itemAlias || 'item'}
+                            onChange={(e) => handleUpdateNode(selectedNode.id, {
+                              config: {
+                                ...selectedNode.config,
+                                loopConfig: {
+                                  inputKey: 'items',
+                                  concurrency: selectedNode.config.loopMaxIterations || 3,
+                                  itemAlias: e.target.value,
+                                }
+                              }
+                            })}
+                            className="mt-1 w-full px-2 py-1 bg-white border border-stone-200 rounded-lg font-mono text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subworkflow Node Configuration */}
+                  {selectedNode.type === 'subworkflow' && (
+                    <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold text-indigo-900">
+                        <span>Nested Subworkflow</span>
+                        <span className="text-[10px] font-mono text-indigo-700">Graph Call</span>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-stone-500 font-medium">Target Workflow ID</div>
+                        <input
+                          type="text"
+                          value={selectedNode.config.subworkflowId || 'wf-devcontainer-coder'}
+                          onChange={(e) => handleUpdateNode(selectedNode.id, {
+                            config: { ...selectedNode.config, subworkflowId: e.target.value }
+                          })}
+                          placeholder="wf-child-id"
+                          className="mt-1 w-full px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg font-mono text-[11px] text-stone-800"
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -1485,6 +1749,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
               onResetWorkflow={handleResetWorkflow}
               onDeleteNode={handleDeleteNode}
               onEditNode={(nodeId) => setSelectedNodeId(nodeId)}
+              onAddEdge={handleAddEdge}
             />
           </div>
           <div className="w-full xl:w-[480px] h-full overflow-hidden border-t xl:border-t-0 xl:border-l border-stone-200">
@@ -1513,55 +1778,156 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
         <DevContainerConsoleDrawer isOpen={true} />
       )}
 
-      {/* Add Custom Node Modal */}
+      {/* Add Custom Node Modal - All 12 PySpur Block Types */}
       {isAddNodeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-5 space-y-4 font-sans animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-xl p-5 space-y-4 font-sans animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between pb-2 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Plus className="w-4 h-4 text-indigo-600" />
-                <h3 className="font-bold text-sm text-stone-900">Add Pipeline Node</h3>
+                <h3 className="font-bold text-sm text-stone-900">Add PySpur Pipeline Block</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddNodeModalOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <p className="text-xs text-stone-500">
-              Select a node type to insert into the active development workflow pipeline:
+              Select any of the 12 canonical PySpur block types to insert into the active pipeline:
             </p>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              {[
-                { type: 'llm' as PySpurNodeType, label: 'LLM Model Node', icon: Sparkles, desc: 'Claude 3.7 / GPT-4o generator' },
-                { type: 'code' as PySpurNodeType, label: 'Python / AST Code', icon: Code2, desc: 'Inline code execution' },
-                { type: 'tool' as PySpurNodeType, label: 'Tool Invocation', icon: Cpu, desc: 'Filesystem / CLI actions' },
-                { type: 'evaluator' as PySpurNodeType, label: 'Evaluator Grader', icon: CheckCircle2, desc: 'Pass@k assertions' },
-                { type: 'router' as PySpurNodeType, label: 'Branch Router', icon: GitBranch, desc: 'Conditional routing' },
-                { type: 'human_approval' as PySpurNodeType, label: 'Approval Gate', icon: ShieldCheck, desc: 'Human-in-the-loop' },
-              ].map((item) => {
-                const IconComp = item.icon;
-                return (
-                  <button
-                    key={item.type}
-                    type="button"
-                    onClick={() => handleAddNode(item.type)}
-                    className="flex flex-col text-left p-3 rounded-xl border border-stone-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2 text-stone-800 font-semibold text-xs">
-                      <IconComp className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                      <span>{item.label}</span>
-                    </div>
-                    <span className="text-[10px] text-stone-400 mt-1 leading-tight">
-                      {item.desc}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {/* Category 1: Core & Models */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                  Core & Model Blocks
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { type: 'input' as PySpurNodeType, label: 'Input Ingestion', icon: Target, desc: 'Ingests prompts & multi-typed variables' },
+                    { type: 'llm' as PySpurNodeType, label: 'LLM Synthesis', icon: Sparkles, desc: 'Jinja {{var}} templates & structured schema' },
+                    { type: 'output' as PySpurNodeType, label: 'Release Output', icon: CheckCircle2, desc: 'Collects verified results & PR artifacts' },
+                    { type: 'subworkflow' as PySpurNodeType, label: 'Subworkflow', icon: Workflow, desc: 'Executes nested spur pipeline by ID' },
+                  ].map((item) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddNode(item.type)}
+                        className="flex flex-col text-left p-2.5 rounded-xl border border-stone-200 hover:border-indigo-500 hover:bg-indigo-50/40 transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-2 text-stone-800 font-semibold text-xs">
+                          <IconComp className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                          <span>{item.label}</span>
+                        </div>
+                        <span className="text-[10px] text-stone-400 mt-1 leading-tight">
+                          {item.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Category 2: Logic & Control Flow */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                  Logic & Control Flow
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { type: 'branch' as PySpurNodeType, label: 'If-Else Branch', icon: GitBranch, desc: 'Evaluates condition to True/False ports' },
+                    { type: 'router' as PySpurNodeType, label: 'Semantic / MoE Router', icon: Layers, desc: 'Keyword / semantic dispatch to N branches' },
+                    { type: 'loop' as PySpurNodeType, label: 'Loop / Batch Map', icon: Repeat, desc: 'Iterates over arrays with sub-batch limit' },
+                  ].map((item) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddNode(item.type)}
+                        className="flex flex-col text-left p-2.5 rounded-xl border border-stone-200 hover:border-purple-500 hover:bg-purple-50/40 transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-2 text-stone-800 font-semibold text-xs">
+                          <IconComp className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+                          <span>{item.label}</span>
+                        </div>
+                        <span className="text-[10px] text-stone-400 mt-1 leading-tight">
+                          {item.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Category 3: Compute & Integrations */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                  Compute & Integrations
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { type: 'code' as PySpurNodeType, label: 'Python Code Runner', icon: Box, desc: 'DevContainer Docker or Browser Sandbox' },
+                    { type: 'tool' as PySpurNodeType, label: 'Tool / HTTP Client', icon: Cpu, desc: 'REST GET/POST API or Web Search' },
+                    { type: 'rag_retriever' as PySpurNodeType, label: 'RAG Knowledge Retriever', icon: Database, desc: 'Top-k semantic vector similarity search' },
+                  ].map((item) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddNode(item.type)}
+                        className="flex flex-col text-left p-2.5 rounded-xl border border-stone-200 hover:border-blue-500 hover:bg-blue-50/40 transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-2 text-stone-800 font-semibold text-xs">
+                          <IconComp className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
+                          <span>{item.label}</span>
+                        </div>
+                        <span className="text-[10px] text-stone-400 mt-1 leading-tight">
+                          {item.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Category 4: Governance & Verification */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                  Governance & Verification
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { type: 'evaluator' as PySpurNodeType, label: 'Evaluator Grader', icon: ShieldCheck, desc: 'LLM-as-a-judge rubric & pass assertions' },
+                    { type: 'human_approval' as PySpurNodeType, label: 'Approval Gate', icon: CheckCircle2, desc: 'HITL operator signoff gatekeeper' },
+                  ].map((item) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddNode(item.type)}
+                        className="flex flex-col text-left p-2.5 rounded-xl border border-stone-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-2 text-stone-800 font-semibold text-xs">
+                          <IconComp className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                          <span>{item.label}</span>
+                        </div>
+                        <span className="text-[10px] text-stone-400 mt-1 leading-tight">
+                          {item.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -550,8 +550,8 @@ export const TailscaleMeshPanel: React.FC<TailscaleMeshPanelProps> = ({
           />
         </div>
 
-        {/* Peer Table */}
-        <div className="border border-stone-200/80 rounded-2xl overflow-hidden">
+        {/* Peer Table (Desktop) */}
+        <div className="hidden sm:block border border-stone-200/80 rounded-2xl overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50/70 text-stone-400 font-mono text-[11px]">
@@ -685,6 +685,83 @@ export const TailscaleMeshPanel: React.FC<TailscaleMeshPanelProps> = ({
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Peer Cards (Mobile Touch Ergonomics) */}
+        <div className="sm:hidden space-y-2.5">
+          {filteredPeers.map((p) => {
+            const isActive = details?.activeExitNode === p.hostName;
+            return (
+              <div
+                key={p.id}
+                className="p-3.5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center shrink-0">
+                      {getOsIcon(p.os)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-stone-900 flex items-center space-x-1.5 truncate">
+                        <span>{p.hostName}</span>
+                        {p.country && (
+                          <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-stone-100 text-stone-600 border border-stone-200">
+                            {p.country}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] font-mono text-stone-400 truncate">
+                        {p.dnsName || `${p.hostName}.tailnet`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1.5 shrink-0">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        p.online ? 'bg-emerald-500' : 'bg-stone-300'
+                      }`}
+                    />
+                    <span className="text-[11px] font-medium text-stone-600">
+                      {p.online ? 'Online' : 'Idle'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                  <div className="flex items-center space-x-1 font-mono text-xs font-bold text-stone-800">
+                    <span>{p.tailscaleIps[0]}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(p.tailscaleIps[0], p.hostName)}
+                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-700 transition-colors"
+                      title="Copy IP"
+                    >
+                      {copiedText === p.tailscaleIps[0] ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    {p.exitNodeOption && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyExitNode(isActive ? '' : p.hostName)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-2xs ${
+                          isActive
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                            : 'bg-stone-900 text-white hover:bg-black'
+                        }`}
+                      >
+                        {isActive ? 'Disconnect' : 'Exit Node'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
