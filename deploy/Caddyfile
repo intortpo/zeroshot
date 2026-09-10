@@ -1,0 +1,34 @@
+{
+    email admin@theopenengine.com
+}
+
+{$PETRI_DOMAIN:petri.bbs.ac.th} {
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Rust API & WebSocket Engine
+    handle /api/* {
+        reverse_proxy petri-server:4040
+    }
+
+    handle /ws/* {
+        reverse_proxy petri-server:4040
+    }
+
+    # Playwright Automation Worker
+    handle /playwright/* {
+        reverse_proxy playwright-runner:3000
+    }
+
+    # Petri Web UI Static SPA
+    handle {
+        reverse_proxy petri-web:80
+    }
+}

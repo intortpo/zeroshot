@@ -1,0 +1,73 @@
+services:
+  # 1. Caddy Reverse Proxy & Automatic TLS
+  caddy:
+    image: caddy:2-alpine
+    container_name: petri-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 QUIC
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /var/lib/petri/vault/caddy_data:/data
+      - /var/lib/petri/vault/caddy_config:/config
+    depends_on:
+      - petri-web
+      - petri-server
+      - playwright-runner
+
+  # 2. Petri Web UI (SPA)
+  petri-web:
+    build:
+      context: ../openengine-mesh
+      dockerfile: Dockerfile
+    image: petri-web:latest
+    container_name: petri-web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+  # 3. Rust Native Engine Daemon & Cluster Server
+  petri-server:
+    build:
+      context: ..
+      dockerfile: docker/petri-server/Dockerfile
+    image: petri-server:latest
+    container_name: petri-server
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - PETRI_VAULT_PATH=/var/lib/petri/vault
+      - PETRI_PORT=4040
+      - DWD_IMPERSONATE_USER=j.sadol@bbs.ac.th
+    volumes:
+      - /var/lib/petri/vault:/var/lib/petri/vault
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # 4. Playwright Headless Chromium Operator Worker
+  playwright-runner:
+    image: mcr.microsoft.com/playwright:v1.49.0-noble
+    container_name: petri-playwright-runner
+    restart: unless-stopped
+    ipc: host
+    command: ["npx", "playwright", "run-server", "--port", "3000", "--host", "0.0.0.0"]
+    volumes:
+      - /var/lib/petri/vault/browser_vault:/vault
+
+  # 5. Tailscale Mesh Subnet Router
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: petri-tailscale
+    restart: unless-stopped
+    hostname: petri-bangkok-turnkey
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTHKEY:-}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server --accept-routes
+    volumes:
+      - /var/lib/petri/vault/tailscale:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
