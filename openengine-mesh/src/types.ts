@@ -273,7 +273,8 @@ export type PetriViewMode =
   | 'generative_audio'
   | 'generative_image'
   | 'generative_multimodal'
-  | 'generative_design';
+  | 'generative_design'
+  | 'projects';
 
 export interface SteerableConceptWord {
   id: string;

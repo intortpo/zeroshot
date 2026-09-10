@@ -28,6 +28,7 @@ import {
   Coins,
   Activity,
   Image as ImageIcon,
+  FolderGit2,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -101,7 +102,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'chat' ||
     currentView === 'plan' ||
     currentView === 'board' ||
-    currentView === 'node';
+    currentView === 'node' ||
+    currentView === 'projects';
 
   const isGenActive =
     currentView === 'generative_video' ||
@@ -387,6 +389,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-50 text-sky-700">Studio</span>
                       </div>
                       <div className="text-[10px] text-stone-400 font-normal">Visual Pipelines & DevContainers</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('projects');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'projects'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <FolderGit2 className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Projects</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-50 text-teal-700">Git</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Multi-Account GitHub & Repos</div>
                     </div>
                   </button>
                 </div>
