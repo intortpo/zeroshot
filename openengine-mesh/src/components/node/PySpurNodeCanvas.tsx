@@ -17,6 +17,15 @@ import {
   ZoomOut,
   Activity,
   Check,
+  Box,
+  Sliders,
+  FileText,
+  Repeat,
+  CheckSquare,
+  Play,
+  StepForward,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import {
   PySpurWorkflow,
@@ -29,6 +38,12 @@ interface PySpurNodeCanvasProps {
   onSelectNode: (node: PySpurNode | null) => void;
   onUpdateNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
   isRunning?: boolean;
+  onRunAll?: () => void;
+  onRunSingleNode?: (nodeId: string) => void;
+  onStepNext?: () => void;
+  onResetWorkflow?: () => void;
+  onDeleteNode?: (nodeId: string) => void;
+  onEditNode?: (nodeId: string) => void;
 }
 
 // Icon mapper for nodes
@@ -45,6 +60,11 @@ const NODE_ICONS: Record<string, React.ElementType> = {
   Cpu,
   Database,
   Sparkles,
+  Box,
+  Sliders,
+  FileText,
+  Repeat,
+  CheckSquare,
 };
 
 export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
@@ -53,6 +73,12 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
   onSelectNode,
   onUpdateNodePosition,
   isRunning = false,
+  onRunAll,
+  onRunSingleNode,
+  onStepNext,
+  onResetWorkflow,
+  onDeleteNode,
+  onEditNode,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = useState<number>(0.92);
@@ -201,6 +227,53 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
         </button>
       </div>
 
+      {/* Floating Step Debugger Toolbar */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-md font-sans text-xs">
+        <button
+          type="button"
+          onClick={onRunAll}
+          disabled={isRunning}
+          className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white font-medium flex items-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
+        >
+          <Play className={`w-3.5 h-3.5 fill-current ${isRunning ? 'animate-spin' : ''}`} />
+          <span>{isRunning ? 'Running...' : 'Run All'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => selectedNodeId && onRunSingleNode?.(selectedNodeId)}
+          disabled={isRunning || !selectedNodeId}
+          className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 disabled:opacity-40 text-stone-700 font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+          title="Run only the currently selected node"
+        >
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
+          <span>Run Node</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onStepNext}
+          disabled={isRunning}
+          className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 disabled:opacity-40 text-stone-700 font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+          title="Step to next downstream node in DAG"
+        >
+          <StepForward className="w-3.5 h-3.5 text-indigo-500" />
+          <span>Step Next</span>
+        </button>
+
+        <div className="w-[1px] h-4 bg-stone-200" />
+
+        <button
+          type="button"
+          onClick={onResetWorkflow}
+          disabled={isRunning}
+          className="p-1.5 rounded-xl text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer"
+          title="Reset node statuses to idle"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
       {/* SVG Canvas for Bezier Edges */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none z-0"
@@ -336,8 +409,36 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
                   </div>
                 </div>
 
-                {/* Status Indicator */}
-                <div>
+                {/* Action Icons & Status Indicator */}
+                <div className="flex items-center space-x-1">
+                  {onEditNode && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectNode(node);
+                        onEditNode(node.id);
+                      }}
+                      className="p-1 rounded-md text-stone-400 hover:text-indigo-600 hover:bg-stone-100 transition-colors cursor-pointer"
+                      title="Edit Node in Inspector"
+                    >
+                      <Pencil className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                  {onDeleteNode && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteNode(node.id);
+                      }}
+                      className="p-1 rounded-md text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Delete Node"
+                    >
+                      <Trash2 className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+
                   {isRunningNode ? (
                     <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
                       <Activity className="w-2.5 h-2.5 animate-spin" />
@@ -366,11 +467,32 @@ export const PySpurNodeCanvas: React.FC<PySpurNodeCanvasProps> = ({
                   {node.sublabel}
                 </p>
 
-                {/* Model Tier & Weight Badge */}
+                {/* Model Tier & DevContainer Badge */}
                 <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[10px]">
-                  {node.config.modelTier && (
+                  {node.config.codeExecutionTarget === 'devcontainer' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 flex items-center space-x-1 font-semibold">
+                      <span>🐳</span>
+                      <span>DevContainer</span>
+                    </span>
+                  ) : node.type === 'rag_retriever' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                      RAG Vector
+                    </span>
+                  ) : node.type === 'evaluator' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-purple-50 text-purple-700 border border-purple-200 font-medium">
+                      Evaluator
+                    </span>
+                  ) : node.type === 'human_approval' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                      HITL Gate
+                    </span>
+                  ) : node.config.modelTier ? (
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-stone-100 text-stone-600 border border-stone-200">
                       {node.config.modelTier.split('-').slice(-2).join('-')}
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-stone-100 text-stone-500">
+                      {node.type}
                     </span>
                   )}
 
