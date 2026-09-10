@@ -146,14 +146,14 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     <div className="px-3 sm:px-6 pt-3 pb-1.5 shrink-0 z-30">
       <header
         data-tauri-drag-region
-        className="editorial-card-elevated rounded-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-sm font-sans"
+        className="border border-[#1A1D1A]/20 bg-[#F6F3EC]/95 backdrop-blur-md rounded-xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-sm font-mono"
       >
       {/* Left: Brand, Breadcrumbs, User, Tier & Workspace */}
       <div className="flex items-center space-x-3.5">
         {/* Brand */}
         <div className="flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
-          <span className="text-base font-sans font-semibold tracking-tight text-stone-900">
+          <span className="w-2 h-2 rounded-full bg-[#1A1D1A]" />
+          <span className="text-base font-mono font-bold tracking-tight text-[#1A1D1A]">
             Petri
           </span>
         </div>

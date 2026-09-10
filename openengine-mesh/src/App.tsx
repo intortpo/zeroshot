@@ -7,14 +7,12 @@ import { MemoryExplorer } from './components/MemoryExplorer';
 import { EnterpriseStats } from './components/EnterpriseStats';
 import { TuiView } from './components/TuiView';
 import { UserProfileModal } from './components/UserProfileModal';
-import { SilkShaderBackground } from './components/SilkShaderBackground';
 import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
-import { NodeStudioView } from './components/node/NodeStudioView';
 import { PreviewAgentationPanel } from './components/preview/PreviewAgentationPanel';
 import { GovernanceView } from './components/GovernanceView';
 import { AgentCognitionHUD } from './components/AgentCognitionHUD';
@@ -41,6 +39,7 @@ import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
+import { PetriTesseractStudioView } from './components/studio/PetriTesseractStudioView';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
 
 export function App() {
@@ -54,8 +53,8 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'focus' (default) | 'chat' | 'board' | 'node' | 'generative_*' | 'mcp' | etc.
-  const [currentView, setCurrentView] = useState<PetriViewMode>('focus');
+  // Enterprise View: 'node' (default Studio & Tesseract) | 'chat' | 'focus' | 'board' | etc.
+  const [currentView, setCurrentView] = useState<PetriViewMode>('node');
   const handleSelectView = (view: PetriViewMode) => {
     if (view === 'graph') {
       setCurrentView('node');
@@ -516,12 +515,15 @@ function inferPetriKind(text: string): PetriItemKind {
   ).length;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden text-stone-900 font-sans relative">
-      {/* Background: Flowing Tiffany pastel light fluid silk shader */}
-      <SilkShaderBackground workflowStatus="running" />
-
-      {/* Soft Frost Ambient Overlay */}
-      <div className="absolute inset-0 backdrop-blur-[1px] bg-white/15 pointer-events-none z-10" />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative">
+      {/* Background: Inked Drafting Vellum Paper with 24mm Grid */}
+      <div 
+        className="absolute inset-0 bg-[#F6F3EC] pointer-events-none z-0" 
+        style={{
+          backgroundImage: 'linear-gradient(to right, rgba(26,29,26,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,29,26,0.07) 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }} 
+      />
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
@@ -633,17 +635,17 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
          
-                {/* View: Node Studio (Visual Platform & DevContainer Pipeline Engine) */}
-                {currentView === 'node' && (
+                {/* View: Node Studio & 4D Tesseract (Pure Inked Draft Parchment) */}
+                {(currentView === 'node' || currentView === 'tesseract') && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <NodeStudioView
+                    <PetriTesseractStudioView
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
-                      onHandoffPlan={(plan) => {
-                        handleCreateIntent(plan.title, 'feat');
-                        setCurrentView('chat');
-                      }}
+                      items={visibleItems}
                       onNavigateToChat={() => setCurrentView('chat')}
+                      onUpdateUser={(updated) => {
+                        setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+                      }}
                     />
                   </div>
                 )}

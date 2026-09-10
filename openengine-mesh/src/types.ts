@@ -253,6 +253,7 @@ export interface EnterpriseStats {
 }
 
 export type PetriViewMode =
+  | 'tesseract'
   | 'chat'
   | 'focus'
   | 'plan'
