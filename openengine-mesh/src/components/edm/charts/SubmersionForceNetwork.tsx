@@ -70,9 +70,15 @@ export const SubmersionForceNetwork: React.FC<SubmersionForceNetworkProps> = ({
     camera.position.set(0, -60, 60);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(width, canvasHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(width, canvasHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    } catch (err) {
+      console.warn('SubmersionForceNetwork WebGL init failed:', err);
+      return;
+    }
 
     // 2. Build Force Graph Nodes & Edges
     const nodes: GraphNode[] = [];
@@ -358,7 +364,13 @@ export const SubmersionForceNetwork: React.FC<SubmersionForceNetworkProps> = ({
       camera.position.y = -Math.sin(rotX) * zoomDist;
       camera.lookAt(0, 0, 0);
 
-      renderer.render(scene, camera);
+      try {
+        if (renderer) {
+          renderer.render(scene, camera);
+        }
+      } catch (err) {
+        // Safe WebGL context recovery guard
+      }
     };
     animate();
 
@@ -370,7 +382,9 @@ export const SubmersionForceNetwork: React.FC<SubmersionForceNetworkProps> = ({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
       window.removeEventListener('resize', handleResize);
-      renderer.dispose();
+      try {
+        renderer?.dispose();
+      } catch {}
     };
   }, [students, colorMode, waterlineElevation, height]);
 

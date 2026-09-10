@@ -50,13 +50,19 @@ export const SubmersionWaveRidge: React.FC<SubmersionWaveRidgeProps> = ({
     camera.position.set(0, -65, 55);
     camera.lookAt(0, 5, 0);
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-    });
-    renderer.setSize(width, canvasHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(width, canvasHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    } catch (err) {
+      console.warn('SubmersionWaveRidge WebGL init failed:', err);
+      return;
+    }
 
     // 2. Build Wave Ridge Geometry ("Fifty Cohorts, One Wave")
     // Dimension X: Time sequence (12 weeks)
@@ -281,7 +287,13 @@ export const SubmersionWaveRidge: React.FC<SubmersionWaveRidgeProps> = ({
       // Soft water ripple
       waterPlane.position.y = waterlineElevation * 5 + Math.sin(Date.now() * 0.002) * 0.2;
 
-      renderer.render(scene, camera);
+      try {
+        if (renderer) {
+          renderer.render(scene, camera);
+        }
+      } catch (err) {
+        // Safe WebGL render guard
+      }
     };
     animate();
 
@@ -293,11 +305,15 @@ export const SubmersionWaveRidge: React.FC<SubmersionWaveRidgeProps> = ({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
       window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      geom.dispose();
-      ridgeMat.dispose();
-      waterGeom.dispose();
-      waterMat.dispose();
+      try {
+        renderer?.dispose();
+      } catch {}
+      try {
+        geom.dispose();
+        ridgeMat.dispose();
+        waterGeom.dispose();
+        waterMat.dispose();
+      } catch {}
     };
   }, [students, colorMode, waterlineElevation, isWireframe, height]);
 

@@ -959,13 +959,34 @@ export interface SubmersionManifest {
  * latent cognitive competency manifold (DINA model).
  */
 export function generateStudentSubmersionManifest(student: StudentEdmRecord): SubmersionManifest {
+  if (!student) {
+    return {
+      id: 'submersion-manifest-empty',
+      title: 'Petri Submersion · Unassigned',
+      academicTerm: 'AY2026 Sem 1',
+      mode: 'individual_latent',
+      hyperplaneElevation: 0,
+      nodes: [],
+      summaryStats: {
+        totalEntities: 0,
+        submergedCount: 0,
+        submergedPercentage: 0,
+        meanVelocity: 0,
+        criticalDeficits: [],
+      },
+    };
+  }
+
   const skills = CANONICAL_LATENT_SKILLS;
-  const positions: Array<[number, number]> = [
-    [-45, -45], // Vocab (Quadrant III)
-    [45, -45],  // Grammar (Quadrant IV)
-    [45, 45],   // Reading Comp (Quadrant I)
-    [-45, 45],  // Synthesis (Quadrant II)
-  ];
+  const numSkills = skills.length;
+  const radius = 45;
+  const positions: Array<[number, number]> = skills.map((_, i) => {
+    const angle = (i / Math.max(1, numSkills)) * 2 * Math.PI - Math.PI / 2;
+    return [
+      Number((Math.cos(angle) * radius).toFixed(1)),
+      Number((Math.sin(angle) * radius).toFixed(1)),
+    ];
+  });
 
   const nodes: SubmersionNode[] = [];
   const submergedWaterline = 0; // Z=0 corresponds to 50% normalized baseline
@@ -974,7 +995,7 @@ export function generateStudentSubmersionManifest(student: StudentEdmRecord): Su
   const criticalDeficits: string[] = [];
 
   skills.forEach((skill, idx) => {
-    const prob = student.latentMastery[skill.id] ?? 0.5;
+    const prob = student.latentMastery?.[skill.id] ?? 0.5;
     totalMastery += prob;
     // Map probability [0, 1] to Z-elevation [-50, +50]
     const zElevation = Number(((prob * 100) - 50).toFixed(1));
@@ -984,12 +1005,12 @@ export function generateStudentSubmersionManifest(student: StudentEdmRecord): Su
       criticalDeficits.push(skill.name);
     }
 
-    const [bx, by] = positions[idx];
+    const [bx, by] = positions[idx] || [0, 0];
     nodes.push({
       id: `node-${skill.id}`,
       label: skill.name,
       position: [bx, by, zElevation],
-      velocity: student.compositeVelocity,
+      velocity: student.compositeVelocity ?? 0,
       riskLevel: prob >= skill.benchmarkTarget ? 'green' : prob >= 0.5 ? 'amber' : 'red',
       isSubmerged,
       scorePct: Math.round(prob * 100),
@@ -1010,8 +1031,8 @@ export function generateStudentSubmersionManifest(student: StudentEdmRecord): Su
     id: `node-${student.id}-centroid`,
     label: student.pseudonym,
     position: [0, 0, studentZ],
-    velocity: student.compositeVelocity,
-    riskLevel: student.qsvcRiskLevel,
+    velocity: student.compositeVelocity ?? 0,
+    riskLevel: student.qsvcRiskLevel || 'green',
     isSubmerged: studentZ < submergedWaterline,
     scorePct: Math.round(avgMastery * 100),
     benchmarkPct: 80,
@@ -1031,10 +1052,10 @@ export function generateStudentSubmersionManifest(student: StudentEdmRecord): Su
   const xBounds: [number, number] = [-60, 60];
   const yBounds: [number, number] = [-60, 60];
 
-  const zV = nodes[0].position[2];
-  const zG = nodes[1].position[2];
-  const zR = nodes[2].position[2];
-  const zS = nodes[3].position[2];
+  const zV = nodes[0]?.position[2] ?? 0;
+  const zG = nodes[1]?.position[2] ?? 0;
+  const zR = nodes[2]?.position[2] ?? 0;
+  const zS = nodes[3]?.position[2] ?? 0;
 
   for (let i = 0; i < resolution; i++) {
     const row: number[] = [];
@@ -1057,11 +1078,12 @@ export function generateStudentSubmersionManifest(student: StudentEdmRecord): Su
   }
 
   // Trajectory streamlines from student's weekly timeline
-  const streamPoints: Array<[number, number, number]> = student.weeklyTimeline.map((f, i) => {
-    const t = i / Math.max(1, student.weeklyTimeline.length - 1);
+  const weeklyTimeline = student.weeklyTimeline || [];
+  const streamPoints: Array<[number, number, number]> = weeklyTimeline.map((f, i) => {
+    const t = i / Math.max(1, weeklyTimeline.length - 1);
     const x = -40 + t * 80;
-    const y = (f.normHomework - 0.7) * 80;
-    const z = (f.normAttendance * 100) - 50;
+    const y = ((f?.normHomework ?? 0.7) - 0.7) * 80;
+    const z = ((f?.normAttendance ?? 0.8) * 100) - 50;
     return [Number(x.toFixed(1)), Number(y.toFixed(1)), Number(z.toFixed(1))];
   });
 
@@ -1135,8 +1157,9 @@ export function generateCohortSubmersionManifest(
     // X = Attendance Velocity scaled [-70, 70]
     // Y = Homework Score deviation scaled [-60, 60]
     // Z = Composite Latent Cognitive Mastery scaled [-50, 50] (Z=0 is 50% waterline)
-    const lastFrame = st.weeklyTimeline[st.weeklyTimeline.length - 1];
-    const x = Math.min(75, Math.max(-75, st.compositeVelocity * 220));
+    const timeline = st.weeklyTimeline || [];
+    const lastFrame = timeline[timeline.length - 1];
+    const x = Math.min(75, Math.max(-75, (st.compositeVelocity ?? 0) * 220));
     const y = Math.min(65, Math.max(-65, ((lastFrame ? lastFrame.normHomework : 0.7) - 0.70) * 160));
     const z = Number(((avgMastery * 100) - 50).toFixed(1));
 
@@ -1146,8 +1169,8 @@ export function generateCohortSubmersionManifest(
       id: `cohort-node-${st.id}`,
       label: st.pseudonym,
       position: [Number(x.toFixed(1)), Number(y.toFixed(1)), z],
-      velocity: st.compositeVelocity,
-      riskLevel: st.qsvcRiskLevel,
+      velocity: st.compositeVelocity ?? 0,
+      riskLevel: st.qsvcRiskLevel || 'green',
       isSubmerged,
       scorePct: Math.round(avgMastery * 100),
       benchmarkPct: Math.round(threshold * 100),
@@ -1162,11 +1185,11 @@ export function generateCohortSubmersionManifest(
     });
 
     // Generate longitudinal particle stream for each student
-    const points: Array<[number, number, number]> = st.weeklyTimeline.map((frame, i) => {
-      const t = i / Math.max(1, st.weeklyTimeline.length - 1);
-      const px = x - (1 - t) * (st.compositeVelocity * 80);
-      const py = (frame.normHomework - 0.70) * 120;
-      const pz = (frame.normAttendance * 100) - 50;
+    const points: Array<[number, number, number]> = timeline.map((frame, i) => {
+      const t = i / Math.max(1, timeline.length - 1);
+      const px = x - (1 - t) * ((st.compositeVelocity ?? 0) * 80);
+      const py = ((frame?.normHomework ?? 0.7) - 0.70) * 120;
+      const pz = ((frame?.normAttendance ?? 0.8) * 100) - 50;
       return [Number(px.toFixed(1)), Number(py.toFixed(1)), Number(pz.toFixed(1))];
     });
 

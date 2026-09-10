@@ -20,8 +20,11 @@ export const EdmEarlyWarningCard: React.FC<EdmEarlyWarningCardProps> = ({
   student,
   onTriggerIntervention,
 }) => {
-  const isRed = student.qsvcRiskLevel === 'red';
-  const isAmber = student.qsvcRiskLevel === 'amber';
+  if (!student) return null;
+
+  const risk = student.qsvcRiskLevel || 'green';
+  const isRed = risk === 'red';
+  const isAmber = risk === 'amber';
 
   const badgeConfig = {
     red: {
@@ -39,9 +42,13 @@ export const EdmEarlyWarningCard: React.FC<EdmEarlyWarningCardProps> = ({
       badgeBg: 'bg-emerald-100 text-emerald-700 border-emerald-300',
       icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />,
     },
-  }[student.qsvcRiskLevel];
+  }[risk] || {
+    bg: 'bg-slate-50 border-slate-200 text-slate-800',
+    badgeBg: 'bg-slate-100 text-slate-700 border-slate-300',
+    icon: <ShieldCheck className="w-5 h-5 text-slate-600" />,
+  };
 
-  const velocityIsNegative = student.compositeVelocity < 0;
+  const velocityIsNegative = (student.compositeVelocity ?? 0) < 0;
 
   return (
     <div className={`rounded-xl border p-4 transition-all duration-200 ${badgeConfig.bg} shadow-sm`}>

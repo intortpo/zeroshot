@@ -40,6 +40,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
 import { PetriTesseractStudioView } from './components/studio/PetriTesseractStudioView';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
 
 export function App() {
@@ -776,24 +777,28 @@ function inferPetriKind(text: string): PetriItemKind {
                 {/* View 9: Quantum-Enhanced Educational Data Mining (EDM) Dashboard */}
                 {currentView === 'edm' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <EdmDashboardView
-                      activeWorkspace={activeWorkspace}
-                      activeUser={activeUser}
-                      onNavigateToNodeStudio={() => setCurrentView('node')}
-                      selectedFederatedFileId={selectedEdmSourceFileId}
-                      onSelectFederatedSourceFile={setSelectedEdmSourceFileId}
-                      onNavigateToFederatedData={() => setCurrentView('federated')}
-                      onNavigateToMidtermDemo={() => setCurrentView('midterm_clockin_demo')}
-                    />
+                    <ErrorBoundary fallbackTitle="PETRI EDM // COGNITIVE DIAGNOSTICS SUBSYSTEM" onReset={() => setCurrentView('node')}>
+                      <EdmDashboardView
+                        activeWorkspace={activeWorkspace}
+                        activeUser={activeUser}
+                        onNavigateToNodeStudio={() => setCurrentView('node')}
+                        selectedFederatedFileId={selectedEdmSourceFileId}
+                        onSelectFederatedSourceFile={setSelectedEdmSourceFileId}
+                        onNavigateToFederatedData={() => setCurrentView('federated')}
+                        onNavigateToMidtermDemo={() => setCurrentView('midterm_clockin_demo')}
+                      />
+                    </ErrorBoundary>
                   </div>
                 )}
 
                 {/* View 9b: Midterm Examination & Clock-In Longitudinal Live Demo (110+ Lieflat Charts) */}
                 {currentView === 'midterm_clockin_demo' && (
                   <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-[#041017]">
-                    <MidtermClockInDemoView
-                      onBackToDashboard={() => setCurrentView('edm')}
-                    />
+                    <ErrorBoundary fallbackTitle="PETRI MIDTERM TELEMETRY SUBSYSTEM" onReset={() => setCurrentView('edm')}>
+                      <MidtermClockInDemoView
+                        onBackToDashboard={() => setCurrentView('edm')}
+                      />
+                    </ErrorBoundary>
                   </div>
                 )}
 

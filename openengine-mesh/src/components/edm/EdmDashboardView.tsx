@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Cloud,
   FolderOpen,
-  Clock,
 } from 'lucide-react';
 import {
   CANONICAL_LATENT_SKILLS,
@@ -93,7 +92,30 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
     }
   };
 
-  const selectedStudent = students.find((s) => s.id === selectedStudentId) || students[0];
+  const defaultStudent: StudentEdmRecord = {
+    id: 'std-default',
+    pseudonym: 'Student (Cohort Baseline)',
+    cohort: 'General Cohort',
+    itemResponses: {},
+    weeklyTimeline: [],
+    latentMastery: {
+      skill_comp_thinking: 0.75,
+      skill_critical_inquiry: 0.70,
+      skill_esl_receptive_productive: 0.80,
+      skill_esl_syntactic_latency: 0.72,
+      skill_manova_activity_orientation: 0.68,
+      skill_bigfive_conscientiousness: 0.74,
+    },
+    qsvcRiskLevel: 'green',
+    qsvcStatusLabel: 'Active Baseline',
+    qsvcConfidence: 0.88,
+    compositeVelocity: 0.05,
+    pedagogicalRationale: 'Active longitudinal cohort baseline.',
+  };
+
+  const selectedStudent = (students && students.length > 0)
+    ? (students.find((s) => s.id === selectedStudentId) || students[0])
+    : defaultStudent;
 
   // Recalculate psychometrics & quantum risk when Q-Matrix changes
   const handleToggleQMatrixCell = (itemId: string, skillId: string) => {
@@ -168,28 +190,27 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   const onTrackCount = students.filter((s) => s.qsvcRiskLevel === 'green').length;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 font-sans">
-      {/* Top Banner & Telemetry KPIs */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-2xs">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono select-none">
+      {/* Top Banner: 1960s Technical Manual Header */}
+      <div className="bg-[#FAF8F3] border-b border-[#1A1D1A] px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white shadow-sm">
-              <GraduationCap className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#1A1D1A] shadow-[2px_2px_0px_#1A1D1A]">
+              <GraduationCap className="w-4.5 h-4.5" strokeWidth={1.5} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-teal-600 tracking-wider">Petri EDM</span>
-                <span className="text-slate-300">/</span>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                  EDM Studio
+                <span className="text-xs font-bold tracking-widest uppercase">PETRI EDM</span>
+                <span className="text-[#1A1D1A]/30">/</span>
+                <h2 className="text-sm font-black uppercase tracking-wider">
+                  EDUCATIONAL DATA MINING STUDIO
                 </h2>
-                <span className="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-                  <Lock className="w-3 h-3 text-teal-600" />
-                  FERPA Encrypted Local Vault
+                <span className="text-[10px] px-2 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] uppercase tracking-wider">
+                  FERPA SECURE VAULT
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-mono">
-                Cognitive Psychometrics (DINA) · Submersion Analytics · Midterm Telemetry · Federated Data Lake
+              <p className="text-[10px] text-[#1A1D1A]/60 tracking-wider uppercase mt-0.5">
+                MANUAL SPEC 1964 · SECTION 08 · DINA PSYCHOMETRICS &amp; MULTIDIMENSIONAL MANIFOLD
               </p>
             </div>
           </div>
@@ -200,87 +221,87 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
           <button
             onClick={handleRunDevContainerPipeline}
             disabled={isExecutingPipeline}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-teal-700 hover:bg-teal-800 text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1.5 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1A1D1A] hover:bg-[#333] transition-colors cursor-pointer disabled:opacity-40"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isExecutingPipeline ? 'animate-spin' : ''}`} />
-            {isExecutingPipeline ? 'Running DevContainer QML...' : 'Execute QML Pipeline'}
+            {isExecutingPipeline ? 'EXEC PIPELINE...' : 'EXEC QML PIPELINE'}
           </button>
           {onNavigateToNodeStudio && (
             <button
               onClick={onNavigateToNodeStudio}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[#1A1D1A] text-xs font-bold uppercase tracking-wider hover:bg-[#FAF8F3] transition-colors cursor-pointer shadow-[2px_2px_0px_#1A1D1A]"
             >
-              <Cpu className="w-3.5 h-3.5 text-teal-600" />
-              Open in Node Studio
+              <Cpu className="w-3.5 h-3.5" strokeWidth={1.5} />
+              NODE STUDIO
             </button>
           )}
         </div>
       </div>
 
       {/* Universal Federated Data Source Ingestion & Impersonation Bar */}
-      <div className="bg-slate-100/95 border-b border-slate-200 px-6 py-3 flex flex-col gap-2.5 text-xs shrink-0">
+      <div className="bg-[#F2EFE9] border-b border-[#1A1D1A] px-6 py-2.5 flex flex-col gap-2 text-xs shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2 font-mono font-semibold text-slate-800">
-            <Database className="w-4 h-4 text-teal-600" />
-            <span className="text-xs uppercase tracking-wider text-teal-900 font-bold">Universal Federated Data Selector:</span>
-            <span className="text-slate-400 font-normal">({AVAILABLE_FEDERATED_SOURCES.length} Connected Sources)</span>
+          <div className="flex items-center space-x-2 font-mono font-bold text-xs uppercase tracking-wider">
+            <Database className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>SOURCE MANIFEST REGISTRY</span>
+            <span className="text-[#1A1D1A]/50 font-normal">({AVAILABLE_FEDERATED_SOURCES.length} CONNECTED)</span>
           </div>
 
           <div className="flex items-center space-x-2">
             {activeSourceMeta.isDelegatedAdmin ? (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-sky-50 text-sky-700 border border-sky-200 font-medium">
-                <Cloud className="w-3 h-3 text-sky-600" />
-                <span>DWD Impersonating <strong>j.sadol@bbs.ac.th</strong></span>
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 border border-[#1A1D1A] text-[10px] uppercase tracking-wider bg-[#FAF8F3]">
+                <Cloud className="w-3 h-3" strokeWidth={1.5} />
+                <span>DWD: <strong>j.sadol@bbs.ac.th</strong></span>
               </span>
             ) : (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-                <Lock className="w-3 h-3 text-emerald-600" />
-                <span>Local AES-256 Vault Encrypted</span>
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 border border-[#1A1D1A] text-[10px] uppercase tracking-wider bg-[#FAF8F3]">
+                <Lock className="w-3 h-3" strokeWidth={1.5} />
+                <span>LOCAL AES-256 VAULT</span>
               </span>
             )}
 
             <button
               onClick={() => handleSwitchSource(activeSourceId)}
-              className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer shadow-2xs"
-              title="Re-read raw file from Federated Data Hub and recompute psychometrics"
+              className="px-2.5 py-1 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#FAF8F3] text-[10px] uppercase tracking-wider font-bold flex items-center space-x-1 transition-colors cursor-pointer shadow-[1px_1px_0px_#1A1D1A]"
+              title="Re-read raw file from Federated Data Hub"
             >
-              <RefreshCw className="w-3 h-3 text-slate-500" />
-              <span>Sync Source</span>
+              <RefreshCw className="w-3 h-3" />
+              <span>SYNC</span>
             </button>
             {onNavigateToFederatedData && (
               <button
                 onClick={onNavigateToFederatedData}
-                className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                className="px-2.5 py-1 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#FAF8F3] text-[10px] uppercase tracking-wider font-bold flex items-center space-x-1 transition-colors cursor-pointer shadow-[1px_1px_0px_#1A1D1A]"
               >
-                <FolderOpen className="w-3 h-3 text-teal-600" />
-                <span>Federated Hub</span>
+                <FolderOpen className="w-3 h-3" />
+                <span>HUB</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Omnipresent Quick-Select Chips for all Federated Sources */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
           {AVAILABLE_FEDERATED_SOURCES.map((src) => {
             const isSelected = src.id === activeSourceId;
             return (
               <button
                 key={src.id}
                 onClick={() => handleSwitchSource(src.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs transition-all shrink-0 cursor-pointer ${
+                className={`flex items-center gap-2 px-2.5 py-1 border text-[11px] uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
                   isSelected
-                    ? 'bg-teal-600 text-white font-semibold shadow-xs ring-2 ring-teal-500/40'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-teal-500/30'
+                    ? 'border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] font-bold shadow-[2px_2px_0px_#1A1D1A]'
+                    : 'border-[#1A1D1A]/50 bg-[#FAF8F3] text-[#1A1D1A] hover:border-[#1A1D1A] shadow-[1px_1px_0px_#1A1D1A]'
                 }`}
               >
-                <Database className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-teal-600'}`} />
-                <span className="truncate max-w-[180px]">{src.name}</span>
+                <Database className="w-3 h-3" strokeWidth={1.5} />
+                <span className="truncate max-w-[200px]">{src.name}</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-teal-700 text-teal-100' : 'bg-slate-100 text-slate-600'
+                  className={`text-[9px] px-1 py-0.2 border ${
+                    isSelected ? 'border-[#FAF8F3] bg-[#333] text-[#FAF8F3]' : 'border-[#1A1D1A]/40 bg-[#EDE8DC]'
                   }`}
                 >
-                  {src.recordsCount} rec
+                  {src.recordsCount}
                 </span>
               </button>
             );
@@ -288,127 +309,89 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* KPI Accounting Statistics Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 px-6 py-4 bg-transparent shrink-0">
-        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
+      {/* KPI Accounting Statistics Bar: 1960s Wireframe Instrument Panels */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-6 py-3 bg-transparent shrink-0">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-stone-500 font-mono uppercase tracking-wider">Cohort Active</span>
-            <p className="text-xl sm:text-2xl font-bold text-stone-900 font-sans tracking-tight">{students.length}</p>
-            <span className="text-[10px] font-sans text-stone-400">Total Enrolled</span>
+            <span className="text-[9px] text-[#1A1D1A]/60 uppercase tracking-widest block">COHORT ACTIVE</span>
+            <p className="text-xl font-black text-[#1A1D1A] tracking-tight">{students.length}</p>
+            <span className="text-[9px] text-[#1A1D1A]/50">TOTAL ENROLLED</span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
-            <GraduationCap className="w-4.5 h-4.5" />
+          <div className="w-7 h-7 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#1A1D1A]">
+            <GraduationCap className="w-4 h-4" strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-rose-600 font-mono uppercase tracking-wider font-semibold">Critical Risk</span>
-            <p className="text-xl sm:text-2xl font-bold text-rose-700 font-sans tracking-tight">{criticalCount}</p>
-            <span className="text-[10px] font-sans text-rose-600 font-medium">Flagged &lt; 50%</span>
+            <span className="text-[9px] text-[#1A1D1A]/60 uppercase tracking-widest block">DEFICIT STATE</span>
+            <p className="text-xl font-black text-[#8B0000] tracking-tight">{criticalCount}</p>
+            <span className="text-[9px] text-[#8B0000]/70 font-semibold">FLAGGED &lt; 50%</span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
-            <AlertCircle className="w-4.5 h-4.5" />
+          <div className="w-7 h-7 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#8B0000]">
+            <AlertCircle className="w-4 h-4" strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-amber-600 font-mono uppercase tracking-wider font-semibold">Latent Warning</span>
-            <p className="text-xl sm:text-2xl font-bold text-amber-700 font-sans tracking-tight">{warningCount}</p>
-            <span className="text-[10px] font-sans text-amber-600 font-medium">Divergent Skills</span>
+            <span className="text-[9px] text-[#1A1D1A]/60 uppercase tracking-widest block">LATENT DIVERGENCE</span>
+            <p className="text-xl font-black text-[#8A5A00] tracking-tight">{warningCount}</p>
+            <span className="text-[9px] text-[#8A5A00]/70 font-semibold">WARNING BAND</span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-            <Sliders className="w-4.5 h-4.5" />
+          <div className="w-7 h-7 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#8A5A00]">
+            <Sliders className="w-4 h-4" strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-emerald-600 font-mono uppercase tracking-wider font-semibold">On-Track</span>
-            <p className="text-xl sm:text-2xl font-bold text-emerald-700 font-sans tracking-tight">{onTrackCount}</p>
-            <span className="text-[10px] font-sans text-emerald-600 font-medium">Proficient Mastery</span>
+            <span className="text-[9px] text-[#1A1D1A]/60 uppercase tracking-widest block">COMPETENT APEX</span>
+            <p className="text-xl font-black text-[#1A5A2A] tracking-tight">{onTrackCount}</p>
+            <span className="text-[9px] text-[#1A5A2A]/70 font-semibold">MASTERY SECURED</span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-4.5 h-4.5" />
+          <div className="w-7 h-7 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#1A5A2A]">
+            <CheckCircle2 className="w-4 h-4" strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between col-span-2 md:col-span-1">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] flex items-center justify-between col-span-2 md:col-span-1">
           <div>
-            <span className="text-[10px] text-teal-600 font-mono uppercase tracking-wider font-semibold">Quantum Fidelity</span>
-            <p className="text-xl sm:text-2xl font-bold text-teal-900 font-sans tracking-tight">98.4%</p>
-            <span className="text-[10px] font-sans text-teal-700 font-medium">QSVC Kernel</span>
+            <span className="text-[9px] text-[#1A1D1A]/60 uppercase tracking-widest block">KERNEL ACCURACY</span>
+            <p className="text-xl font-black text-[#1A1D1A] tracking-tight">98.4%</p>
+            <span className="text-[9px] text-[#1A1D1A]/60">QSVC CLUSTERING</span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600">
-            <Sparkles className="w-4.5 h-4.5" />
+          <div className="w-7 h-7 border border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-center text-[#1A1D1A]">
+            <Sparkles className="w-4 h-4" strokeWidth={1.5} />
           </div>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white shrink-0 overflow-x-auto scrollbar-none">
-        <button
-          onClick={() => setActiveTab('diagnostics')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'diagnostics'
-              ? 'border-teal-600 text-teal-700'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Student Latent Profiles & Early Warning
-        </button>
-        <button
-          onClick={() => setActiveTab('submersion_suite')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'submersion_suite'
-              ? 'border-teal-600 text-teal-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          ✦ Submersion Analytics Suite
-        </button>
-        <button
-          onClick={() => setActiveTab('midterm_telemetry')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
-            activeTab === 'midterm_telemetry'
-              ? 'border-teal-600 text-teal-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5 text-teal-600" />
-          <span>Midterm & Clock-In (110+ Almanac)</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('qmatrix')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'qmatrix'
-              ? 'border-teal-600 text-teal-700'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Curriculum Q-Matrix Blueprint ($J \times K$)
-        </button>
-        <button
-          onClick={() => setActiveTab('ingestion')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'ingestion'
-              ? 'border-teal-600 text-teal-700'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Secure XLSX Ingestion Vault & RAG
-        </button>
-        <button
-          onClick={() => setActiveTab('hourglass')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'hourglass'
-              ? 'border-teal-600 text-teal-700'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Petri Funnel Hourglass Stream
-        </button>
+      {/* Navigation Sub-Tabs: 1960s Technical Switcher */}
+      <div className="flex items-center gap-1.5 px-6 pt-2 border-b border-[#1A1D1A] bg-[#FAF8F3] shrink-0 overflow-x-auto scrollbar-none">
+        {[
+          { id: 'diagnostics', label: '01 // LATENT PROFILES & DIAGNOSTICS' },
+          { id: 'submersion_suite', label: '02 // SUBMERSION ANALYTICS SUITE' },
+          { id: 'midterm_telemetry', label: '03 // LONGITUDINAL ALMANAC' },
+          { id: 'qmatrix', label: '04 // CURRICULUM Q-MATRIX' },
+          { id: 'ingestion', label: '05 // VAULT INGESTION' },
+          { id: 'hourglass', label: '06 // FUNNEL STREAM' },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-t border-l border-r transition-all cursor-pointer shrink-0 ${
+                isActive
+                  ? 'border-[#1A1D1A] bg-[#F6F3EC] text-[#1A1D1A] -mb-[1px] pb-2'
+                  : 'border-transparent text-[#1A1D1A]/50 hover:text-[#1A1D1A] hover:bg-[#EDE8DC]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Intervention Toast Alert */}
@@ -545,7 +528,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                     Curriculum Competencies
                   </h4>
                   {CANONICAL_LATENT_SKILLS.map((skill) => {
-                    const prob = selectedStudent.latentMastery[skill.id] ?? 0.5;
+                    const prob = selectedStudent?.latentMastery?.[skill.id] ?? 0.5;
                     const isTargetMet = prob >= skill.benchmarkTarget;
 
                     return (

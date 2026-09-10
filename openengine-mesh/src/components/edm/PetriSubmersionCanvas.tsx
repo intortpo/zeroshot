@@ -99,7 +99,7 @@ export const PetriSubmersionCanvas: React.FC<PetriSubmersionCanvasProps> = ({
     camera.lookAt(0, 0, 0);
 
     // 2. WebGL Renderer
-    let renderer: THREE.WebGLRenderer;
+    let renderer: THREE.WebGLRenderer | null = null;
     try {
       renderer = new THREE.WebGLRenderer({
         canvas,
@@ -109,8 +109,9 @@ export const PetriSubmersionCanvas: React.FC<PetriSubmersionCanvasProps> = ({
       });
       renderer.setSize(width, canvasHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    } catch {
-      return;
+    } catch (err) {
+      console.warn('PetriSubmersionCanvas WebGL init failed:', err);
+      return () => {};
     }
 
     // 3. Lighting
@@ -402,7 +403,13 @@ export const PetriSubmersionCanvas: React.FC<PetriSubmersionCanvasProps> = ({
         posAttr.needsUpdate = true;
       }
 
-      renderer.render(scene, camera);
+      try {
+        if (renderer) {
+          renderer.render(scene, camera);
+        }
+      } catch (err) {
+        // Safe WebGL render guard
+      }
     };
 
     animate();
@@ -415,7 +422,9 @@ export const PetriSubmersionCanvas: React.FC<PetriSubmersionCanvasProps> = ({
       window.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
-      renderer.dispose();
+      try {
+        renderer?.dispose();
+      } catch {}
     };
   }, [manifest, wireframe, showWaterline, isFullscreen, height, onSelectStudent]);
 
