@@ -162,7 +162,7 @@ export interface WorkspaceUseCaseResult {
   execution_log: string[];
 }
 
-export type SkillCategory = 'firebase' | 'github' | 'gcloud' | 'agy';
+export type SkillCategory = 'firebase' | 'github' | 'gcloud' | 'agy' | 'diagram';
 
 export interface PetriSkill {
   id: string;
@@ -174,6 +174,7 @@ export interface PetriSkill {
   tags: string[];
   isActive: boolean;
   samplePrompts: string[];
+  repoUrl?: string;
 }
 
 export type MemoryType = 'episodic' | 'semantic' | 'rule' | 'vector' | 'config';

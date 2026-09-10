@@ -9,6 +9,8 @@ import {
   Sparkles,
   ShieldCheck,
   Play,
+  Palette,
+  ExternalLink,
 } from 'lucide-react';
 import { PetriSkill, SkillCategory } from '../types';
 
@@ -384,6 +386,25 @@ export const INITIAL_SKILLS: PetriSkill[] = [
       'Trigger /boost mode with multi-perspective analysis on cluster protocol',
     ],
   },
+  // Editorial Diagram & Visual Design Skills
+  {
+    id: 'diagram-design',
+    category: 'diagram',
+    name: 'diagram-design',
+    title: 'Editorial Diagram & Visual Design',
+    description: '39 visual diagram types (architecture, flowcharts, sequence, state machines, ER models, data flow, Sankey, Wardley maps) as self-contained SVG/HTML adhering to opinionated editorial design.',
+    version: 'v2.6',
+    tags: ['diagrams', 'svg', 'architecture', 'html', 'visual-design', 'drawio', 'mermaid'],
+    isActive: true,
+    repoUrl: 'https://github.com/cathrynlavery/diagram-design',
+    samplePrompts: [
+      'Create branded architecture diagram of the distributed mesh ledger with bounded repair loop',
+      'Generate sequence diagram for zero-petri Google Workspace DWD OAuth token validation',
+      'Design state machine diagram for PetriItem stages (inbox -> in_flight -> verifying -> gated -> merged)',
+      'Produce an entity-relationship ER diagram for Petri users, nodes, workspaces, and ledger runs',
+      'Create a process flowchart for autonomous agent fanout and recursive execution',
+    ],
+  },
 ];
 
 export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill }) => {
@@ -449,6 +470,12 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
       label: 'Antigravity (AGY)',
       icon: <Cpu className="w-3.5 h-3.5 text-stone-700" />,
       count: skills.filter((s) => s.category === 'agy').length,
+    },
+    {
+      category: 'diagram',
+      label: 'Diagrams',
+      icon: <Palette className="w-3.5 h-3.5 text-rose-500" />,
+      count: skills.filter((s) => s.category === 'diagram').length,
     },
   ];
 
@@ -604,6 +631,19 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                 <div className="text-xs font-sans text-stone-400">
                   {selectedSkill.name}
                 </div>
+                {selectedSkill.repoUrl && (
+                  <div className="mt-1">
+                    <a
+                      href={selectedSkill.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1 text-xs text-indigo-600 hover:text-indigo-800 font-mono underline"
+                    >
+                      <span>{selectedSkill.repoUrl}</span>
+                      <ExternalLink className="w-3 h-3 ml-0.5" />
+                    </a>
+                  </div>
+                )}
               </div>
 
               <button

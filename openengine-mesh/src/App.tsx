@@ -194,7 +194,9 @@ export function App() {
     }
 
     handleCreateIntent(prompt, kind);
-    setCurrentView('board');
+    if (currentView === 'skills') {
+      setCurrentView('board');
+    }
   };
 
   // Fan out agents into parallel RTX subagents
@@ -473,6 +475,7 @@ export function App() {
               onAdvanceStage={handleAdvanceStage}
               onRecurseAgent={handleRecurseAgent}
               onSelectView={setCurrentView}
+              onDispatchSkill={handleDispatchSkill}
             />
           </div>
         )}
