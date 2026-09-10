@@ -7,6 +7,9 @@ import {
   RotateCw,
   Plus,
   Coins,
+  Shield,
+  Activity,
+  Radio,
 } from 'lucide-react';
 import { Workspace, UserProfile, PetriItem, NodeSpec } from '../types';
 
@@ -32,37 +35,37 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
     {
       id: 'inv-01',
       title: 'Protocol Rust types are canonical source of truth; no hand-editing generated definitions',
-      category: 'Invariants',
+      category: 'INVARIANTS',
       source: 'AGENTS.md:L44',
     },
     {
       id: 'inv-02',
       title: 'Clippy four-parameter ceiling on public APIs; use typed request structs',
-      category: 'Maintainability',
+      category: 'MAINTAINABILITY',
       source: 'AGENTS.md:L142',
     },
     {
       id: 'inv-03',
       title: 'Structured-output recovery is provider-owned and fail-closed (bounded to max 2 turns)',
-      category: 'Reliability',
+      category: 'RELIABILITY',
       source: 'AGENTS.md:L55',
     },
     {
       id: 'inv-04',
       title: 'Safe-log timestamps must be positive JavaScript-safe Unix epoch milliseconds',
-      category: 'Serialization',
+      category: 'SERIALIZATION',
       source: 'AGENTS.md:L67',
     },
     {
       id: 'inv-05',
       title: 'Single development trunk (main) with Conventional Commit PR squash headers',
-      category: 'Release Policy',
+      category: 'RELEASE_POLICY',
       source: 'AGENTS.md:L19',
     },
     {
       id: 'inv-06',
       title: 'Concurrent & bounded provider stdin/stdout preventing deadlock on large prompts',
-      category: 'Streaming',
+      category: 'STREAMING',
       source: 'AGENTS.md:L63',
     },
   ]);
@@ -72,6 +75,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
   const mergedCount = items.filter((i) => i.stage === 'merged').length;
   const inFlightCount = items.filter((i) => i.stage === 'in_flight').length;
   const gatedCount = items.filter((i) => i.stage === 'gated').length;
+  const verifyingCount = items.filter((i) => i.stage === 'verifying').length;
   const backlogCount = items.filter((i) => i.stage === 'backlog').length;
 
   const handleAddRule = (e: React.FormEvent) => {
@@ -81,8 +85,8 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       {
         id: `inv-${Date.now().toString().slice(-4)}`,
         title: newRuleInput.trim(),
-        category: 'Learned Invariant',
-        source: 'Petri Session Memory',
+        category: 'LEARNED_INVARIANT',
+        source: 'PETRI_MEMORY_LOG',
       },
       ...prev,
     ]);
@@ -95,296 +99,312 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
       setRules((prev) => [
         {
           id: `inv-${Date.now().toString().slice(-4)}`,
-          title: 'Distilled AST verification checkpoint from merged test suites',
-          category: 'Synthesized Heuristic',
-          source: 'Continuous Self-Learning Loop',
+          title: 'Distilled AST verification checkpoint from merged test suites and invariant receipts',
+          category: 'SYNTHESIZED_HEURISTIC',
+          source: 'SELF_LEARNING_ENGINE',
         },
         ...prev,
       ]);
       setIsReflecting(false);
-    }, 800);
+    }, 600);
   };
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 space-y-8 font-sans">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-5">
-        <div>
-          <div className="flex items-center space-x-2 text-xs text-stone-500 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#0ABAB5]" />
-            <span className="uppercase tracking-wider">Runtime Telemetry</span>
+    <div className="flex-1 w-full overflow-y-auto p-4 sm:p-8 space-y-6 font-mono bg-[#F6F3EC] text-[#1A1D1A]">
+      {/* 1960s Technical Document Header */}
+      <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1A1D1A] pb-3 mb-3">
+          <div>
+            <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-widest text-[#1A1D1A]/70 mb-1">
+              <span className="px-1 border border-[#1A1D1A] bg-[#EDE8DC]">DOC NO. 60-PETRI-TEL-01</span>
+              <span>//</span>
+              <span>SYSTEM LOGBOOK SECTION 04</span>
+            </div>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#1A1D1A]">
+              TELEMETRY, TOKEN EXPENDITURE & INVARIANTS
+            </h1>
           </div>
-          <h1 className="text-xl font-semibold text-stone-900 tracking-tight">
-            Telemetry & Invariants
-          </h1>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Switcher */}
+            <div className="flex items-center border border-[#1A1D1A] bg-[#EDE8DC] p-0.5 text-xs">
+              <button
+                onClick={() => setCurrentTab('all')}
+                className={`px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                  currentTab === 'all'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                    : 'text-[#1A1D1A] hover:bg-[#FAF8F3]'
+                }`}
+              >
+                [ALL]
+              </button>
+              <button
+                onClick={() => setCurrentTab('telemetry')}
+                className={`px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                  currentTab === 'telemetry'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                    : 'text-[#1A1D1A] hover:bg-[#FAF8F3]'
+                }`}
+              >
+                [01 TELEMETRY]
+              </button>
+              <button
+                onClick={() => setCurrentTab('tokens')}
+                className={`px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                  currentTab === 'tokens'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                    : 'text-[#1A1D1A] hover:bg-[#FAF8F3]'
+                }`}
+              >
+                [02 TOKEN LEDGER]
+              </button>
+            </div>
+
+            <button
+              onClick={handleReflect}
+              disabled={isReflecting}
+              className="flex items-center space-x-1.5 px-3 py-1 border border-[#1A1D1A] bg-[#FAF8F3] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-xs font-bold transition-colors cursor-pointer"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isReflecting ? 'animate-spin' : ''}`} />
+              <span>{isReflecting ? 'ANALYZING...' : '[EXECUTE REFLECTION]'}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          {/* Sub Tab Switcher */}
-          <div className="flex items-center bg-stone-100 p-0.5 rounded-xl border border-stone-200 text-xs">
-            <button
-              onClick={() => setCurrentTab('all')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                currentTab === 'all'
-                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setCurrentTab('telemetry')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                currentTab === 'telemetry'
-                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              Telemetry
-            </button>
-            <button
-              onClick={() => setCurrentTab('tokens')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                currentTab === 'tokens'
-                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              Token Spend & Compaction
-            </button>
+        <div className="flex flex-wrap items-center justify-between text-[10px] text-[#1A1D1A]/80 pt-1">
+          <div className="flex items-center space-x-3">
+            <span>CALIBRATION: 0.0σ</span>
+            <span>·</span>
+            <span>FAIL-CLOSED POLICY: ACTIVE</span>
+            <span>·</span>
+            <span>4-PARAM CEILING: ENFORCED</span>
           </div>
-
-          <button
-            onClick={handleReflect}
-            disabled={isReflecting}
-            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-sans font-medium transition-all"
-          >
-            <RotateCw className={`w-3.5 h-3.5 text-stone-600 ${isReflecting ? 'animate-spin' : ''}`} />
-            <span>{isReflecting ? 'Analyzing...' : 'Self-Learning Reflection'}</span>
-          </button>
+          <div className="font-bold border border-[#1A1D1A] px-2 py-0.5 bg-[#EDE8DC]">
+            ● STATUS: AIRWORTHY / NOMINAL
+          </div>
         </div>
       </div>
 
-      {/* Dedicated Token Spend & Compaction Breakdown View - Modern Accounting Style */}
-      {(currentTab === 'tokens' || currentTab === 'all') && (
-        <div className="p-6 sm:p-7 rounded-3xl editorial-card border border-stone-200/90 shadow-sm space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-                <Coins className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-stone-900 tracking-tight">
-                  Token Spend & Cache Compaction Ledger
-                </h2>
-                <p className="text-[11px] text-stone-400 font-sans">
-                  Real-time tokenizer telemetry and prompt cache savings
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-mono font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center space-x-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>42.6% Compaction Savings</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 sm:p-5 rounded-2.5xl editorial-stat-card space-y-2 relative overflow-hidden group">
-              <div className="flex items-center justify-between text-xs text-stone-500 font-mono uppercase tracking-wider">
-                <span>Prompt Tokens</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">+14.2%</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight font-sans">
-                1,420,890
-              </div>
-              {/* Segmented accounting progress bar */}
-              <div className="space-y-1 pt-1">
-                <div className="w-full bg-stone-200/80 rounded-full h-1.5 overflow-hidden flex">
-                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '86.4%' }} />
-                </div>
-                <div className="text-[11px] text-emerald-600 font-medium font-sans">86.4% Cache Hit Ratio</div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2.5xl editorial-stat-card space-y-2 relative overflow-hidden group">
-              <div className="flex items-center justify-between text-xs text-stone-500 font-mono uppercase tracking-wider">
-                <span>Completion</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-sky-100 text-sky-800">20.0%</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight font-sans">
-                284,110
-              </div>
-              <div className="space-y-1 pt-1">
-                <div className="w-full bg-stone-200/80 rounded-full h-1.5 overflow-hidden flex">
-                  <div className="bg-sky-500 h-1.5 rounded-full" style={{ width: '20%' }} />
-                </div>
-                <div className="text-[11px] text-stone-500 font-sans">Structured JSON Schema</div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2.5xl editorial-stat-card space-y-2 relative overflow-hidden group">
-              <div className="flex items-center justify-between text-xs text-stone-500 font-mono uppercase tracking-wider">
-                <span>Guard Ceiling</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-100 text-teal-800">Bounded</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight font-sans">
-                64 MiB
-              </div>
-              <div className="space-y-1 pt-1">
-                <div className="w-full bg-stone-200/80 rounded-full h-1.5 overflow-hidden flex">
-                  <div className="bg-[#0ABAB5] h-1.5 rounded-full" style={{ width: '100%' }} />
-                </div>
-                <div className="text-[11px] text-teal-700 font-medium font-sans">Zero Deadlock Drain</div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2.5xl editorial-stat-card space-y-2 relative overflow-hidden group">
-              <div className="flex items-center justify-between text-xs text-stone-500 font-mono uppercase tracking-wider">
-                <span>Monthly Budget</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-800">-$482</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight font-sans">
-                $482.50
-              </div>
-              <div className="space-y-1 pt-1">
-                <div className="w-full bg-stone-200/80 rounded-full h-1.5 overflow-hidden flex">
-                  <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '68%' }} />
-                </div>
-                <div className="text-[11px] text-indigo-700 font-medium font-sans">Prompt Caching Savings</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Real Repository Metric Cards - Editorial Accounting Pills */}
+      {/* Real Airworthiness Pipeline Telemetry - 1960s Wireframe Gauge Cluster */}
       {(currentTab === 'telemetry' || currentTab === 'all') && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Merged Commits */}
-          <div className="p-5 rounded-3xl editorial-card space-y-2 transition-all hover:scale-[1.01]">
-            <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
-              <span>MERGED COMMITS</span>
-              <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="text-3xl sm:text-4xl font-bold text-stone-900 font-sans tracking-tight">
-              {mergedCount}
-            </div>
-            <div className="text-xs text-stone-500 font-mono flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Released on main</span>
-            </div>
-          </div>
-
-          {/* In-Flight Work */}
-          <div className="p-5 rounded-3xl editorial-card space-y-2 transition-all hover:scale-[1.01]">
-            <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
-              <span>IN-FLIGHT TASKS</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5] animate-pulse" />
-            </div>
-            <div className="text-3xl sm:text-4xl font-bold text-stone-900 font-sans tracking-tight">
-              {inFlightCount}
-            </div>
-            <div className="text-xs text-stone-500 font-mono flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
-              <span>Active subagents running</span>
-            </div>
-          </div>
-
-          {/* Gated Review */}
-          <div className="p-5 rounded-3xl editorial-card space-y-2 transition-all hover:scale-[1.01]">
-            <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
-              <span>GATED APPROVAL</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F1F]" />
-            </div>
-            <div className="text-3xl sm:text-4xl font-bold text-stone-900 font-sans tracking-tight">
-              {gatedCount}
-            </div>
-            <div className="text-xs text-stone-500 font-mono flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5F1F]" />
-              <span>Human signoff required</span>
-            </div>
-          </div>
-
-          {/* Total Tasks Tracked */}
-          <div className="p-5 rounded-3xl editorial-card space-y-2 transition-all hover:scale-[1.01]">
-            <div className="flex items-center justify-between text-xs font-sans font-medium text-stone-500 tracking-wider">
-              <span>TOTAL PIPELINE</span>
-              <GitCommit className="w-4 h-4 text-stone-400" />
-            </div>
-            <div className="text-3xl sm:text-4xl font-bold text-stone-900 font-sans tracking-tight">
-              {totalTasks}
-            </div>
-            <div className="text-xs text-stone-500 font-mono flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
-              <span>{backlogCount} items in backlog</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Real Environment & Invariant Rules Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Host Environment Spec (5 cols) */}
-        <div className="lg:col-span-5 p-6 rounded-3xl editorial-card space-y-4">
-          <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
-            <div className="flex items-center space-x-2">
-              <Cpu className="w-4 h-4 text-stone-700" />
-              <h3 className="text-sm font-bold text-stone-900 font-sans tracking-tight">Host Hardware & Environment</h3>
-            </div>
-            <span className="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-              verified
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1A1D1A] pb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider">
+              [FIG 4.1 // AIRFRAME PIPELINE STAGE GAUGES]
+            </span>
+            <span className="text-[10px] text-[#1A1D1A]/70 font-mono">
+              TOTAL SPECIFICATIONS: {totalTasks}
             </span>
           </div>
 
-          <div className="space-y-2.5 text-xs font-sans">
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Host Name</span>
-              <span className="font-sans text-stone-800 font-medium">po</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Merged Commits */}
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span>05 // MERGED TRUNK</span>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold">{mergedCount}</div>
+              <div className="text-[9px] text-[#1A1D1A]/70 uppercase border-t border-[#1A1D1A]/30 pt-1">
+                RELEASED ON MAIN
+              </div>
             </div>
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Operating System</span>
-              <span className="font-sans text-stone-700">Linux 7.1.9-arch1-2 (x86_64)</span>
+
+            {/* In-Flight Work */}
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span>02 // IN-FLIGHT</span>
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold">{inFlightCount}</div>
+              <div className="text-[9px] text-[#1A1D1A]/70 uppercase border-t border-[#1A1D1A]/30 pt-1">
+                AST SYNTHESIS RUNNING
+              </div>
             </div>
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Active Workspace</span>
-              <span className="font-sans text-stone-700">{activeWorkspace?.name || 'zero-petri'}</span>
+
+            {/* Verifying Acceptance */}
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span>03 // ACCEPTANCE</span>
+                <Activity className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold">{verifyingCount}</div>
+              <div className="text-[9px] text-[#1A1D1A]/70 uppercase border-t border-[#1A1D1A]/30 pt-1">
+                CONTAINER INVARIANTS
+              </div>
             </div>
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Repository Path</span>
-              <span className="font-sans text-stone-700 truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
+
+            {/* Gated Review */}
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span>04 // GATED SIGN</span>
+                <Shield className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold">{gatedCount}</div>
+              <div className="text-[9px] text-[#1A1D1A]/70 uppercase border-t border-[#1A1D1A]/30 pt-1">
+                PILOT OVERSIGHT REQ
+              </div>
+            </div>
+
+            {/* Spec Backlog */}
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span>01 // SPEC BACKLOG</span>
+                <GitCommit className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold">{backlogCount}</div>
+              <div className="text-[9px] text-[#1A1D1A]/70 uppercase border-t border-[#1A1D1A]/30 pt-1">
+                INGESTED DIRECTIVES
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Token Spend & Compaction Ledger - 1960s Wireframe Accounting Sheet */}
+      {(currentTab === 'tokens' || currentTab === 'all') && (
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A] space-y-3">
+          <div className="flex flex-wrap items-center justify-between border-b border-[#1A1D1A] pb-2 gap-2">
+            <div className="flex items-center space-x-2">
+              <Coins className="w-4 h-4" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">
+                [FIG 4.2 // TOKEN CONSUMPTION & COMPACTION LEDGER]
+              </span>
+            </div>
+            <span className="text-[10px] font-bold border border-[#1A1D1A] px-2 py-0.5 bg-[#EDE8DC]">
+              EFFICIENCY GAIN: +42.6% COMPACTION RATIO
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-2">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span>PROMPT EXPENDITURE</span>
+                <span className="border border-[#1A1D1A] px-1 bg-[#EDE8DC]">+14.2%</span>
+              </div>
+              <div className="text-2xl font-bold">1,420,890</div>
+              <div className="space-y-1 text-[10px]">
+                <div className="w-full border border-[#1A1D1A] bg-[#FAF8F3] h-2">
+                  <div className="bg-[#1A1D1A] h-full" style={{ width: '86.4%' }} />
+                </div>
+                <div className="text-[9px] text-[#1A1D1A]/80 font-bold">
+                  86.4% PROMPT CACHE HIT
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-2">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span>COMPLETION DRAIN</span>
+                <span className="border border-[#1A1D1A] px-1 bg-[#EDE8DC]">20.0%</span>
+              </div>
+              <div className="text-2xl font-bold">284,110</div>
+              <div className="space-y-1 text-[10px]">
+                <div className="w-full border border-[#1A1D1A] bg-[#FAF8F3] h-2">
+                  <div className="bg-[#1A1D1A] h-full" style={{ width: '20%' }} />
+                </div>
+                <div className="text-[9px] text-[#1A1D1A]/80 font-bold">
+                  BOUNDED JSON SCHEMA
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-2">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span>STREAMING BUFFER CEILING</span>
+                <span className="border border-[#1A1D1A] px-1 bg-[#EDE8DC]">GUARD</span>
+              </div>
+              <div className="text-2xl font-bold">64 MiB</div>
+              <div className="space-y-1 text-[10px]">
+                <div className="w-full border border-[#1A1D1A] bg-[#FAF8F3] h-2">
+                  <div className="bg-[#1A1D1A] h-full" style={{ width: '100%' }} />
+                </div>
+                <div className="text-[9px] text-[#1A1D1A]/80 font-bold">
+                  ZERO-LOSS RECOVERY ACTIVE
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 space-y-2">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span>ACCUMULATED CHARGE</span>
+                <span className="border border-[#1A1D1A] px-1 bg-[#EDE8DC]">EST</span>
+              </div>
+              <div className="text-2xl font-bold">$482.50</div>
+              <div className="space-y-1 text-[10px]">
+                <div className="w-full border border-[#1A1D1A] bg-[#FAF8F3] h-2">
+                  <div className="bg-[#1A1D1A] h-full" style={{ width: '68%' }} />
+                </div>
+                <div className="text-[9px] text-[#1A1D1A]/80 font-bold">
+                  PROMPT CACHING REDUCED 68%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Host Environment Spec & Invariants Register */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: Host Environment Spec (5 cols) */}
+        <div className="lg:col-span-5 border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1A1D1A] pb-2">
+            <div className="flex items-center space-x-2">
+              <Cpu className="w-4 h-4" />
+              <h3 className="text-xs font-bold uppercase tracking-wider">
+                [SCHEMATIC 4.3 // HOST AVIONICS]
+              </h3>
+            </div>
+            <span className="text-[9px] border border-[#1A1D1A] bg-[#EDE8DC] px-1.5 py-0.5 font-bold">
+              VERIFIED
+            </span>
+          </div>
+
+          <div className="space-y-1 text-xs border border-[#1A1D1A] bg-[#F2EFE9] p-3 divide-y divide-[#1A1D1A]/20">
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">HOST BUS</span>
+              <span className="font-bold">po</span>
+            </div>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">OS KERNEL</span>
+              <span className="font-bold">Linux 7.1.9-arch1-2 (x86_64)</span>
+            </div>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">WORKSPACE</span>
+              <span className="font-bold">{activeWorkspace?.name || 'zero-petri'}</span>
+            </div>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">FS ROOT</span>
+              <span className="font-bold truncate max-w-[200px]" title="/home/hideo/Documents/GitHub/zero-petri">
                 .../GitHub/zero-petri
               </span>
             </div>
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Execution Hardware</span>
-              <span className="font-sans text-stone-700">{localNode?.deviceName || 'Generic Linux Client'}</span>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">AVIONICS UNIT</span>
+              <span className="font-bold">{localNode?.deviceName || 'Generic Linux Client'}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-500">Active Operator</span>
-              <span className="font-sans text-stone-800 font-medium">{activeUser?.name || 'Hideo'}</span>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">CHIEF OPERATOR</span>
+              <span className="font-bold">{activeUser?.name || 'Hideo'} (j.sadol@bbs.ac.th)</span>
             </div>
-            <div className="flex justify-between py-1">
-              <span className="text-stone-500">Git Remote</span>
-              <span className="font-sans text-stone-700">github.com:foxlight/zero-petri</span>
+            <div className="flex justify-between py-1.5">
+              <span className="text-[#1A1D1A]/70">UPSTREAM TRUNK</span>
+              <span className="font-bold">github.com:foxlight/zero-petri</span>
             </div>
           </div>
         </div>
 
         {/* Right: Architectural Invariants & Learned Heuristics (7 cols) */}
-        <div className="lg:col-span-7 p-6 rounded-3xl editorial-card space-y-4">
-          <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+        <div className="lg:col-span-7 border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1A1D1A] pb-2">
             <div className="flex items-center space-x-2">
-              <Brain className="w-4 h-4 text-stone-700" />
-              <h3 className="text-sm font-bold text-stone-900 font-sans tracking-tight">
-                Architectural Invariants & Heuristics ({rules.length})
+              <Brain className="w-4 h-4" />
+              <h3 className="text-xs font-bold uppercase tracking-wider">
+                [LOGBOOK 4.4 // INVARIANTS & HEURISTICS ({rules.length})]
               </h3>
             </div>
-            <span className="text-[10px] font-mono font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              active
+            <span className="text-[9px] border border-[#1A1D1A] bg-[#EDE8DC] px-1.5 py-0.5 font-bold">
+              ENFORCED
             </span>
           </div>
 
@@ -393,29 +413,31 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
               type="text"
               value={newRuleInput}
               onChange={(e) => setNewRuleInput(e.target.value)}
-              placeholder="Add distilled invariant rule to memory..."
-              className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 text-xs bg-white text-stone-900 focus:outline-none focus:border-stone-900 font-sans"
+              placeholder="Record distilled invariant directive..."
+              className="flex-1 px-3 py-1.5 border border-[#1A1D1A] bg-[#FAF8F3] text-xs text-[#1A1D1A] placeholder-[#888] focus:outline-none"
             />
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-medium border border-stone-900 flex items-center space-x-1 transition-colors"
+              className="px-3 py-1.5 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] hover:bg-[#333] text-xs font-bold flex items-center space-x-1 cursor-pointer transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
+              <span>[ADD]</span>
             </button>
           </form>
 
-          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="p-3.5 rounded-xl bg-white/80 border border-stone-200/80 hover:border-stone-400 transition-all text-xs"
+                className="p-2.5 border border-[#1A1D1A] bg-[#F2EFE9] text-xs space-y-1"
               >
-                <div className="flex items-center justify-between text-xs font-sans mb-1">
-                  <span className="text-stone-800 font-medium">{rule.category}</span>
-                  <span className="text-stone-400 font-sans">{rule.source}</span>
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-bold border border-[#1A1D1A] px-1 bg-[#EDE8DC]">
+                    {rule.category}
+                  </span>
+                  <span className="text-[#1A1D1A]/60">{rule.source}</span>
                 </div>
-                <div className="text-stone-700 leading-relaxed font-sans font-normal">
+                <div className="text-[#1A1D1A] leading-relaxed">
                   {rule.title}
                 </div>
               </div>

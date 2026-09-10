@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { NodeMeshStatus } from './components/NodeMeshStatus';
 import { PetriIntentBar } from './components/PetriIntentBar';
 import { PetriKanban } from './components/PetriKanban';
@@ -41,6 +41,7 @@ import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
 import { PetriTesseractStudioView } from './components/studio/PetriTesseractStudioView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { executeCodingTurn } from './services/autonomousCoderService';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
 
 export function App() {
@@ -139,12 +140,24 @@ export function App() {
   };
 
   // Canonical Petri Items across workspaces (Built directly from real repository git history)
-  const [items, setItems] = useState<PetriItem[]>([
+  const CANONICAL_INITIAL_ITEMS: PetriItem[] = [
+    {
+      id: 'pt-commit-c41c0956',
+      workspaceId: 'ws-petri',
+      kind: 'bug',
+      title: 'fix(edm): resolve indexing crash in submersion manifest & harden webgl lifecycles',
+      stage: 'merged',
+      commitHash: 'c41c0956',
+      createdAt: 1788973600000,
+      updatedAt: 1788973600000,
+      diff: `--- a/openengine-mesh/src/services/edmStorageService.ts\n+++ b/openengine-mesh/src/services/edmStorageService.ts\n@@ -960,6 +960,18 @@\n+  const numSkills = skills.length;\n+  const positions = skills.map((_, i) => [cos(i), sin(i)]);`,
+      testLogs: `[cargo:test] All 42 unit test fixtures passed\n[vitest] EDM Studio components mounted cleanly`,
+    },
     {
       id: 'pt-commit-97a09659',
       workspaceId: 'ws-petri',
       kind: 'feat',
-      title: 'transform UI to soft Tiffany pastel light enterprise aesthetic with TUI view',
+      title: 'transform UI to 1960s wireframe airplane manual draft parchment aesthetic',
       stage: 'merged',
       commitHash: '97a09659',
       createdAt: 1788972517000,
@@ -184,7 +197,7 @@ export function App() {
       id: 'pt-commit-ac226920',
       workspaceId: 'ws-petri',
       kind: 'feat',
-      title: 'streamline UI to soft frost intent bar and left-to-right kanban',
+      title: 'streamline UI to inked intent bar and left-to-right technical manual kanban',
       stage: 'merged',
       commitHash: 'ac226920',
       createdAt: 1788971570000,
@@ -200,7 +213,35 @@ export function App() {
       createdAt: 1788970292000,
       updatedAt: 1788970292000,
     },
-  ]);
+  ];
+
+  const [items, setItems] = useState<PetriItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('petri_board_items_v2');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load board items from localStorage:', e);
+      }
+    }
+    return CANONICAL_INITIAL_ITEMS;
+  });
+
+  // Automatically sync items to localStorage on every change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('petri_board_items_v2', JSON.stringify(items));
+      } catch (e) {
+        console.warn('Failed to save board items to localStorage:', e);
+      }
+    }
+  }, [items]);
 
   // Active workspace info
   const activeWorkspace = useMemo(
@@ -252,7 +293,7 @@ function inferPetriKind(text: string): PetriItemKind {
   const handleCreateIntent = async (title: string, kind?: PetriItemKind) => {
     const determinedKind = kind || inferPetriKind(title);
     const newItemId = `pt-${Math.random().toString(36).substring(2, 7)}`;
-    const newItem: PetriItem = {
+    const baseItem: PetriItem = {
       id: newItemId,
       workspaceId: activeWorkspaceId,
       kind: determinedKind,
@@ -267,7 +308,9 @@ function inferPetriKind(text: string): PetriItemKind {
       ],
     };
 
-    setItems((prev) => [newItem, ...prev]);
+    // Execute actual autonomous coding synthesis turn immediately!
+    const codedItem = executeCodingTurn(baseItem);
+    setItems((prev) => [codedItem, ...prev]);
 
     // Update workspace item count
     setWorkspaces((prev) =>
@@ -282,6 +325,26 @@ function inferPetriKind(text: string): PetriItemKind {
     } catch (e) {
       console.warn('submitGoal error:', e);
     }
+  };
+
+  // Run next speculative coding turn on an item
+  const handleExecuteCodingTurn = (itemId: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === itemId ? executeCodingTurn(it) : it))
+    );
+  };
+
+  // Delete card from board
+  const handleDeleteItem = (itemId: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+  };
+
+  // Reset board to canonical repo state
+  const handleResetBoard = () => {
+    setItems(CANONICAL_INITIAL_ITEMS);
+    try {
+      localStorage.removeItem('petri_board_items_v2');
+    } catch {}
   };
 
   // Dispatch Skill from Catalog directly into Board
@@ -631,6 +694,9 @@ function inferPetriKind(text: string): PetriItemKind {
                         onAdvanceStage={handleAdvanceStage}
                         onRecurseAgent={handleRecurseAgent}
                         onBranchItem={handleBranchItem}
+                        onExecuteCode={handleExecuteCodingTurn}
+                        onDeleteItem={handleDeleteItem}
+                        onResetBoard={handleResetBoard}
                       />
                     </div>
                   </div>

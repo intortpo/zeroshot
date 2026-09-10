@@ -521,67 +521,81 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
   ];
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 space-y-8 font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
-        <div>
-          <h1 className="text-xl font-semibold font-sans text-stone-900 flex items-center space-x-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
-            <span>Skills Registry</span>
-            <span className="text-xs font-sans font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
-              {skills.length}
-            </span>
-          </h1>
+    <div className="flex-1 w-full overflow-y-auto p-4 sm:p-8 space-y-6 font-mono bg-[#F6F3EC] text-[#1A1D1A]">
+      {/* 1960s Technical Header Panel */}
+      <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1A1D1A] pb-3 mb-3">
+          <div>
+            <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-widest text-[#1A1D1A]/70 mb-1">
+              <span className="px-1 border border-[#1A1D1A] bg-[#EDE8DC]">DOC NO. 60-PETRI-SKL-02</span>
+              <span>//</span>
+              <span>SYSTEM LOGBOOK SECTION 02</span>
+            </div>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#1A1D1A]">
+              AVIONICS SKILLS & SUBSYSTEM REGISTRY
+            </h1>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-80">
+            <Search className="w-3.5 h-3.5 text-[#1A1D1A]/60 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH SUBSYSTEMS, TAGS, WORKFLOWS..."
+              className="w-full bg-[#FAF8F3] border border-[#1A1D1A] pl-9 pr-3 py-1.5 text-xs font-mono text-[#1A1D1A] placeholder-[#888] focus:outline-none"
+            />
+          </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search skills, tags, workflows..."
-            className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2 text-xs font-sans text-stone-900 placeholder-[#555555] focus:outline-none focus:border-stone-900 transition-all"
-          />
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+          <div className="flex items-center space-x-2">
+            <span>REGISTERED CAPABILITIES: {skills.length}</span>
+            <span>·</span>
+            <span>ACTIVE FILTER COUNT: {filteredSkills.length}</span>
+          </div>
+          <div className="font-bold border border-[#1A1D1A] px-2 py-0.5 bg-[#EDE8DC]">
+            ● REGISTRY INTEGRITY: VERIFIED
+          </div>
         </div>
       </div>
 
-      {/* Category Tabs */}
+      {/* Category Inked Tabs */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-1">
         {CATEGORY_TABS.map((tab) => (
           <button
             key={tab.category}
             onClick={() => setSelectedCategory(tab.category)}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-sans transition-all ${
+            className={`flex items-center space-x-1.5 px-3 py-1.5 border border-[#1A1D1A] text-xs font-mono transition-all cursor-pointer ${
               selectedCategory === tab.category
-                ? 'bg-stone-900 text-white font-medium'
-                : 'bg-white/70 text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-white font-normal'
+                ? 'bg-[#1A1D1A] text-[#FAF8F3] font-bold shadow-[2px_2px_0px_#1A1D1A]'
+                : 'bg-[#FAF8F3] text-[#1A1D1A] hover:bg-[#EDE8DC]'
             }`}
           >
             {tab.icon}
             <span>{tab.label}</span>
-            <span className="text-xs text-stone-400 font-sans">({tab.count})</span>
+            <span className="opacity-70">[{tab.count}]</span>
           </button>
         ))}
       </div>
 
       {/* Skills Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredSkills.map((skill) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredSkills.map((skill, idx) => {
           return (
             <div
               key={skill.id}
               onClick={() => setSelectedSkill(skill)}
-              className="bg-white/70 border border-stone-200/80 hover:border-stone-400 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
+              className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 flex flex-col justify-between space-y-3 transition-all shadow-[2px_2px_0px_#1A1D1A] hover:bg-[#F2EFE9] cursor-pointer group"
             >
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {/* Header: Category Badge, Version, and Active Switch */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-[#1A1D1A]/30 pb-2">
                   <div className="flex items-center space-x-2">
-                    <span className="px-2 py-0.5 rounded text-xs font-sans font-medium uppercase bg-stone-100 text-stone-700 border border-stone-200">
+                    <span className="px-1.5 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[9px] font-bold uppercase">
                       {skill.category}
                     </span>
-                    <span className="text-xs font-sans text-stone-400 font-normal">
+                    <span className="text-[10px] text-[#1A1D1A]/70">
                       {skill.version}
                     </span>
                   </div>
@@ -589,37 +603,36 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                   <button
                     type="button"
                     onClick={(e) => toggleSkillActive(skill.id, e)}
-                    className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-xs font-sans transition-colors ${
+                    className={`flex items-center space-x-1 px-2 py-0.5 border border-[#1A1D1A] text-[9px] font-bold transition-colors cursor-pointer ${
                       skill.isActive
-                        ? 'bg-stone-100 border border-stone-200 text-stone-700 font-medium'
-                        : 'bg-stone-100 border border-stone-200 text-stone-400'
+                        ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                        : 'bg-[#EDE8DC] text-[#1A1D1A]/60'
                     }`}
                   >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        skill.isActive ? 'bg-emerald-500' : 'bg-stone-400'
-                      }`}
-                    />
-                    <span>{skill.isActive ? 'ACTIVE' : 'IDLE'}</span>
+                    <span>{skill.isActive ? '● READY' : '○ STANDBY'}</span>
                   </button>
                 </div>
 
                 {/* Title */}
                 <div>
-                  <h3 className="text-sm font-semibold text-stone-900 group-hover:text-stone-950 transition-colors leading-snug">
+                  <div className="text-[10px] text-[#1A1D1A]/60 font-mono">
+                    REF 0{idx + 1} // {skill.name}
+                  </div>
+                  <h3 className="text-xs font-bold text-[#1A1D1A] leading-snug mt-0.5">
                     {skill.title}
                   </h3>
-                  <div className="text-xs font-sans text-stone-400 mt-0.5">
-                    {skill.name}
-                  </div>
                 </div>
 
+                <p className="text-[11px] text-[#1A1D1A]/80 leading-relaxed line-clamp-2">
+                  {skill.description}
+                </p>
+
                 {/* Tags */}
-                <div className="flex flex-wrap gap-1 pt-0.5">
+                <div className="flex flex-wrap gap-1 pt-1">
                   {skill.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 rounded bg-white/80 border border-stone-200 text-xs font-sans text-stone-500 font-normal"
+                      className="px-1.5 py-0.2 border border-[#1A1D1A]/40 bg-[#EDE8DC] text-[9px] font-mono"
                     >
                       #{tag}
                     </span>
@@ -628,9 +641,9 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
               </div>
 
               {/* Sample Prompts & Launch Footer */}
-              <div className="pt-3 border-t border-stone-100 space-y-2">
-                <div className="text-xs font-sans text-stone-400">
-                  Quick Action:
+              <div className="pt-2 border-t border-[#1A1D1A] space-y-1.5">
+                <div className="text-[9px] text-[#1A1D1A]/70 uppercase font-bold">
+                  DIRECTIVE DISPATCH:
                 </div>
                 <button
                   type="button"
@@ -638,12 +651,12 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                     e.stopPropagation();
                     onDispatchSkill(skill.samplePrompts[0], skill.category);
                   }}
-                  className="w-full py-2 px-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-sans transition-all flex items-center justify-between group/btn font-normal"
+                  className="w-full py-1.5 px-2.5 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-[10px] font-mono font-bold transition-all flex items-center justify-between cursor-pointer"
                 >
                   <span className="truncate text-left mr-2">
                     {skill.samplePrompts[0]}
                   </span>
-                  <Play className="w-3 h-3 text-stone-500 flex-shrink-0 group-hover/btn:translate-x-0.5 transition-transform" />
+                  <Play className="w-3 h-3 flex-shrink-0" />
                 </button>
               </div>
             </div>
@@ -653,24 +666,24 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
 
       {/* Detailed Skill Inspection Modal */}
       {selectedSkill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/20 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white/95 border border-stone-200/80 rounded-3xl w-full max-w-2xl overflow-hidden text-stone-800 font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1D1A]/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="border-2 border-[#1A1D1A] bg-[#FAF8F3] w-full max-w-2xl overflow-hidden text-[#1A1D1A] font-mono shadow-[6px_6px_0px_#1A1D1A]">
             {/* Modal Header */}
-            <div className="border-b border-stone-200 p-6 flex items-center justify-between bg-stone-50">
+            <div className="border-b border-[#1A1D1A] p-4 flex items-center justify-between bg-[#EDE8DC]">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded text-xs font-sans font-medium uppercase bg-stone-100 border border-stone-200 text-stone-600">
+                  <span className="px-1.5 py-0.5 border border-[#1A1D1A] bg-[#FAF8F3] text-[10px] font-bold uppercase">
                     {selectedSkill.category}
                   </span>
-                  <span className="text-xs font-sans text-stone-400">
+                  <span className="text-[10px] text-[#1A1D1A]/70">
                     {selectedSkill.version}
                   </span>
                 </div>
-                <h2 className="text-base font-semibold text-stone-900 mt-1.5">
+                <h2 className="text-sm font-bold text-[#1A1D1A] mt-1">
                   {selectedSkill.title}
                 </h2>
-                <div className="text-xs font-sans text-stone-400">
-                  {selectedSkill.name}
+                <div className="text-[10px] text-[#1A1D1A]/70">
+                  SYSTEM IDENT: {selectedSkill.name}
                 </div>
                 {selectedSkill.repoUrl && (
                   <div className="mt-1">
@@ -678,7 +691,7 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                       href={selectedSkill.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center space-x-1 text-xs text-indigo-600 hover:text-indigo-800 font-mono underline"
+                      className="inline-flex items-center space-x-1 text-[10px] underline font-mono text-[#1A1D1A]"
                     >
                       <span>{selectedSkill.repoUrl}</span>
                       <ExternalLink className="w-3 h-3 ml-0.5" />
@@ -689,32 +702,32 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
 
               <button
                 onClick={() => setSelectedSkill(null)}
-                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-white/5 transition-colors"
+                className="px-2 py-1 border border-[#1A1D1A] bg-[#FAF8F3] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-xs font-bold cursor-pointer"
               >
-                ✕
+                [ESC ✕]
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div>
-                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-1.5">
-                  Specification & Architecture
+                <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                  [1.0 SPECIFICATION & FLIGHT ARCHITECTURE]
                 </h4>
-                <p className="text-xs text-stone-600 leading-relaxed">
+                <p className="text-xs text-[#1A1D1A] leading-relaxed">
                   {selectedSkill.description}
                 </p>
               </div>
 
               <div>
-                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
-                  Tags & Capabilities
+                <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                  [2.0 CAPABILITY TAGS]
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedSkill.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-sans text-stone-600"
+                      className="px-2 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[10px]"
                     >
                       #{tag}
                     </span>
@@ -723,8 +736,8 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
               </div>
 
               <div>
-                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2.5">
-                  Executable Workflow Prompts (Click to Dispatch to Board)
+                <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                  [3.0 DISPATCH DIRECTIVES (CLICK TO INGEST TO BOARD)]
                 </h4>
                 <div className="space-y-2">
                   {selectedSkill.samplePrompts.map((prompt, pIdx) => (
@@ -734,13 +747,13 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
                         onDispatchSkill(prompt, selectedSkill.category);
                         setSelectedSkill(null);
                       }}
-                      className="w-full text-left p-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-stone-400 text-xs font-sans text-stone-800 hover:text-stone-950 transition-all flex items-center justify-between group"
+                      className="w-full text-left p-2.5 border border-[#1A1D1A] bg-[#F2EFE9] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-xs transition-all flex items-center justify-between cursor-pointer group"
                     >
-                      <div className="flex items-center space-x-2.5">
-                        <span className="text-stone-400 font-semibold">0{pIdx + 1}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold">0{pIdx + 1} //</span>
                         <span>{prompt}</span>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-stone-900 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 ml-2" />
                     </button>
                   ))}
                 </div>
@@ -748,17 +761,17 @@ export const SkillsCatalog: React.FC<SkillsCatalogProps> = ({ onDispatchSkill })
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-xs font-sans text-stone-400">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Verified autonomous capability</span>
+            <div className="p-3 border-t border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-between">
+              <div className="flex items-center space-x-1.5 text-[10px]">
+                <ShieldCheck className="w-4 h-4" />
+                <span>FORMALLY VERIFIED AUTONOMOUS SUBSYSTEM</span>
               </div>
 
               <button
                 onClick={() => setSelectedSkill(null)}
-                className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black border border-stone-900 text-xs font-sans font-medium text-white transition-colors"
+                className="px-3 py-1 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] text-xs font-bold hover:bg-[#333] cursor-pointer"
               >
-                Close
+                [CLOSE]
               </button>
             </div>
           </div>

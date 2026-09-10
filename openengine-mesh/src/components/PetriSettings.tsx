@@ -148,32 +148,31 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
             </div>
 
             {/* Status Badges */}
-            <div className="flex items-center flex-wrap gap-2 text-xs">
-              <div className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-stone-700 flex items-center space-x-1.5 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
-                <span>Target: Active</span>
+            <div className="flex items-center flex-wrap gap-2 text-xs font-mono">
+              <div className="px-2 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[#1A1D1A] flex items-center space-x-1.5 font-bold">
+                <span className="w-1.5 h-1.5 bg-[#1A1D1A]" />
+                <span>TARGET: ACTIVE</span>
               </div>
-              <div className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-stone-700 font-medium">
-                Cluster: Connected
+              <div className="px-2 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[#1A1D1A] font-bold">
+                CLUSTER: CONNECTED
               </div>
               <div
-                className={`px-2.5 py-1 rounded-lg border transition-colors flex items-center space-x-1.5 font-medium ${
+                className={`px-2 py-0.5 border border-[#1A1D1A] transition-colors flex items-center space-x-1.5 font-bold ${
                   settings.failClosedArmed
-                    ? 'bg-orange-50 border-orange-200 text-[#FF5F1F]'
-                    : 'bg-stone-100 border-stone-200 text-stone-400'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                    : 'bg-[#EDE8DC] text-[#1A1D1A]/70'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${settings.failClosedArmed ? 'bg-[#FF5F1F]' : 'bg-stone-400'}`} />
-                <span>{settings.failClosedArmed ? 'Fail-Closed Armed' : 'Permissive Bypass'}</span>
+                <span>{settings.failClosedArmed ? '● FAIL-CLOSED ARMED' : '○ PERMISSIVE BYPASS'}</span>
               </div>
             </div>
           </div>
 
           {/* Quick Notice Banner */}
           {saveStatus && (
-            <div className="mt-4 p-3 rounded-xl bg-stone-900 text-white text-xs flex items-center justify-between font-medium">
+            <div className="mt-4 p-2.5 border border-[#1A1D1A] bg-[#FAF8F3] text-[#1A1D1A] text-xs flex items-center justify-between font-mono font-bold shadow-[2px_2px_0px_#1A1D1A]">
               <span className="flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-[#0ABAB5]" />
+                <CheckCircle2 className="w-4 h-4" />
                 <span>{saveStatus}</span>
               </span>
             </div>
@@ -250,12 +249,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               >
                 {settings.failClosedArmed ? (
                   <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
+                    <span className="w-1.5 h-1.5 bg-[#FAF8F3]" />
                     <span>Armed (Fail-Closed)</span>
                   </>
                 ) : (
                   <>
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#FF5F1F]" />
+                    <AlertTriangle className="w-3.5 h-3.5" />
                     <span>Permissive (Caution)</span>
                   </>
                 )}
@@ -267,17 +266,17 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
         {/* Section 2: Connection Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* AI Providers & Google Antigravity Center Card */}
-          <div className="md:col-span-2 bg-white/85 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-4">
+          <div className="md:col-span-2 border border-[#1A1D1A] bg-[#FAF8F3] p-6 space-y-4 shadow-[2px_2px_0px_#1A1D1A]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1A1D1A] pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-emerald-500 flex items-center justify-center text-white shadow-xs">
+                <div className="w-8 h-8 border border-[#1A1D1A] bg-[#1A1D1A] flex items-center justify-center text-[#FAF8F3]">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-stone-900">
+                  <h2 className="text-sm font-bold text-[#1A1D1A] font-mono">
                     Google Antigravity & AI Models Center
                   </h2>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-[#1A1D1A]/70 font-mono">
                     Manage AGY CLI local binary execution, live latency, reasoning effort, and provider admission
                   </p>
                 </div>
@@ -285,9 +284,9 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               <button
                 type="button"
                 onClick={onOpenAiProviderModal}
-                className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+                className="px-3.5 py-1.5 border border-[#1A1D1A] bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shrink-0"
               >
-                <Sliders className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                <Sliders className="w-3.5 h-3.5" />
                 <span>Open AI Models & Providers Center</span>
               </button>
             </div>
@@ -548,9 +547,9 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
             <button
               type="submit"
-              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-medium transition-all"
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-2 border border-[#1A1D1A] bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-mono font-bold transition-all cursor-pointer shadow-[2px_2px_0px_#1A1D1A]"
             >
-              <Save className="w-3.5 h-3.5 text-[#0ABAB5]" />
+              <Save className="w-3.5 h-3.5" />
               <span>Save Changes</span>
             </button>
           </div>

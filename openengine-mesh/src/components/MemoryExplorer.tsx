@@ -14,7 +14,6 @@ import {
   Cpu,
   Key,
   Calendar,
-  X,
   History,
 } from 'lucide-react';
 import { MemoryEntry, MemoryType, Workspace } from '../types';
@@ -250,171 +249,184 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
     switch (type) {
       case 'semantic':
         return {
-          label: 'SEMANTIC / ADR',
-          icon: <BookOpen className="w-3.5 h-3.5 text-stone-700" />,
-          style: 'bg-stone-100 text-stone-900 border-stone-300 font-semibold',
+          label: 'SEMANTIC (ADR)',
+          icon: <BookOpen className="w-3.5 h-3.5" />,
+          style: 'bg-[#EDE8DC] text-[#1A1D1A] border-[#1A1D1A]',
         };
       case 'episodic':
         return {
-          label: 'EPISODIC / RUN',
-          icon: <History className="w-3.5 h-3.5 text-emerald-400" />,
-          style: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          label: 'EPISODIC (RUN)',
+          icon: <History className="w-3.5 h-3.5" />,
+          style: 'bg-[#EDE8DC] text-[#1A1D1A] border-[#1A1D1A]',
         };
       case 'rule':
         return {
           label: 'RULE & INVARIANT',
-          icon: <FileCode2 className="w-3.5 h-3.5 text-amber-400" />,
-          style: 'bg-amber-50 text-amber-700 border-amber-200',
+          icon: <FileCode2 className="w-3.5 h-3.5" />,
+          style: 'bg-[#EDE8DC] text-[#1A1D1A] border-[#1A1D1A]',
         };
       case 'vector':
         return {
-          label: 'VECTOR STORE',
-          icon: <Cpu className="w-3.5 h-3.5 text-cyan-400" />,
-          style: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+          label: 'VECTOR EMBEDDING',
+          icon: <Cpu className="w-3.5 h-3.5" />,
+          style: 'bg-[#EDE8DC] text-[#1A1D1A] border-[#1A1D1A]',
         };
       case 'config':
         return {
           label: 'CONFIG & STATE',
-          icon: <Key className="w-3.5 h-3.5 text-purple-400" />,
-          style: 'bg-purple-50 text-purple-800 border-purple-200',
+          icon: <Key className="w-3.5 h-3.5" />,
+          style: 'bg-[#EDE8DC] text-[#1A1D1A] border-[#1A1D1A]',
         };
     }
   };
 
   const TYPE_TABS: { type: MemoryType | 'all'; label: string; count: number }[] = [
-    { type: 'all', label: 'All Memory', count: memories.length },
-    { type: 'semantic', label: 'Semantic (ADRs)', count: memories.filter((m) => m.type === 'semantic').length },
-    { type: 'episodic', label: 'Episodic (Runs)', count: memories.filter((m) => m.type === 'episodic').length },
-    { type: 'rule', label: 'Rules & Invariants', count: memories.filter((m) => m.type === 'rule').length },
-    { type: 'vector', label: 'Vector Store', count: memories.filter((m) => m.type === 'vector').length },
-    { type: 'config', label: 'Configs & Keys', count: memories.filter((m) => m.type === 'config').length },
+    { type: 'all', label: 'ALL LOGS', count: memories.length },
+    { type: 'semantic', label: 'SEMANTIC (ADR)', count: memories.filter((m) => m.type === 'semantic').length },
+    { type: 'episodic', label: 'EPISODIC (RUNS)', count: memories.filter((m) => m.type === 'episodic').length },
+    { type: 'rule', label: 'RULES & INVARIANTS', count: memories.filter((m) => m.type === 'rule').length },
+    { type: 'vector', label: 'VECTOR EMBEDDINGS', count: memories.filter((m) => m.type === 'vector').length },
+    { type: 'config', label: 'CONFIGS & KEYS', count: memories.filter((m) => m.type === 'config').length },
   ];
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 space-y-8">
-      {/* Top Header & Telemetry */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
-        <div>
-          <h1 className="text-xl font-semibold font-sans text-stone-900 flex items-center space-x-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0ABAB5]" />
-            <span>Memory Explorer</span>
-            <span className="text-xs font-sans font-medium text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
-              {filteredMemories.length} Nodes
-            </span>
-          </h1>
+    <div className="flex-1 w-full overflow-y-auto p-4 sm:p-8 space-y-6 font-mono bg-[#F6F3EC] text-[#1A1D1A]">
+      {/* 1960s Technical Header Panel */}
+      <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 shadow-[2px_2px_0px_#1A1D1A]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1A1D1A] pb-3 mb-3">
+          <div>
+            <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-widest text-[#1A1D1A]/70 mb-1">
+              <span className="px-1 border border-[#1A1D1A] bg-[#EDE8DC]">DOC NO. 60-PETRI-MEM-03</span>
+              <span>//</span>
+              <span>SYSTEM LOGBOOK SECTION 03</span>
+            </div>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#1A1D1A]">
+              FLIGHT DATA RECORDER & ARCHITECTURAL LOGBOOK
+            </h1>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsAddingMemory(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] hover:bg-[#333] text-xs font-bold transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>[RECORD LOG ENTRY]</span>
+            </button>
+          </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setIsAddingMemory(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-sans font-semibold transition-all border border-stone-900"
-          >
-            <Plus className="w-4 h-4 text-white" />
-            <span>Add Memory Node</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+          <div className="flex items-center space-x-2">
+            <span>REGISTERED MEMORY NODES: {memories.length}</span>
+            <span>·</span>
+            <span>INDEXED TOKENS: {totalTokens.toLocaleString()}</span>
+          </div>
+          <div className="font-bold border border-[#1A1D1A] px-2 py-0.5 bg-[#EDE8DC]">
+            ● VAULT STATUS: PERSISTED & DURABLE
+          </div>
         </div>
       </div>
 
-      {/* Memory Telemetry Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/70 border border-stone-200/80 rounded-2xl p-4 flex items-center space-x-3.5 backdrop-blur-2xl">
-          <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-700">
-            <Database className="w-4 h-4" />
+      {/* Memory Telemetry Instruments */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#1A1D1A]/70">
+            <span>INDEXED TOKENS</span>
+            <Database className="w-3.5 h-3.5 text-[#1A1D1A]" />
           </div>
-          <div>
-            <div className="text-xs text-stone-400 font-sans">Indexed Tokens</div>
-            <div className="text-base sm:text-lg font-semibold font-sans text-stone-900">
-              {totalTokens.toLocaleString()}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white/70 border border-stone-200/80 rounded-2xl p-4 flex items-center space-x-3.5 backdrop-blur-2xl">
-          <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-emerald-600">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs text-stone-400 font-sans">Cache Hit Rate</div>
-            <div className="text-base sm:text-lg font-semibold font-sans text-stone-900">89.4%</div>
+          <div className="text-xl font-bold">{totalTokens.toLocaleString()}</div>
+          <div className="text-[9px] text-[#1A1D1A]/60 uppercase border-t border-[#1A1D1A]/20 pt-1">
+            AST COMPACTED VECTORS
           </div>
         </div>
 
-        <div className="bg-white/70 border border-stone-200/80 rounded-2xl p-4 flex items-center space-x-3.5 backdrop-blur-2xl">
-          <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-700">
-            <Cpu className="w-4 h-4" />
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#1A1D1A]/70">
+            <span>CACHE HIT RATIO</span>
+            <Sparkles className="w-3.5 h-3.5 text-[#1A1D1A]" />
           </div>
-          <div>
-            <div className="text-xs text-stone-400 font-sans">Vector Model</div>
-            <div className="text-xs font-sans font-medium text-stone-800 truncate max-w-[150px]">
-              text-emb-3-small
-            </div>
+          <div className="text-xl font-bold">89.4%</div>
+          <div className="text-[9px] text-[#1A1D1A]/60 uppercase border-t border-[#1A1D1A]/20 pt-1">
+            PROMPT REUSE GAIN
           </div>
         </div>
 
-        <div className="bg-white/70 border border-stone-200/80 rounded-2xl p-4 flex items-center space-x-3.5 backdrop-blur-2xl">
-          <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-700">
-            <Layers className="w-4 h-4" />
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#1A1D1A]/70">
+            <span>VECTOR MODEL</span>
+            <Cpu className="w-3.5 h-3.5 text-[#1A1D1A]" />
           </div>
-          <div>
-            <div className="text-xs text-stone-400 font-sans">Workspace Scope</div>
-            <div className="text-xs font-medium text-stone-800 truncate max-w-[150px] font-sans">
-              {filterWorkspace ? activeWorkspace?.name || 'Current' : 'All Workspaces'}
-            </div>
+          <div className="text-sm font-bold truncate">text-emb-3-small</div>
+          <div className="text-[9px] text-[#1A1D1A]/60 uppercase border-t border-[#1A1D1A]/20 pt-1">
+            COSINE DIST 1536D
+          </div>
+        </div>
+
+        <div className="border border-[#1A1D1A] bg-[#FAF8F3] p-3 shadow-[2px_2px_0px_#1A1D1A] space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#1A1D1A]/70">
+            <span>FLIGHT SCOPE</span>
+            <Layers className="w-3.5 h-3.5 text-[#1A1D1A]" />
+          </div>
+          <div className="text-sm font-bold truncate">
+            {filterWorkspace ? activeWorkspace?.name || 'Current' : 'All Workspaces'}
+          </div>
+          <div className="text-[9px] text-[#1A1D1A]/60 uppercase border-t border-[#1A1D1A]/20 pt-1">
+            WORKSPACE ENFORCED
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        {/* Type Pills */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        {/* Type Inked Pills */}
         <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 max-w-full">
           {TYPE_TABS.map((tab) => (
             <button
               key={tab.type}
               onClick={() => setSelectedType(tab.type)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-sans transition-all ${
+              className={`flex items-center space-x-1 px-2.5 py-1 border border-[#1A1D1A] text-xs font-mono transition-all cursor-pointer ${
                 selectedType === tab.type
-                  ? 'bg-stone-900 text-white font-medium'
-                  : 'bg-white/70 text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-white font-normal'
+                  ? 'bg-[#1A1D1A] text-[#FAF8F3] font-bold shadow-[2px_2px_0px_#1A1D1A]'
+                  : 'bg-[#FAF8F3] text-[#1A1D1A] hover:bg-[#EDE8DC]'
               }`}
             >
               <span>{tab.label}</span>
-              <span className="text-xs text-stone-400 font-sans">({tab.count})</span>
+              <span className="opacity-70">[{tab.count}]</span>
             </button>
           ))}
         </div>
 
         {/* Workspace Scope Toggle & Search */}
-        <div className="flex items-center space-x-3 w-full md:w-auto">
+        <div className="flex items-center space-x-2 w-full md:w-auto">
           <button
             onClick={() => setFilterWorkspace(!filterWorkspace)}
-            className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white/70 hover:bg-white text-xs text-stone-700 flex items-center space-x-1.5 transition-colors font-sans"
+            className="px-2.5 py-1 border border-[#1A1D1A] bg-[#EDE8DC] text-xs font-mono flex items-center space-x-1 cursor-pointer hover:bg-[#FAF8F3]"
           >
-            <span>Scope:</span>
-            <span className="font-medium text-stone-900">
-              {filterWorkspace ? activeWorkspace?.name : 'Global'}
+            <span className="text-[#1A1D1A]/70">SCOPE:</span>
+            <span className="font-bold">
+              {filterWorkspace ? activeWorkspace?.name : 'GLOBAL'}
             </span>
           </button>
 
-          <div className="relative flex-1 md:w-72">
-            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-3.5 h-3.5 text-[#1A1D1A]/60 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search memory entries..."
-              className="w-full bg-white/70 border border-stone-200/80 rounded-xl pl-9 pr-3.5 py-1.5 text-xs font-sans text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:bg-white font-normal"
+              placeholder="SEARCH MEMORY LOGS..."
+              className="w-full bg-[#FAF8F3] border border-[#1A1D1A] pl-8 pr-2.5 py-1 text-xs font-mono text-[#1A1D1A] placeholder-[#888] focus:outline-none"
             />
           </div>
         </div>
       </div>
 
       {/* Memory Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredMemories.length === 0 ? (
-          <div className="col-span-full h-40 flex flex-col items-center justify-center border border-dashed border-stone-200 rounded-2xl text-xs text-stone-400 space-y-1.5 font-sans">
-            <Brain className="w-6 h-6 text-stone-300" />
-            <span>No memory records match query</span>
+          <div className="col-span-full h-36 flex flex-col items-center justify-center border border-dashed border-[#1A1D1A] bg-[#FAF8F3] text-xs text-[#1A1D1A]/60 space-y-1 font-mono">
+            <Brain className="w-5 h-5" />
+            <span>NO FLIGHT LOG ENTRIES MATCH QUERY</span>
           </div>
         ) : (
           filteredMemories.map((mem) => {
@@ -424,45 +436,48 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
               <div
                 key={mem.id}
                 onClick={() => setSelectedMemory(mem)}
-                className="bg-white/70 border border-stone-200/80 hover:border-stone-400 rounded-2xl p-5 flex flex-col justify-between space-y-3.5 transition-all duration-200 backdrop-blur-2xl group cursor-pointer"
+                className="border border-[#1A1D1A] bg-[#FAF8F3] p-4 flex flex-col justify-between space-y-3 transition-all shadow-[2px_2px_0px_#1A1D1A] hover:bg-[#F2EFE9] cursor-pointer group"
               >
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {/* Top: Type Badge, Importance, and Timestamp */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-[#1A1D1A]/20 pb-2">
                     <div className="flex items-center space-x-2">
                       <span
-                        className={`flex items-center space-x-1.5 px-2 py-0.5 rounded text-xs font-sans font-medium border ${typeStyle.style}`}
+                        className={`flex items-center space-x-1 px-1.5 py-0.5 border text-[9px] font-bold ${typeStyle.style}`}
                       >
                         {typeStyle.icon}
                         <span>{typeStyle.label}</span>
                       </span>
 
                       <span
-                        className={`px-2 py-0.5 rounded text-xs font-sans uppercase font-medium ${
+                        className={`px-1.5 py-0.5 border border-[#1A1D1A] text-[9px] font-bold uppercase ${
                           mem.importance === 'critical'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-[#8B0000] text-[#FAF8F3]'
                             : mem.importance === 'high'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-stone-100 text-stone-500 border border-stone-200'
+                            ? 'bg-[#EDE8DC] text-[#1A1D1A]'
+                            : 'bg-[#FAF8F3] text-[#1A1D1A]/70'
                         }`}
                       >
                         {mem.importance}
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 text-xs font-sans text-stone-400">
+                    <div className="flex items-center space-x-1 text-[10px] text-[#1A1D1A]/60">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(mem.timestamp).toLocaleDateString()}</span>
                     </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-sm font-semibold text-stone-900 group-hover:text-stone-950 transition-colors leading-snug">
+                  <div className="text-[10px] text-[#1A1D1A]/60 font-mono">
+                    ID: #{mem.id}
+                  </div>
+                  <h3 className="text-xs font-bold text-[#1A1D1A] leading-snug">
                     {mem.title}
                   </h3>
 
                   {/* Content snippet */}
-                  <div className="bg-stone-50/80 border border-stone-200 rounded-xl p-3 text-xs font-sans text-stone-700 leading-relaxed line-clamp-2">
+                  <div className="border border-[#1A1D1A]/40 bg-[#F2EFE9] p-2.5 text-[11px] text-[#1A1D1A] leading-relaxed line-clamp-2">
                     {mem.content}
                   </div>
 
@@ -471,7 +486,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                     {mem.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded bg-white border border-stone-200 text-xs font-sans text-stone-500 font-normal"
+                        className="px-1.5 py-0.2 border border-[#1A1D1A]/40 bg-[#EDE8DC] text-[9px]"
                       >
                         #{tag}
                       </span>
@@ -480,22 +495,22 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                 </div>
 
                 {/* Footer: Tokens & Actions */}
-                <div className="pt-3.5 border-t border-stone-200 flex items-center justify-between text-xs font-sans text-stone-400">
+                <div className="pt-2 border-t border-[#1A1D1A] flex items-center justify-between text-[10px] text-[#1A1D1A]/70">
                   <div className="flex items-center space-x-2">
-                    <span>{mem.tokens} tokens</span>
+                    <span className="font-bold">{mem.tokens} TOKENS</span>
                     <span>·</span>
-                    <span className="text-stone-500">{mem.workspaceId}</span>
+                    <span>{mem.workspaceId}</span>
                   </div>
 
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1">
                     <button
                       type="button"
                       onClick={(e) => handleCopyContent(mem.content, mem.id, e)}
-                      className="p-1.5 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-white/5 transition-colors"
+                      className="p-1 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] transition-colors cursor-pointer"
                       title="Copy content"
                     >
                       {copiedId === mem.id ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -504,7 +519,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
                     <button
                       type="button"
                       onClick={(e) => handleDeleteMemory(mem.id, e)}
-                      className="p-1.5 rounded-lg text-stone-400 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      className="p-1 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#8B0000] hover:text-[#FAF8F3] transition-colors cursor-pointer"
                       title="Prune memory record"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -519,24 +534,22 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
 
       {/* Memory Detail Modal */}
       {selectedMemory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/20 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white/95 border border-stone-200/80 rounded-3xl w-full max-w-2xl overflow-hidden text-stone-800 font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1D1A]/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="border-2 border-[#1A1D1A] bg-[#FAF8F3] w-full max-w-2xl overflow-hidden text-[#1A1D1A] font-mono shadow-[6px_6px_0px_#1A1D1A]">
             {/* Modal Header */}
-            <div className="border-b border-stone-200 p-6 flex items-center justify-between bg-stone-50">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-xl bg-stone-100 border border-stone-200">
-                  <Brain className="w-4 h-4 text-stone-700" />
-                </div>
+            <div className="border-b border-[#1A1D1A] p-4 flex items-center justify-between bg-[#EDE8DC]">
+              <div className="flex items-center space-x-2.5">
+                <Brain className="w-4 h-4" />
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-sans uppercase text-stone-400">
+                    <span className="text-[10px] font-bold uppercase">
                       {selectedMemory.type}
                     </span>
-                    <span className="text-xs font-sans text-stone-400">
+                    <span className="text-[10px] opacity-70">
                       #{selectedMemory.id}
                     </span>
                   </div>
-                  <h2 className="text-sm font-semibold text-stone-900 mt-0.5">
+                  <h2 className="text-xs sm:text-sm font-bold mt-0.5">
                     {selectedMemory.title}
                   </h2>
                 </div>
@@ -544,43 +557,43 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
 
               <button
                 onClick={() => setSelectedMemory(null)}
-                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-white/5 transition-colors"
+                className="px-2 py-1 border border-[#1A1D1A] bg-[#FAF8F3] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-xs font-bold cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                [ESC ✕]
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div>
-                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
-                  Memory Payload & Knowledge Content
+                <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                  [1.0 PAYLOAD & SYSTEM CONTENT]
                 </h4>
-                <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs font-sans text-stone-700 leading-relaxed whitespace-pre-wrap">
+                <div className="border border-[#1A1D1A] bg-[#F2EFE9] p-3 text-xs leading-relaxed whitespace-pre-wrap">
                   {selectedMemory.content}
                 </div>
               </div>
 
               {selectedMemory.metadata && (
                 <div>
-                  <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
-                    Provenance & Structured Metadata
+                  <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                    [2.0 PROVENANCE & STRUCTURED METADATA]
                   </h4>
-                  <pre className="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs font-mono text-cyan-800 overflow-x-auto">
+                  <pre className="border border-[#1A1D1A] bg-[#EDE8DC] p-3 text-[11px] overflow-x-auto">
                     {JSON.stringify(selectedMemory.metadata, null, 2)}
                   </pre>
                 </div>
               )}
 
               <div>
-                <h4 className="text-xs font-sans font-medium text-stone-400 uppercase mb-2">
-                  Indexed Tags
+                <h4 className="text-[10px] font-bold uppercase border-b border-[#1A1D1A] pb-1 mb-1.5">
+                  [3.0 INDEXED TAGS]
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedMemory.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-200 text-xs font-sans text-stone-600"
+                      className="px-2 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] text-[10px]"
                     >
                       #{tag}
                     </span>
@@ -590,16 +603,16 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
-              <span className="text-xs font-sans text-stone-400">
-                Created {new Date(selectedMemory.timestamp).toLocaleString()}
+            <div className="p-3 border-t border-[#1A1D1A] bg-[#EDE8DC] flex items-center justify-between">
+              <span className="text-[10px] opacity-70">
+                LOGGED: {new Date(selectedMemory.timestamp).toLocaleString()}
               </span>
 
               <button
                 onClick={() => setSelectedMemory(null)}
-                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-[#252525] border border-stone-200 text-xs font-sans font-medium text-stone-900 transition-colors"
+                className="px-3 py-1 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] text-xs font-bold hover:bg-[#333] cursor-pointer"
               >
-                Close
+                [CLOSE]
               </button>
             </div>
           </div>
@@ -608,85 +621,85 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
 
       {/* Add Memory Node Modal */}
       {isAddingMemory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/20 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white/95 border border-stone-200/80 rounded-3xl w-full max-w-xl overflow-hidden text-stone-800 font-sans">
-            <div className="border-b border-stone-200 p-5 flex items-center justify-between bg-stone-50">
-              <div className="flex items-center space-x-2.5">
-                <Brain className="w-4 h-4 text-stone-700" />
-                <h2 className="text-sm font-semibold text-stone-900">
-                  Add Memory Node
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1D1A]/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="border-2 border-[#1A1D1A] bg-[#FAF8F3] w-full max-w-xl overflow-hidden text-[#1A1D1A] font-mono shadow-[6px_6px_0px_#1A1D1A]">
+            <div className="border-b border-[#1A1D1A] p-4 flex items-center justify-between bg-[#EDE8DC]">
+              <div className="flex items-center space-x-2">
+                <Brain className="w-4 h-4" />
+                <h2 className="text-xs sm:text-sm font-bold">
+                  RECORD FLIGHT MEMORY ENTRY
                 </h2>
               </div>
               <button
                 onClick={() => setIsAddingMemory(false)}
-                className="p-1 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-stone-100"
+                className="px-2 py-1 border border-[#1A1D1A] bg-[#FAF8F3] hover:bg-[#1A1D1A] hover:text-[#FAF8F3] text-xs font-bold cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                [ESC ✕]
               </button>
             </div>
 
-            <form onSubmit={handleAddMemorySubmit} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-sans font-medium text-stone-600">Memory Type</label>
+            <form onSubmit={handleAddMemorySubmit} className="p-4 sm:p-6 space-y-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase">ENTRY TYPE</label>
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as MemoryType)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-[#FAF8F3] border border-[#1A1D1A] px-2.5 py-1.5 text-xs focus:outline-none"
                 >
-                  <option value="semantic">Semantic (ADR / Concept)</option>
+                  <option value="semantic">Semantic (ADR / Architectural Concept)</option>
                   <option value="rule">Rule & Invariant Guard</option>
-                  <option value="episodic">Episodic (Run Record)</option>
+                  <option value="episodic">Episodic (Flight Run Record)</option>
                   <option value="vector">Vector Store Embedding</option>
                   <option value="config">Config & State</option>
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-sans font-medium text-stone-600">Title</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase">ENTRY TITLE</label>
                 <input
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. ADR 0004: Eventarc Concurrency Guard"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-[#FAF8F3] border border-[#1A1D1A] px-2.5 py-1.5 text-xs text-[#1A1D1A] placeholder-[#888] focus:outline-none"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-sans font-medium text-stone-600">Knowledge Content</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase">KNOWLEDGE PAYLOAD</label>
                 <textarea
                   required
                   rows={4}
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   placeholder="Describe the decision, heuristic, or learned constraint..."
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-[#FAF8F3] border border-[#1A1D1A] px-2.5 py-1.5 text-xs text-[#1A1D1A] placeholder-[#888] focus:outline-none"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-sans font-medium text-stone-600">Tags (comma-separated)</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase">INDEXED TAGS (COMMA-SEPARATED)</label>
                 <input
                   value={newTags}
                   onChange={(e) => setNewTags(e.target.value)}
                   placeholder="e.g. adr, eventarc, concurrency, fail-closed"
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-sans text-stone-900 focus:outline-none focus:border-stone-900"
+                  className="w-full bg-[#FAF8F3] border border-[#1A1D1A] px-2.5 py-1.5 text-xs text-[#1A1D1A] placeholder-[#888] focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-200">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#1A1D1A]">
                 <button
                   type="button"
                   onClick={() => setIsAddingMemory(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-sans font-medium text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors"
+                  className="px-3 py-1 border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#FAF8F3] text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Cancel
+                  [CANCEL]
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-sans font-semibold transition-all border border-stone-900"
+                  className="px-4 py-1 border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] text-xs font-bold hover:bg-[#333] transition-colors cursor-pointer"
                 >
-                  Save to Memory
+                  [COMMIT TO VAULT]
                 </button>
               </div>
             </form>
