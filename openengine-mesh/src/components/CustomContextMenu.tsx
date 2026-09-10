@@ -9,7 +9,9 @@ import {
   MousePointerClick,
   FileText,
   RotateCw,
+  Workflow,
 } from 'lucide-react';
+import { PetriViewMode } from '../types';
 
 interface ContextMenuState {
   visible: boolean;
@@ -23,7 +25,7 @@ interface ContextMenuState {
 }
 
 interface CustomContextMenuProps {
-  onSelectView?: (view: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings') => void;
+  onSelectView?: (view: PetriViewMode) => void;
   currentView?: string;
 }
 
@@ -209,7 +211,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
     closeMenu();
   };
 
-  const handleQuickNavigate = (view: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings') => {
+  const handleQuickNavigate = (view: PetriViewMode) => {
     onSelectView?.(view);
     closeMenu();
   };
@@ -316,6 +318,15 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           <div className="px-2.5 py-1 text-[9px] text-stone-400 font-semibold uppercase tracking-wider">
             Switch View
           </div>
+
+          <button
+            type="button"
+            onClick={() => handleQuickNavigate('graph')}
+            className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-stone-100 text-stone-700 transition-colors"
+          >
+            <Workflow className="w-3 h-3 text-[#0ABAB5]" />
+            <span className="text-[11px] font-medium">Orchestration Graph</span>
+          </button>
 
           <button
             type="button"

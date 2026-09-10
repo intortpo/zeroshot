@@ -223,7 +223,7 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'board' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+export type PetriViewMode = 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
 
 // Bevy & Avian Physics Game Studio Types
 export interface GameQuestionOption {

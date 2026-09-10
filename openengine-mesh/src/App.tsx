@@ -13,6 +13,7 @@ import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
+import { OrchestrationGraphView } from './components/OrchestrationGraphView';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
@@ -411,6 +412,20 @@ export function App() {
           </div>
         )}
  
+        {/* View: Orchestration Graph (zeroshot software-change pipeline) */}
+        {currentView === 'graph' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <OrchestrationGraphView
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              items={visibleItems}
+              onAdvanceStage={handleAdvanceStage}
+              onOpenApproval={handleOpenApproval}
+              onSubmitGoal={(goalText) => handleCreateIntent(goalText, 'feat')}
+            />
+          </div>
+        )}
+
         {/* View: Zero (Zeroshot v8 Engine & Invariants) */}
         {currentView === 'zero' && (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
