@@ -29,6 +29,7 @@ import {
 import { execInDevContainer } from '../../services/devcontainerService';
 import { PetriSubmersionCanvas } from './PetriSubmersionCanvas';
 import { PetriHourglassStream } from './PetriHourglassStream';
+import { PetriSubmersionSuite } from './PetriSubmersionSuite';
 import { EdmEarlyWarningCard } from './EdmEarlyWarningCard';
 import { Workspace, UserProfile } from '../../types';
 
@@ -62,7 +63,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   const [qMatrix, setQMatrix] = useState<QMatrixItem[]>(() => CANONICAL_Q_MATRIX);
   const [isExecutingPipeline, setIsExecutingPipeline] = useState(false);
   const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'diagnostics' | 'qmatrix' | 'ingestion' | 'hourglass'>('diagnostics');
+  const [activeTab, setActiveTab] = useState<'diagnostics' | 'submersion_suite' | 'qmatrix' | 'ingestion' | 'hourglass'>('diagnostics');
   const [interventionNotice, setInterventionNotice] = useState<string | null>(null);
 
   // Ingest source when selectedFederatedFileId changes from parent
@@ -322,6 +323,16 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
           Student Latent Profiles & Early Warning
         </button>
         <button
+          onClick={() => setActiveTab('submersion_suite')}
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'submersion_suite'
+              ? 'border-teal-600 text-teal-700 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          ✦ Submersion Analytics Suite (Lieflat Charts)
+        </button>
+        <button
           onClick={() => setActiveTab('qmatrix')}
           className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'qmatrix'
@@ -529,6 +540,20 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Tab 2: Submersion Analytics Suite (Lieflat Charts) */}
+        {activeTab === 'submersion_suite' && (
+          <div className="animate-in fade-in duration-200">
+            <PetriSubmersionSuite
+              students={students}
+              selectedStudentId={selectedStudentId}
+              onSelectStudent={(id) => {
+                setSelectedStudentId(id);
+                setActiveTab('diagnostics');
+              }}
+            />
           </div>
         )}
 
