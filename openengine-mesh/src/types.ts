@@ -541,4 +541,49 @@ export interface AgentationAnnotation {
   createdAt: number;
 }
 
+// ============================================================================
+// Google Antigravity (AGY) CLI & AI Provider Management Types
+// ============================================================================
+
+export type AiProviderType = 'agy' | 'anthropic' | 'openai' | 'ollama' | 'cluster_oecp';
+
+export interface AiModelSpec {
+  id: string;
+  providerId: AiProviderType;
+  name: string;
+  description: string;
+  contextWindowTokens: number;
+  maxOutputTokens: number;
+  reasoningEffortSupported: boolean;
+  costPer1mInputUsd: number;
+  costPer1mOutputUsd: number;
+  isLocal: boolean;
+  category: 'flagship' | 'reasoning' | 'fast' | 'local';
+}
+
+export interface AiProviderConfig {
+  id: AiProviderType;
+  name: string;
+  description: string;
+  endpointUrl: string;
+  apiKey?: string;
+  status: 'connected' | 'degraded' | 'offline' | 'unconfigured';
+  latencyMs?: number;
+  models: AiModelSpec[];
+  activeModelId: string;
+  selectedEffort?: 'low' | 'medium' | 'high';
+  isLocalBinary?: boolean;
+  binaryPath?: string;
+}
+
+export interface AgyRunResult {
+  stdout: string;
+  stderr: string;
+  exit_code: number;
+  duration_ms: number;
+  model_used: string;
+  tokens_estimated: number;
+}
+
+
 

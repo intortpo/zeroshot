@@ -9,6 +9,8 @@ import {
   GitPullRequest,
   Cloud,
   FileCode2,
+  Sparkles,
+  Sliders,
 } from 'lucide-react';
 import { Workspace, UserProfile } from '../types';
 
@@ -32,12 +34,14 @@ interface PetriSettingsProps {
   activeWorkspace: Workspace;
   activeUser: UserProfile;
   onSaveNotice?: (msg: string) => void;
+  onOpenAiProviderModal?: () => void;
 }
 
 export const PetriSettings: React.FC<PetriSettingsProps> = ({
   activeWorkspace,
   activeUser: _activeUser,
   onSaveNotice,
+  onOpenAiProviderModal,
 }) => {
   const [settings, setSettings] = useState<PetriSettingsConfig>(() => {
     const saved = localStorage.getItem('petri_settings_config');
@@ -262,6 +266,56 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
 
         {/* Section 2: Connection Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* AI Providers & Google Antigravity Center Card */}
+          <div className="md:col-span-2 bg-white/85 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-emerald-500 flex items-center justify-center text-white shadow-xs">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-stone-900">
+                    Google Antigravity & AI Models Center
+                  </h2>
+                  <p className="text-xs text-stone-500">
+                    Manage AGY CLI local binary execution, live latency, reasoning effort, and provider admission
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenAiProviderModal}
+                className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+              >
+                <Sliders className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                <span>Open AI Models & Providers Center</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200/80">
+                <div className="text-[11px] font-mono text-stone-400 uppercase tracking-wider">AGY CLI Status</div>
+                <div className="text-xs font-semibold text-emerald-600 mt-1 flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Installed & Operational</span>
+                </div>
+                <div className="text-[10px] text-stone-500 font-mono mt-0.5 truncate">/home/hideo/.local/bin/agy</div>
+              </div>
+
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200/80">
+                <div className="text-[11px] font-mono text-stone-400 uppercase tracking-wider">Default Reasoning Model</div>
+                <div className="text-xs font-semibold text-stone-800 mt-1">Gemini 3.8 Flash (High Effort)</div>
+                <div className="text-[10px] text-stone-500 font-sans mt-0.5">Multimodal CoT · 1M Context Window</div>
+              </div>
+
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200/80">
+                <div className="text-[11px] font-mono text-stone-400 uppercase tracking-wider">Active Providers</div>
+                <div className="text-xs font-semibold text-stone-800 mt-1">AGY, Anthropic, OpenAI, RTX Mesh</div>
+                <div className="text-[10px] text-stone-500 font-sans mt-0.5">Unified Token Diagnostics & Monitoring</div>
+              </div>
+            </div>
+          </div>
+
           {/* Target & Gateway Endpoints */}
           <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">

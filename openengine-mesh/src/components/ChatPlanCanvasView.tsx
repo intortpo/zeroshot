@@ -43,6 +43,7 @@ import {
 } from '../types';
 import { EccTerminalConsole } from '../ecc/EccTerminalConsole';
 import { executeEccCli } from '../ecc/eccCliEngine';
+import { executeAiTurn } from '../services/aiProviderService';
 
 export type CanvasDisplayMode = 'canvas' | 'split' | 'chat' | 'ecc';
 
@@ -51,6 +52,9 @@ interface ChatPlanCanvasViewProps {
   activeUser?: UserProfile;
   items?: PetriItem[];
   initialMode?: CanvasDisplayMode;
+  selectedModelId?: string;
+  onSelectModelId?: (modelId: string) => void;
+  onOpenAiProviderModal?: () => void;
   onApprovePlan?: (plan: PlanCanvasDoc) => void;
   onSelectView?: (view: 'board' | 'graph' | 'node') => void;
   onBranchItem?: (parentItem: PetriItem, branchName: string, subGoal: string) => void;
@@ -167,11 +171,18 @@ const INITIAL_DEFAULT_PLAN: PlanCanvasDoc = {
 };
 
 const AVAILABLE_MODELS = [
-  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: 'Hybrid Reasoning', provider: 'Anthropic' },
-  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: 'Fast Triage', provider: 'Anthropic' },
-  { id: 'gemini-2-5-flash', name: 'Gemini 2.5 Flash', badge: 'Low Latency', provider: 'Google' },
-  { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', badge: 'Deep Architecture', provider: 'Google' },
-  { id: 'deepseek-r1-local', name: 'DeepSeek-R1', badge: 'Self-Hosted', provider: 'Local Mesh' },
+  // Google Antigravity (AGY CLI Native Models)
+  { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High Effort)', badge: 'AGY · Reasoning', provider: 'Google Antigravity' },
+  { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Med)', badge: 'AGY · Balanced', provider: 'Google Antigravity' },
+  { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Low)', badge: 'AGY · Fast Triage', provider: 'Google Antigravity' },
+  { id: 'gemini-3.1-pro-high', name: 'Gemini 3.1 Pro (High)', badge: 'AGY · 2M Context', provider: 'Google Antigravity' },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', badge: 'AGY · Synthesis', provider: 'Anthropic / AGY' },
+  { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 Thinking', badge: 'AGY · Invariants', provider: 'Anthropic / AGY' },
+  { id: 'gpt-oss-120b-medium', name: 'GPT-OSS 120B (Med)', badge: 'AGY · Open Weights', provider: 'OpenAI / AGY' },
+  // Standard & Direct API Models
+  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: 'Direct API', provider: 'Anthropic' },
+  { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', badge: 'Direct Vertex', provider: 'Google' },
+  { id: 'deepseek-r1-local', name: 'DeepSeek-R1 (RTX Host)', badge: 'Local Mesh', provider: 'Local RTX Mesh' },
 ];
 
 const INITIAL_THREADS: ChatThread[] = [
@@ -206,6 +217,9 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   activeUser,
   items = [],
   initialMode,
+  selectedModelId: propSelectedModelId,
+  onSelectModelId,
+  onOpenAiProviderModal,
   onApprovePlan,
   onSelectView,
   onBranchItem,
@@ -215,8 +229,13 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
   const [eccState, setEccState] = useState<EccOptimizationState>(INITIAL_DEFAULT_ECC_STATE);
   const [eccToast, setEccToast] = useState<string | null>(null);
 
-  // Model Selection in upper left of @orchestrator
-  const [selectedModelId, setSelectedModelId] = useState<string>('claude-3-7-sonnet');
+  // Model Selection in upper left of @orchestrator (defaults to AGY native Gemini 3.8 Flash High)
+  const [internalModelId, setInternalModelId] = useState<string>('gemini-3.8-flash-high');
+  const selectedModelId = propSelectedModelId || internalModelId;
+  const handleSelectModel = (mId: string) => {
+    setInternalModelId(mId);
+    onSelectModelId?.(mId);
+  };
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState<boolean>(false);
 
   // Multi-Thread Chat State
@@ -438,7 +457,57 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
       return;
     }
 
-    // Simulate Agent Reasoning & Plan Generation
+    // Check if active model is an Antigravity CLI model
+    const isAgyModel =
+      activeModelObj.provider.includes('Antigravity') ||
+      activeModelObj.provider.includes('AGY') ||
+      activeModelObj.id.startsWith('gemini-3.') ||
+      activeModelObj.id.startsWith('claude-sonnet-4') ||
+      activeModelObj.id.startsWith('claude-opus-4') ||
+      activeModelObj.id.startsWith('gpt-oss');
+
+    if (isAgyModel) {
+      if (lower.startsWith('/ecc:plan') || lower.startsWith('/plan') || lower.includes('plan') || lower.includes('canvas')) {
+        const goalTopic = text.replace(/^(\/ecc:plan|\/plan)\s*/i, '').trim() || text;
+        generatePlanForGoal(goalTopic);
+      }
+
+      const effort = activeModelObj.id.includes('high')
+        ? 'high'
+        : activeModelObj.id.includes('low')
+        ? 'low'
+        : 'medium';
+
+      executeAiTurn('agy', activeModelObj.id, text, effort as any)
+        .then((turnRes) => {
+          const agentMsg: AgentChatMessage = {
+            id: `ast-${Date.now()}`,
+            role: 'assistant',
+            sender: `@orchestrator (${activeModelObj.name})`,
+            thought: `[AGY CLI // ${turnRes.modelUsed}] Processed in ${turnRes.durationMs}ms (~${turnRes.tokensUsed} tokens, effort: ${effort}) via /home/hideo/.local/bin/agy`,
+            content: turnRes.responseText,
+            timestamp: Date.now(),
+            planRef: plan.id,
+          };
+          setMessages((prev) => [...prev, agentMsg]);
+          setIsAgentThinking(false);
+        })
+        .catch((err) => {
+          const errMsg: AgentChatMessage = {
+            id: `ast-err-${Date.now()}`,
+            role: 'assistant',
+            sender: `@orchestrator (${activeModelObj.name})`,
+            thought: `AGY execution error: ${err?.message || String(err)}`,
+            content: `⚠️ Could not run prompt through AGY CLI: ${err?.message || String(err)}.\n\nEnsure \`/home/hideo/.local/bin/agy\` is installed and executable.`,
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, errMsg]);
+          setIsAgentThinking(false);
+        });
+      return;
+    }
+
+    // Standard / fallback simulation for other models
     setTimeout(() => {
       let replyThought = '';
       let replyContent = '';
@@ -721,16 +790,17 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                     </button>
 
                     {isModelDropdownOpen && (
-                      <div className="absolute left-0 mt-1 w-64 bg-white rounded-xl shadow-lg border border-stone-200 py-1 z-30 font-sans text-xs">
-                        <div className="px-3 py-1.5 text-[10px] font-mono text-stone-400 font-bold uppercase tracking-wider border-b border-stone-100">
-                          Active Model
+                      <div className="absolute left-0 mt-1 w-72 bg-white rounded-xl shadow-xl border border-stone-200 py-1 z-30 font-sans text-xs max-h-96 overflow-y-auto">
+                        <div className="px-3 py-1.5 text-[10px] font-mono text-stone-400 font-bold uppercase tracking-wider border-b border-stone-100 flex items-center justify-between">
+                          <span>Active Model</span>
+                          <span className="text-stone-400 lowercase">{AVAILABLE_MODELS.length} choices</span>
                         </div>
                         {AVAILABLE_MODELS.map((m) => (
                           <button
                             key={m.id}
                             type="button"
                             onClick={() => {
-                              setSelectedModelId(m.id);
+                              handleSelectModel(m.id);
                               setIsModelDropdownOpen(false);
                               showEccToast(`Active model switched to ${m.name}`);
                             }}
@@ -738,13 +808,26 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
                               selectedModelId === m.id ? 'bg-teal-50/50 font-medium text-stone-900' : 'text-stone-600'
                             }`}
                           >
-                            <div>
-                              <div className="text-xs font-mono font-medium">{m.name}</div>
-                              <div className="text-[10px] text-stone-400 font-sans">{m.provider} · {m.badge}</div>
+                            <div className="min-w-0 pr-2">
+                              <div className="text-xs font-mono font-medium truncate">{m.name}</div>
+                              <div className="text-[10px] text-stone-400 font-sans truncate">{m.provider} · {m.badge}</div>
                             </div>
-                            {selectedModelId === m.id && <Check className="w-3.5 h-3.5 text-[#0ABAB5]" />}
+                            {selectedModelId === m.id && <Check className="w-3.5 h-3.5 text-[#0ABAB5] shrink-0" />}
                           </button>
                         ))}
+                        <div className="p-1.5 border-t border-stone-100 bg-stone-50/80 sticky bottom-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsModelDropdownOpen(false);
+                              onOpenAiProviderModal?.();
+                            }}
+                            className="w-full flex items-center justify-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium text-[#0ABAB5] hover:text-[#089792] hover:bg-teal-50/80 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Sliders className="w-3.5 h-3.5" />
+                            <span>Manage AI Providers & Setup...</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

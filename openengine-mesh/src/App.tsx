@@ -18,6 +18,7 @@ import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
 import { NodeStudioView } from './components/node/NodeStudioView';
 import { PreviewAgentationPanel } from './components/preview/PreviewAgentationPanel';
 import { CustomContextMenu } from './components/CustomContextMenu';
+import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
 
@@ -55,6 +56,8 @@ export function App() {
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [isAiProviderModalOpen, setIsAiProviderModalOpen] = useState(false);
+  const [activeAiModelId, setActiveAiModelId] = useState('gemini-3.8-flash-high');
   const [selectedItem, setSelectedItem] = useState<PetriItem | null>(null);
 
   // Workspaces State (Authentic Local Repository)
@@ -490,6 +493,9 @@ function inferPetriKind(text: string): PetriItemKind {
               activeUser={activeUser}
               items={visibleItems}
               initialMode={currentView === 'plan' ? 'canvas' : 'split'}
+              selectedModelId={activeAiModelId}
+              onSelectModelId={setActiveAiModelId}
+              onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
               onApprovePlan={(plan) => handleCreateIntent(plan.title)}
               onSelectView={setCurrentView}
               onBranchItem={handleBranchItem}
@@ -609,6 +615,7 @@ function inferPetriKind(text: string): PetriItemKind {
             <PetriSettings
               activeWorkspace={activeWorkspace}
               activeUser={activeUser}
+              onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
             />
           </div>
         )}
@@ -668,6 +675,13 @@ function inferPetriKind(text: string): PetriItemKind {
           handleCreateIntent(prompt, 'feat');
           dispatchUseCase(useCaseId, prompt);
         }}
+      />
+
+      {/* AI Models & Providers Monitor & Setup Center Modal */}
+      <AiProviderMonitorModal
+        isOpen={isAiProviderModalOpen}
+        onClose={() => setIsAiProviderModalOpen(false)}
+        onSelectModel={(modelId) => setActiveAiModelId(modelId)}
       />
 
       {/* Global Custom Right-Click Context Menu & Text Selection Copy */}
