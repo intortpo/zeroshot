@@ -176,7 +176,7 @@ export const LieflatAlmanacGrid: React.FC<LieflatAlmanacGridProps> = ({
                   <span
                     className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
                       chart.dimensionality === '3D Submersion'
-                        ? 'bg-indigo-900/40 text-indigo-300 border border-indigo-500/30'
+                        ? 'bg-teal-950/80 text-teal-300 border border-teal-500/30'
                         : chart.dimensionality === '2.5D'
                         ? 'bg-teal-900/40 text-teal-300 border border-teal-500/30'
                         : 'bg-slate-800 text-slate-400'
@@ -259,7 +259,7 @@ export const LieflatAlmanacGrid: React.FC<LieflatAlmanacGridProps> = ({
               <span className="text-xs font-mono text-slate-400">
                 ID: {activePreviewChart.id}
               </span>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-indigo-900/40 text-indigo-300 border border-indigo-500/30 ml-auto mr-8">
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-300 border border-teal-500/30 ml-auto mr-8">
                 {activePreviewChart.dimensionality}
               </span>
             </div>

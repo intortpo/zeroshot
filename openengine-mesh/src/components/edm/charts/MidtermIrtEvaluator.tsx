@@ -153,15 +153,15 @@ export const MidtermIrtEvaluator: React.FC<MidtermIrtEvaluatorProps> = ({
           <div className="text-[10px] text-emerald-500/80 mt-0.5">Above {passingCutoff}% waterline</div>
         </div>
 
-        <div className="bg-slate-900/80 border border-indigo-500/30 rounded-xl p-3.5 bg-indigo-950/10">
-          <div className="text-[10px] text-indigo-400 font-mono uppercase flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" /> Submerged Cohort
+        <div className="bg-slate-900/80 border border-slate-700/60 rounded-xl p-3.5">
+          <div className="text-[10px] text-slate-400 font-mono uppercase flex items-center gap-1">
+            <AlertCircle className="w-3 h-3 text-rose-400" /> Submerged Cohort
           </div>
-          <div className="text-xl font-bold font-mono text-indigo-300 mt-1">
+          <div className="text-xl font-bold font-mono text-slate-200 mt-1">
             {metrics.submergedCount}{' '}
             <span className="text-xs font-normal text-slate-400 ml-1">({metrics.submergedRate}%)</span>
           </div>
-          <div className="text-[10px] text-indigo-400/80 mt-0.5">Requiring remediation</div>
+          <div className="text-[10px] text-rose-400/80 mt-0.5">Requiring remediation</div>
         </div>
 
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
@@ -224,7 +224,7 @@ export const MidtermIrtEvaluator: React.FC<MidtermIrtEvaluatorProps> = ({
                           isPassing
                             ? 'bg-gradient-to-r from-teal-500 to-emerald-400'
                             : isSubmerged
-                            ? 'bg-gradient-to-r from-slate-700 to-indigo-600'
+                            ? 'bg-gradient-to-r from-slate-700 to-slate-500'
                             : 'bg-gradient-to-r from-amber-500 to-teal-400'
                         }`}
                       />
@@ -238,7 +238,7 @@ export const MidtermIrtEvaluator: React.FC<MidtermIrtEvaluatorProps> = ({
           <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-2 rounded bg-indigo-600" /> Submerged ({metrics.submergedCount})
+                <span className="w-3 h-2 rounded bg-slate-500" /> Submerged ({metrics.submergedCount})
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-2 rounded bg-teal-400" /> Passing ({metrics.passedCount})
@@ -491,7 +491,7 @@ export const MidtermIrtEvaluator: React.FC<MidtermIrtEvaluatorProps> = ({
                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           passed
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                            : 'bg-slate-800 text-slate-300 border border-slate-700'
                         }`}
                       >
                         {passed ? 'PASSED' : 'SUBMERGED'}

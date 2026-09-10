@@ -210,7 +210,7 @@ export const ClockInRadialDial: React.FC<ClockInRadialDialProps> = ({
                           : isSurgeHour
                           ? 'url(#radialSurgeGrad)'
                           : item.punchCount > 20
-                          ? '#0284C7'
+                          ? '#0D9488'
                           : '#1E293B'
                       }
                       stroke={isSelected ? '#5EEAD4' : isSurgeHour ? '#2DD4BF' : '#334155'}

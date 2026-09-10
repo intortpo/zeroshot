@@ -277,7 +277,8 @@ export type PetriViewMode =
   | 'generative_image'
   | 'generative_multimodal'
   | 'generative_design'
-  | 'projects';
+  | 'projects'
+  | 'gallery';
 
 export type VideoFlowTransitionType =
   | 'cut'
@@ -970,4 +971,21 @@ export interface GovernanceAuditRecord {
   details: string;
   status: 'verified' | 'flagged' | 'blocked';
   receiptHash: string;
+}
+
+export type AssetItemType = 'video' | 'image' | 'audio' | '3d' | 'dataset' | 'document';
+
+export interface AssetItem {
+  id: string;
+  name: string;
+  type: AssetItemType;
+  url: string;
+  thumbnailUrl?: string;
+  sizeBytes: number;
+  createdAt: number;
+  source: string;
+  tags: string[];
+  dimensions?: string;
+  durationSeconds?: number;
+  metadata?: Record<string, any>;
 }

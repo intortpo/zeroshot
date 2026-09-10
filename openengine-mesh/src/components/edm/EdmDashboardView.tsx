@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Cloud,
   FolderOpen,
+  Clock,
 } from 'lucide-react';
 import {
   CANONICAL_LATENT_SKILLS,
@@ -30,6 +31,7 @@ import { execInDevContainer } from '../../services/devcontainerService';
 import { PetriSubmersionCanvas } from './PetriSubmersionCanvas';
 import { PetriHourglassStream } from './PetriHourglassStream';
 import { PetriSubmersionSuite } from './PetriSubmersionSuite';
+import { MidtermClockInDemoView } from './MidtermClockInDemoView';
 import { EdmEarlyWarningCard } from './EdmEarlyWarningCard';
 import { Workspace, UserProfile } from '../../types';
 
@@ -65,7 +67,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   const [qMatrix, setQMatrix] = useState<QMatrixItem[]>(() => CANONICAL_Q_MATRIX);
   const [isExecutingPipeline, setIsExecutingPipeline] = useState(false);
   const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'diagnostics' | 'submersion_suite' | 'qmatrix' | 'ingestion' | 'hourglass'>('diagnostics');
+  const [activeTab, setActiveTab] = useState<'diagnostics' | 'submersion_suite' | 'midterm_telemetry' | 'qmatrix' | 'ingestion' | 'hourglass'>('diagnostics');
   const [interventionNotice, setInterventionNotice] = useState<string | null>(null);
 
   // Ingest source when selectedFederatedFileId changes from parent
@@ -176,8 +178,10 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-                  Quantum-Enhanced EDM Diagnostic Suite
+                <span className="text-xs font-mono font-bold text-teal-600 tracking-wider">Petri EDM</span>
+                <span className="text-slate-300">/</span>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                  EDM Studio
                 </h2>
                 <span className="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
                   <Lock className="w-3 h-3 text-teal-600" />
@@ -185,7 +189,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-mono">
-                DINA Cognitive Psychometrics · Qiskit ZZFeatureMap Fidelity Kernel · QSVC Early Warning
+                Cognitive Psychometrics (DINA) · Submersion Analytics · Midterm Telemetry · Federated Data Lake
               </p>
             </div>
           </div>
@@ -213,59 +217,74 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Federated Data Source Ingestion & Impersonation Bar */}
-      <div className="bg-slate-100/90 border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-          <div className="flex items-center space-x-2 font-mono font-semibold text-slate-700">
-            <Database className="w-3.5 h-3.5 text-teal-600" />
-            <span>Active Federated Data Source:</span>
+      {/* Universal Federated Data Source Ingestion & Impersonation Bar */}
+      <div className="bg-slate-100/95 border-b border-slate-200 px-6 py-3 flex flex-col gap-2.5 text-xs shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-2 font-mono font-semibold text-slate-800">
+            <Database className="w-4 h-4 text-teal-600" />
+            <span className="text-xs uppercase tracking-wider text-teal-900 font-bold">Universal Federated Data Selector:</span>
+            <span className="text-slate-400 font-normal">({AVAILABLE_FEDERATED_SOURCES.length} Connected Sources)</span>
           </div>
 
-          <div className="relative">
-            <select
-              value={activeSourceId}
-              onChange={(e) => handleSwitchSource(e.target.value)}
-              className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs pr-8 cursor-pointer"
+          <div className="flex items-center space-x-2">
+            {activeSourceMeta.isDelegatedAdmin ? (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-sky-50 text-sky-700 border border-sky-200 font-medium">
+                <Cloud className="w-3 h-3 text-sky-600" />
+                <span>DWD Impersonating <strong>j.sadol@bbs.ac.th</strong></span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                <Lock className="w-3 h-3 text-emerald-600" />
+                <span>Local AES-256 Vault Encrypted</span>
+              </span>
+            )}
+
+            <button
+              onClick={() => handleSwitchSource(activeSourceId)}
+              className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer shadow-2xs"
+              title="Re-read raw file from Federated Data Hub and recompute psychometrics"
             >
-              {AVAILABLE_FEDERATED_SOURCES.map((src) => (
-                <option key={src.id} value={src.id}>
-                  {src.name} ({src.recordsCount} records · {src.source === 'google_drive' ? 'Google Drive DWD' : src.source === 'google_classroom' ? 'Classroom DWD' : 'Local Vault'})
-                </option>
-              ))}
-            </select>
+              <RefreshCw className="w-3 h-3 text-slate-500" />
+              <span>Sync Source</span>
+            </button>
+            {onNavigateToFederatedData && (
+              <button
+                onClick={onNavigateToFederatedData}
+                className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+              >
+                <FolderOpen className="w-3 h-3 text-teal-600" />
+                <span>Federated Hub</span>
+              </button>
+            )}
           </div>
-
-          {activeSourceMeta.isDelegatedAdmin ? (
-            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-sky-50 text-sky-700 border border-sky-200 font-medium">
-              <Cloud className="w-3 h-3 text-sky-600" />
-              <span>DWD Impersonating <strong>j.sadol@bbs.ac.th</strong></span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-              <Lock className="w-3 h-3 text-emerald-600" />
-              <span>Local AES-256 Vault Encrypted</span>
-            </span>
-          )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleSwitchSource(activeSourceId)}
-            className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer shadow-2xs"
-            title="Re-read raw file from Federated Data Hub and recompute psychometrics"
-          >
-            <RefreshCw className="w-3 h-3 text-slate-500" />
-            <span>Sync Source</span>
-          </button>
-          {onNavigateToFederatedData && (
-            <button
-              onClick={onNavigateToFederatedData}
-              className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
-            >
-              <FolderOpen className="w-3 h-3 text-teal-600" />
-              <span>Explore Federated Hub</span>
-            </button>
-          )}
+        {/* Omnipresent Quick-Select Chips for all Federated Sources */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {AVAILABLE_FEDERATED_SOURCES.map((src) => {
+            const isSelected = src.id === activeSourceId;
+            return (
+              <button
+                key={src.id}
+                onClick={() => handleSwitchSource(src.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-teal-600 text-white font-semibold shadow-xs ring-2 ring-teal-500/40'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-teal-500/30'
+                }`}
+              >
+                <Database className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-teal-600'}`} />
+                <span className="truncate max-w-[180px]">{src.name}</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    isSelected ? 'bg-teal-700 text-teal-100' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {src.recordsCount} rec
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -313,10 +332,10 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white shrink-0">
+      <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white shrink-0 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('diagnostics')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'diagnostics'
               ? 'border-teal-600 text-teal-700'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -326,17 +345,28 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('submersion_suite')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'submersion_suite'
               ? 'border-teal-600 text-teal-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          ✦ Submersion Analytics Suite (Lieflat Charts)
+          ✦ Submersion Analytics Suite
+        </button>
+        <button
+          onClick={() => setActiveTab('midterm_telemetry')}
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'midterm_telemetry'
+              ? 'border-teal-600 text-teal-700 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5 text-teal-600" />
+          <span>Midterm & Clock-In (110+ Almanac)</span>
         </button>
         <button
           onClick={() => setActiveTab('qmatrix')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'qmatrix'
               ? 'border-teal-600 text-teal-700'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -346,7 +376,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('ingestion')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'ingestion'
               ? 'border-teal-600 text-teal-700'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -356,13 +386,13 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('hourglass')}
-          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'hourglass'
               ? 'border-teal-600 text-teal-700'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          Petri Funnel Hourglass Stream (Chats & Git)
+          Petri Funnel Hourglass Stream
         </button>
       </div>
 
@@ -548,32 +578,36 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         {/* Tab 2: Submersion Analytics Suite (Lieflat Charts) */}
         {activeTab === 'submersion_suite' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            {onNavigateToMidtermDemo && (
-              <div className="bg-gradient-to-r from-teal-950/80 via-slate-900 to-indigo-950/80 border border-teal-500/40 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-slate-100">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">
-                      LIVE DEMO SHOWCASE
-                    </span>
-                    <span className="text-xs text-teal-400 font-mono">110+ LIEFLAT CHARTS ALMANAC</span>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-100">
-                    Midterm Exam & Clock-In Longitudinal Telemetry Demo
-                  </h3>
-                  <p className="text-xs text-slate-300 max-w-2xl">
-                    Live interactive evaluation of 849 students, IRT 2PL item curves, dynamic passing grade waterline,
-                    24-hour radial punch clock, and comprehensive 110+ chart possibilities encyclopedia.
-                  </p>
+            <div className="bg-gradient-to-r from-teal-950/80 via-slate-900 to-slate-950/90 border border-teal-500/40 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-slate-100">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                    LIVE DEMO SHOWCASE
+                  </span>
+                  <span className="text-xs text-teal-400 font-mono">110+ CHART ALMANAC</span>
                 </div>
-                <button
-                  onClick={onNavigateToMidtermDemo}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-lg shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Launch Midterm & Clock-In Demo Page →</span>
-                </button>
+                <h3 className="text-base font-bold text-slate-100">
+                  Midterm Exam & Clock-In Longitudinal Telemetry Studio
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl">
+                  Live interactive evaluation of 849 students, IRT 2PL item curves, dynamic passing grade waterline,
+                  24-hour radial punch clock, and comprehensive 110+ chart possibilities encyclopedia.
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => {
+                  if (onNavigateToMidtermDemo) {
+                    onNavigateToMidtermDemo();
+                  } else {
+                    setActiveTab('midterm_telemetry');
+                  }
+                }}
+                className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs whitespace-nowrap shadow-lg shadow-teal-500/20 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Open Midterm & Clock-In Studio →</span>
+              </button>
+            </div>
 
             <PetriSubmersionSuite
               students={students}
@@ -583,6 +617,13 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                 setActiveTab('diagnostics');
               }}
             />
+          </div>
+        )}
+
+        {/* Tab 3: Midterm Exam & Clock-In Longitudinal Telemetry (110+ Almanac) */}
+        {activeTab === 'midterm_telemetry' && (
+          <div className="animate-in fade-in duration-200">
+            <MidtermClockInDemoView onBackToDashboard={() => setActiveTab('diagnostics')} />
           </div>
         )}
 

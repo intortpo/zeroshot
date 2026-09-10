@@ -253,8 +253,8 @@ class MidtermClockInService {
   get24HourRadialDistribution(): ClockInHourDistribution[] {
     const hours: ClockInHourDistribution[] = [];
     const colors = [
-      '#64748B', '#64748B', '#64748B', '#64748B', '#64748B', '#0284C7', // 0-5
-      '#0EA5E9', '#0D9488', '#14B8A6', '#10B981', '#F59E0B', '#EF4444', // 6-11 (7 & 8 are morning surge)
+      '#64748B', '#64748B', '#64748B', '#64748B', '#64748B', '#0D9488', // 0-5
+      '#14B8A6', '#0ABAB5', '#14B8A6', '#10B981', '#F59E0B', '#EF4444', // 6-11 (7 & 8 are morning surge)
       '#64748B', '#64748B', '#64748B', '#64748B', '#64748B', '#0D9488', // 12-17
       '#14B8A6', '#64748B', '#64748B', '#64748B', '#64748B', '#64748B'  // 18-23
     ];

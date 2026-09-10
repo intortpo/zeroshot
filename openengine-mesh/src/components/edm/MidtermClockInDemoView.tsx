@@ -43,7 +43,7 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-teal-400 mb-1">
-            <span>PETRI LIEFLAT CHARTS</span>
+            <span>Petri EDM</span>
             <span>/</span>
             <span>LONGITUDINAL DEMO</span>
             <span>/</span>
@@ -149,7 +149,7 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Key Empirical Takeaways Banner */}
-          <div className="bg-gradient-to-r from-teal-950/60 via-slate-900 to-indigo-950/60 border border-teal-500/30 rounded-2xl p-6 shadow-xl">
+          <div className="bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-950/80 border border-teal-500/30 rounded-2xl p-6 shadow-xl">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-300">
                 <Award className="w-7 h-7" />
@@ -172,7 +172,7 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
                   <span className="flex items-center gap-1.5 text-emerald-300">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 25 Item IRT 2PL Validation
                   </span>
-                  <span className="flex items-center gap-1.5 text-indigo-300">
+                  <span className="flex items-center gap-1.5 text-teal-400">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 16-Week Longitudinal Heatmap
                   </span>
                 </div>

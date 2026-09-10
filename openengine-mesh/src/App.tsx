@@ -25,6 +25,7 @@ import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { MidtermClockInDemoView } from './components/edm/MidtermClockInDemoView';
+import { AssetLibraryView } from './components/gallery/AssetLibraryView';
 import { PetriVideoFlowEditor } from './components/generative/flow/PetriVideoFlowEditor';
 import { GeminiThoughtCompanionView } from './components/companion/GeminiThoughtCompanionView';
 import { GeminiThoughtDrawer } from './components/companion/GeminiThoughtDrawer';
@@ -818,6 +819,16 @@ function inferPetriKind(text: string): PetriItemKind {
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200 bg-slate-950">
                     <GeminiThoughtCompanionView
                       onNavigateToVideoFlow={() => setCurrentView('video_flow')}
+                    />
+                  </div>
+                )}
+
+                {/* View 13: Petri Digital Media & Artifact Vault (Gallery & Asset Library) */}
+                {currentView === 'gallery' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <AssetLibraryView
+                      onNavigateToVideoFlow={() => setCurrentView('video_flow')}
+                      onNavigateToEdmStudio={() => setCurrentView('edm')}
                     />
                   </div>
                 )}

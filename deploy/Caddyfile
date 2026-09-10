@@ -2,7 +2,7 @@
     email admin@theopenengine.com
 }
 
-{$PETRI_DOMAIN:petri.bbs.ac.th} {
+:80, {$PETRI_DOMAIN:petri.bbs.ac.th} {
     encode gzip zstd
 
     # Security Headers

@@ -25,8 +25,8 @@ import {
   Activity,
   Coins,
   Server,
-  Clock,
   Clapperboard,
+  FolderArchive,
 } from 'lucide-react';
 import { PetriViewMode, UserProfile, Workspace } from '../../types';
 
@@ -261,6 +261,30 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                     <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Workdesks</span>
                   </div>
                   <div className="text-[11px] text-stone-500">AGY CLI + MCP Workdesk Studio</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavigate('gallery')}
+              className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
+                currentView === 'gallery'
+                  ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
+                  : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                  <FolderArchive className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold flex items-center space-x-1.5">
+                    <span>Gallery & Assets</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Vault</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500">Videos, Images, 3D & Datasets</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />
@@ -507,7 +531,7 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
               type="button"
               onClick={() => handleNavigate('edm')}
               className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
-                currentView === 'edm'
+                currentView === 'edm' || currentView === 'midterm_clockin_demo'
                   ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
                   : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
               }`}
@@ -518,34 +542,10 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <span>EDM Diagnostics</span>
+                    <span>EDM Studio</span>
                     <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">Q-Matrix, DINA CDM & Quantum QSVC</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-stone-400" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNavigate('midterm_clockin_demo')}
-              className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
-                currentView === 'midterm_clockin_demo'
-                  ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
-                  : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <span>Midterm & Clock-In</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">110+</span>
-                  </div>
-                  <div className="text-[11px] text-stone-500">Lieflat Charts & 24h Telemetry</div>
+                  <div className="text-[11px] text-stone-500">Psychometrics, Submersion & Telemetry</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />

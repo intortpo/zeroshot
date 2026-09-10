@@ -30,8 +30,8 @@ import {
   Activity,
   Image as ImageIcon,
   FolderGit2,
-  Clock,
   Clapperboard,
+  FolderArchive,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -112,6 +112,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   const isGenActive =
     currentView === 'generative_video' ||
     currentView === 'video_flow' ||
+    currentView === 'gallery' ||
     currentView === 'generative_audio' ||
     currentView === 'generative_image' ||
     currentView === 'generative_multimodal' ||
@@ -503,6 +504,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
                   <button
                     onClick={() => {
+                      onSelectView('gallery');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'gallery'
+                        ? 'bg-teal-50 text-teal-900 font-medium border border-teal-100'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <FolderArchive className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Gallery & Assets</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Vault</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Media, Video, 3D & Datasets</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
                       onSelectView('generative_video');
                       setOpenDropdown(null);
                     }}
@@ -795,7 +817,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                       setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'edm'
+                      currentView === 'edm' || currentView === 'midterm_clockin_demo'
                         ? 'bg-teal-50 text-teal-900 font-medium'
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
@@ -803,31 +825,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     <GraduationCap className="w-4 h-4 text-teal-600 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>EDM</span>
+                        <span>EDM Studio</span>
                         <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
                       </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Educational Data Mining & DINA</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onSelectView('midterm_clockin_demo');
-                      setOpenDropdown(null);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'midterm_clockin_demo'
-                        ? 'bg-teal-50 text-teal-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <Clock className="w-4 h-4 text-teal-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Midterm & Clock-In</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">110+</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Lieflat Charts & Telemetry</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Psychometrics, Submersion & Telemetry</div>
                     </div>
                   </button>
 
