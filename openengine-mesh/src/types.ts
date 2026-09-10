@@ -438,13 +438,17 @@ export interface MultiplayerLobby {
 export type PySpurNodeType =
   | 'input'
   | 'router'
+  | 'branch'
   | 'expert'
   | 'llm'
   | 'tool'
   | 'code'
+  | 'rag_retriever'
+  | 'loop'
+  | 'human_approval'
   | 'evaluator'
   | 'aggregator'
-  | 'human_approval'
+  | 'subworkflow'
   | 'output';
 
 export type PySpurNodeStatus = 'idle' | 'running' | 'completed' | 'failed' | 'bypassed';
@@ -462,6 +466,7 @@ export interface PySpurNodeOutputTrace {
   tokensUsed: number;
   durationMs: number;
   logs: string[];
+  rawOutput?: any;
   planFragment?: {
     title?: string;
     objectives?: string[];
@@ -479,9 +484,23 @@ export interface PySpurNodeConfig {
   topK?: number;
   gatingWeights?: Record<string, number>;
   pythonCode?: string;
+  codeExecutionTarget?: 'devcontainer' | 'sandbox';
   toolName?: string;
+  toolArgs?: Record<string, any>;
   timeoutMs?: number;
   expertDomain?: MoeExpertDomain;
+  conditionExpression?: string;
+  ragCollection?: string;
+  ragTopK?: number;
+  loopInputKey?: string;
+  loopMaxIterations?: number;
+  humanApprovalStatus?: 'pending' | 'approved' | 'rejected';
+  humanApprovalNotes?: string;
+  evaluatorCriteria?: string;
+  evaluatorRubricScore?: number;
+  evaluatorAssertions?: string[];
+  structuredOutputSchema?: string;
+  subworkflowId?: string;
 }
 
 export interface PySpurNode {
@@ -514,10 +533,47 @@ export interface PySpurWorkflow {
   id: string;
   name: string;
   description: string;
-  templateKey: 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'custom';
+  templateKey: 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'custom';
   nodes: PySpurNode[];
   edges: PySpurEdge[];
   updatedAt: number;
+}
+
+// DevContainer Telemetry & Execution Types
+export interface DevContainerInfo {
+  installed: boolean;
+  engine: string;
+  state: 'running' | 'stopped' | 'unconfigured' | 'error';
+  container_id?: string;
+  container_name: string;
+  image_name: string;
+  ports: string[];
+  uptime?: string;
+  message: string;
+}
+
+// PySpur Test Dataset & Benchmarking Types
+export interface PySpurTestCase {
+  id: string;
+  name: string;
+  inputPrompt: string;
+  expectedOutput?: string;
+  assertions: string[];
+  lastStatus?: 'pass' | 'fail' | 'pending';
+  lastScore?: number;
+  durationMs?: number;
+}
+
+export interface PySpurEvalRun {
+  id: string;
+  workflowId: string;
+  totalCases: number;
+  passedCases: number;
+  failedCases: number;
+  passRatePercent: number;
+  avgLatencyMs: number;
+  estimatedCostUsd: number;
+  timestamp: number;
 }
 
 // ============================================================================
