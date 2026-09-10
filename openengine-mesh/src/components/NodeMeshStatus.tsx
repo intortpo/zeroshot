@@ -13,6 +13,7 @@ import {
   Workflow,
   MessageSquare,
   Boxes,
+  Network,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
 
@@ -142,6 +143,22 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         >
           <Workflow className={`w-4 h-4 ${currentView === 'graph' ? 'text-stone-900' : 'text-stone-400'}`} />
           <span>Graph</span>
+        </button>
+
+        <button
+          onClick={() => onSelectView('node')}
+          className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+            currentView === 'node'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+          }`}
+          title="PySpur Agentic Visual Platform & Mixture of Experts"
+        >
+          <Network className={`w-4 h-4 ${currentView === 'node' ? 'text-stone-900' : 'text-stone-400'}`} />
+          <span>Node</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+            PySpur
+          </span>
         </button>
 
         {/* Modules Dropdown Menu Group */}

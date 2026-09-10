@@ -227,7 +227,7 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
 
 // ECC (Everything Claude Code) Engine & Optimization Types
 export interface EccOptimizationState {
@@ -430,3 +430,93 @@ export interface MultiplayerLobby {
   lightyearConfig?: LightyearConfig;
   peers: MultiplayerLobbyPeer[];
 }
+
+// ============================================================================
+// PySpur & Mixture of Experts (MoE) Visual Development Platform Types
+// ============================================================================
+
+export type PySpurNodeType =
+  | 'input'
+  | 'router'
+  | 'expert'
+  | 'llm'
+  | 'tool'
+  | 'code'
+  | 'evaluator'
+  | 'aggregator'
+  | 'human_approval'
+  | 'output';
+
+export type PySpurNodeStatus = 'idle' | 'running' | 'completed' | 'failed' | 'bypassed';
+
+export type MoeExpertDomain =
+  | 'architect'
+  | 'speculative_coder'
+  | 'security_auditor'
+  | 'acceptance_verifier'
+  | 'token_optimizer';
+
+export interface PySpurNodeOutputTrace {
+  summary: string;
+  confidence: number;
+  tokensUsed: number;
+  durationMs: number;
+  logs: string[];
+  planFragment?: {
+    title?: string;
+    objectives?: string[];
+    invariants?: string[];
+    tasks?: { text: string; role: string }[];
+    testMatrix?: string[];
+  };
+}
+
+export interface PySpurNodeConfig {
+  modelTier?: string;
+  systemPrompt?: string;
+  promptTemplate?: string;
+  temperature?: number;
+  topK?: number;
+  gatingWeights?: Record<string, number>;
+  pythonCode?: string;
+  toolName?: string;
+  timeoutMs?: number;
+  expertDomain?: MoeExpertDomain;
+}
+
+export interface PySpurNode {
+  id: string;
+  type: PySpurNodeType;
+  label: string;
+  sublabel: string;
+  role: string;
+  iconName: string;
+  position: { x: number; y: number };
+  status: PySpurNodeStatus;
+  config: PySpurNodeConfig;
+  outputTrace?: PySpurNodeOutputTrace;
+  inputs?: string[];
+  outputs?: string[];
+}
+
+export interface PySpurEdge {
+  id: string;
+  sourceNodeId: string;
+  sourceHandle: string;
+  targetNodeId: string;
+  targetHandle: string;
+  weight?: number;
+  isActive?: boolean;
+  label?: string;
+}
+
+export interface PySpurWorkflow {
+  id: string;
+  name: string;
+  description: string;
+  templateKey: 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'custom';
+  nodes: PySpurNode[];
+  edges: PySpurEdge[];
+  updatedAt: number;
+}
+

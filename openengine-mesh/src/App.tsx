@@ -15,6 +15,7 @@ import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
 import { OrchestrationGraphView } from './components/OrchestrationGraphView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
+import { NodeStudioView } from './components/node/NodeStudioView';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
@@ -524,6 +525,21 @@ function inferPetriKind(text: string): PetriItemKind {
               onAdvanceStage={handleAdvanceStage}
               onOpenApproval={handleOpenApproval}
               onSubmitGoal={(goalText) => handleCreateIntent(goalText, 'feat')}
+            />
+          </div>
+        )}
+
+        {/* View: Node Studio (PySpur Visual Platform & Mixture of Experts) */}
+        {currentView === 'node' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <NodeStudioView
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+              onHandoffPlan={(plan) => {
+                handleCreateIntent(plan.title, 'feat');
+                setCurrentView('chat');
+              }}
+              onNavigateToChat={() => setCurrentView('chat')}
             />
           </div>
         )}

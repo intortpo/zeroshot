@@ -52,7 +52,7 @@ interface ChatPlanCanvasViewProps {
   items?: PetriItem[];
   initialMode?: CanvasDisplayMode;
   onApprovePlan?: (plan: PlanCanvasDoc) => void;
-  onSelectView?: (view: 'board' | 'graph') => void;
+  onSelectView?: (view: 'board' | 'graph' | 'node') => void;
   onBranchItem?: (parentItem: PetriItem, branchName: string, subGoal: string) => void;
 }
 
@@ -649,15 +649,27 @@ export const ChatPlanCanvasView: React.FC<ChatPlanCanvasViewProps> = ({
           </div>
 
           {onSelectView && (
-            <button
-              type="button"
-              onClick={() => onSelectView('graph')}
-              className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
-              title="View in Orchestration Graph"
-            >
-              <Workflow className="w-3.5 h-3.5 text-[#0ABAB5]" />
-              <span className="hidden sm:inline">Graph</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onSelectView('graph')}
+                className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+                title="View in Orchestration Graph"
+              >
+                <Workflow className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                <span className="hidden sm:inline">Graph</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSelectView('node')}
+                className="px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-800 text-xs font-medium flex items-center space-x-1.5 transition-colors cursor-pointer"
+                title="Open PySpur Node Studio & Mixture of Experts"
+              >
+                <Network className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="hidden sm:inline">Node (MoE)</span>
+              </button>
+            </>
           )}
 
           {displayMode === 'canvas' && (
