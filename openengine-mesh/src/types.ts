@@ -248,7 +248,32 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance' | 'consumer' | 'server';
+export type PetriViewMode =
+  | 'chat'
+  | 'focus'
+  | 'plan'
+  | 'board'
+  | 'graph'
+  | 'node'
+  | 'skills'
+  | 'memory'
+  | 'stats'
+  | 'zero'
+  | 'tui'
+  | 'settings'
+  | 'governance'
+  | 'consumer'
+  | 'server';
+
+export interface SteerableConceptWord {
+  id: string;
+  word: string;
+  category: 'architecture' | 'security' | 'runtime' | 'eval' | 'networking';
+  relevance: number;
+  selected: boolean;
+  fadedIn: boolean;
+  children?: string[];
+}
 
 // Petri Server & SmartShield Types (Rebranded Architecture)
 export interface PetriServerStatus {

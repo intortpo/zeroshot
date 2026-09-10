@@ -124,6 +124,7 @@ export const STANDARD_TIER_PERSONAS: UserProfile[] = [
 export const TIER_ALLOWED_VIEWS: Record<SystemTier, PetriViewMode[]> = {
   superadmin: [
     'chat',
+    'focus',
     'plan',
     'board',
     'node',
@@ -139,6 +140,7 @@ export const TIER_ALLOWED_VIEWS: Record<SystemTier, PetriViewMode[]> = {
   ],
   control: [
     'chat',
+    'focus',
     'plan',
     'board',
     'node',

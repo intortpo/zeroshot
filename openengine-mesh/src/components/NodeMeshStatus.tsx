@@ -267,6 +267,22 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
             </button>
 
             <button
+              onClick={() => onSelectView('focus')}
+              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                currentView === 'focus'
+                  ? 'border-stone-900 text-stone-950 font-semibold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+              }`}
+              title="Centric Focus Chat with Steerable Thinking"
+            >
+              <Sparkles className={`w-4 h-4 ${currentView === 'focus' ? 'text-indigo-600' : 'text-stone-400'}`} />
+              <span>Focus</span>
+              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Zen
+              </span>
+            </button>
+
+            <button
               onClick={() => onSelectView('board')}
               className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
                 currentView === 'board'

@@ -113,6 +113,10 @@ class AgentCognitionStore {
     this.notify();
   }
 
+  steerConcept(concept: Partial<AgentWorkingConcept>) {
+    this.setWorkingConcept(concept);
+  }
+
   setCognitivePhase(phase: AgentCognitivePhase, isThinking?: boolean) {
     this.state = {
       ...this.state,

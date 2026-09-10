@@ -22,6 +22,7 @@ import { CustomContextMenu } from './components/CustomContextMenu';
 import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
 import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
+import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
@@ -560,6 +561,22 @@ function inferPetriKind(text: string): PetriItemKind {
                       onApprovePlan={(plan) => handleCreateIntent(plan.title)}
                       onSelectView={setCurrentView}
                       onBranchItem={handleBranchItem}
+                    />
+                  </div>
+                )}
+
+                {/* View: Centric Focus Chat with Steerable Thinking Cloud */}
+                {currentView === 'focus' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <CentricFocusChatView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      onHandoffPlan={(plan) => {
+                        handleCreateIntent(plan.title, 'feat');
+                        setCurrentView('plan');
+                      }}
+                      onLogGoal={(goal) => handleCreateIntent(goal, 'feat')}
+                      onNavigateToView={(v) => setCurrentView(v)}
                     />
                   </div>
                 )}
