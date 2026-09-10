@@ -8,6 +8,7 @@ members = [
   "crates/openengine-cluster-testkit/tests/external-backend-fixture",
   "zero",
   "openengine-mesh/src-tauri",
+  "crates/edm-tactical-engine",
 ]
 
 [workspace.package]

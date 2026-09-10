@@ -25,4 +25,5 @@ tmp/
 *.cast
 /site/
 openengine-mesh/dist/
+presentation/edm-portal/dist/
 openengine-mesh/src-tauri/gen/
