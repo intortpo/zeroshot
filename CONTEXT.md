@@ -26,3 +26,9 @@ This document defines the ubiquitous language and domain model for **Petri Zero*
 
 ### Bridge & Handoff Invariants
 - **Goal Sync**: Bi-directional bridge enabling Node Studio to ingest active objectives from the Orchestration Graph, and hand off synthesized execution plans directly to the Plan Canvas and Kanban queue.
+
+### 3-Tier System Architecture
+- **SuperAdmin Tier**: Root governance and platform authority. Manages Google SAIF compliance checks, HITL policy toggles, API provider keys, and final Stage 6 delivery sign-off.
+- **Control Tier**: Engineering and orchestration control plane. Access to Node Studio DAGs, Docker DevContainers, live agent deliberation steering, and verification gates up to Stage 5. Read-only on platform governance.
+- **Consumer Tier**: Product stakeholder and client experience. Features the Consumer Portal (`ConsumerPortalView`), responsive live app previews (Agentation-style), consumer request desk, and plain-English roadmap, fail-closed against developer plumbing via `TierBoundaryGuard`.
+

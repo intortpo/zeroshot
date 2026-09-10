@@ -21,8 +21,11 @@ import { GovernanceView } from './components/GovernanceView';
 import { AgentCognitionHUD } from './components/AgentCognitionHUD';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
+import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
+import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { useMeshLedger } from './hooks/useMeshLedger';
-import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
+import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
+import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
 
 export function App() {
   const {
@@ -35,24 +38,13 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings' | 'governance'
+  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings' | 'governance' | 'consumer'
   const [currentView, setCurrentView] = useState<PetriViewMode>('board');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
 
-  // Enterprise Users & Identity State (Authentic User)
-  const [users, setUsers] = useState<UserProfile[]>([
-    {
-      id: 'usr-hideo',
-      name: 'Hideo (intortpo)',
-      email: '82773932+intortpo@users.noreply.github.com',
-      role: 'owner',
-      organization: 'Petri Zero',
-      canApproveGates: true,
-      canDeploy: true,
-      canEditRules: true,
-    },
-  ]);
+  // 3-Tier Enterprise Users & Identity State (SuperAdmin, Control, Consumer Personas)
+  const [users, setUsers] = useState<UserProfile[]>(STANDARD_TIER_PERSONAS);
   const [activeUserId, setActiveUserId] = useState<string>('usr-hideo');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
@@ -80,6 +72,44 @@ export function App() {
     () => users.find((u) => u.id === activeUserId) || users[0],
     [users, activeUserId]
   );
+
+  const handleSelectTier = (newTier: SystemTier) => {
+    // Check if a preconfigured persona exists for this tier for instantaneous testing
+    const matchingPersona = users.find((u) => u.tier === newTier);
+    if (matchingPersona) {
+      setActiveUserId(matchingPersona.id);
+    } else {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === activeUserId ? { ...u, tier: newTier } : u))
+      );
+    }
+    tierService.setActiveTier(newTier);
+
+    if (newTier === 'consumer') {
+      setCurrentView('consumer');
+    } else if (currentView === 'consumer') {
+      setCurrentView('board');
+    }
+  };
+
+  const handleCreateConsumerRequest = (
+    title: string,
+    details: string,
+    category: 'feature' | 'bug' | 'inquiry'
+  ) => {
+    const newItem: PetriItem = {
+      id: `pt-req-${Date.now().toString().slice(-6)}`,
+      workspaceId: activeWorkspaceId,
+      kind: category === 'bug' ? 'bug' : 'feat',
+      title: `[Consumer ${category.toUpperCase()}] ${title}`,
+      description: details,
+      stage: 'backlog',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      commitHash: 'consumer-intent',
+    };
+    setItems((prev) => [newItem, ...prev]);
+  };
 
   // Canonical Petri Items across workspaces (Built directly from real repository git history)
   const [items, setItems] = useState<PetriItem[]>([
@@ -479,6 +509,7 @@ function inferPetriKind(text: string): PetriItemKind {
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
           activeUser={activeUser}
           onOpenUserModal={() => setIsUserModalOpen(true)}
+          onSelectTier={handleSelectTier}
           currentView={currentView}
           onSelectView={setCurrentView}
           isPreviewOpen={isPreviewOpen}
@@ -490,150 +521,177 @@ function inferPetriKind(text: string): PetriItemKind {
         {/* Main Workspace Body with Optional Side-by-Side Agentation Live Preview */}
         <div className="flex-1 flex overflow-hidden relative min-w-0">
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-            {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
-        {(currentView === 'chat' || currentView === 'plan') && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <ChatPlanCanvasView
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              items={visibleItems}
-              initialMode={currentView === 'plan' ? 'canvas' : 'split'}
-              selectedModelId={activeAiModelId}
-              onSelectModelId={setActiveAiModelId}
-              onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
-              onApprovePlan={(plan) => handleCreateIntent(plan.title)}
-              onSelectView={setCurrentView}
-              onBranchItem={handleBranchItem}
-            />
-          </div>
-        )}
+            {/* View -1: Consumer Portal (Primary Surface for Consumer Tier) */}
+            {currentView === 'consumer' && (
+              <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                <ConsumerPortalView
+                  activeUser={activeUser}
+                  activeWorkspace={activeWorkspace}
+                  items={visibleItems}
+                  onCreateConsumerRequest={handleCreateConsumerRequest}
+                  onOpenUserModal={() => setIsUserModalOpen(true)}
+                />
+              </div>
+            )}
 
-        {/* View 1: Main Kanban Board & Intent Entry Bar */}
-        {currentView === 'board' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            {/* Element 1: Soft Frost Intent Bar */}
-            <PetriIntentBar onSubmitIntent={handleCreateIntent} />
-
-            {/* Element 2: Left-to-Right Flowing Kanban (Right Being Fully Merged) */}
-            <div className="flex-1 flex overflow-hidden">
-              <PetriKanban
-                items={visibleItems}
-                onOpenApproval={handleOpenApproval}
-                onSelectItem={(item) => {
-                  if (item.stage === 'gated') {
-                    handleOpenApproval(item);
-                  }
-                }}
-                onFanOutAgents={handleFanOutAgents}
-                onAdvanceStage={handleAdvanceStage}
-                onRecurseAgent={handleRecurseAgent}
-                onBranchItem={handleBranchItem}
+            {/* Tier Boundary Guard: Blocks Consumers from developer views fail-closed */}
+            {activeUser.tier === 'consumer' && currentView !== 'consumer' ? (
+              <TierBoundaryGuard
+                currentTier={activeUser.tier}
+                activeUser={activeUser}
+                requiredTier="control"
+                targetView={currentView}
+                onReturnToAllowedView={() => setCurrentView('consumer')}
+                onOpenUserModal={() => setIsUserModalOpen(true)}
               />
-            </div>
-          </div>
-        )}
- 
-        {/* View: Orchestration Graph (zeroshot software-change pipeline) */}
-        {currentView === 'graph' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <OrchestrationGraphView
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              items={visibleItems}
-              onAdvanceStage={handleAdvanceStage}
-              onOpenApproval={handleOpenApproval}
-              onSubmitGoal={(goalText) => handleCreateIntent(goalText, 'feat')}
-            />
-          </div>
-        )}
+            ) : (
+              <>
+                {/* View 0: Chat & Interactive Plan Canvas (ECC Inspired) */}
+                {(currentView === 'chat' || currentView === 'plan') && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <ChatPlanCanvasView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      items={visibleItems}
+                      initialMode={currentView === 'plan' ? 'canvas' : 'split'}
+                      selectedModelId={activeAiModelId}
+                      onSelectModelId={setActiveAiModelId}
+                      onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
+                      onApprovePlan={(plan) => handleCreateIntent(plan.title)}
+                      onSelectView={setCurrentView}
+                      onBranchItem={handleBranchItem}
+                    />
+                  </div>
+                )}
 
-        {/* View: Node Studio (Visual Platform & DevContainer Pipeline Engine) */}
-        {currentView === 'node' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <NodeStudioView
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              onHandoffPlan={(plan) => {
-                handleCreateIntent(plan.title, 'feat');
-                setCurrentView('chat');
-              }}
-              onNavigateToChat={() => setCurrentView('chat')}
-            />
-          </div>
-        )}
+                {/* View 1: Main Kanban Board & Intent Entry Bar */}
+                {currentView === 'board' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    {/* Element 1: Soft Frost Intent Bar */}
+                    <PetriIntentBar onSubmitIntent={handleCreateIntent} />
 
-        {/* View: Zero (Zeroshot v8 Engine & Invariants) */}
-        {currentView === 'zero' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <ZeroView
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-            />
-          </div>
-        )}
+                    {/* Element 2: Left-to-Right Flowing Kanban (Right Being Fully Merged) */}
+                    <div className="flex-1 flex overflow-hidden">
+                      <PetriKanban
+                        items={visibleItems}
+                        onOpenApproval={handleOpenApproval}
+                        onSelectItem={(item) => {
+                          if (item.stage === 'gated') {
+                            handleOpenApproval(item);
+                          }
+                        }}
+                        onFanOutAgents={handleFanOutAgents}
+                        onAdvanceStage={handleAdvanceStage}
+                        onRecurseAgent={handleRecurseAgent}
+                        onBranchItem={handleBranchItem}
+                      />
+                    </div>
+                  </div>
+                )}
+         
+                {/* View: Orchestration Graph (zeroshot software-change pipeline) */}
+                {currentView === 'graph' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <OrchestrationGraphView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      items={visibleItems}
+                      onAdvanceStage={handleAdvanceStage}
+                      onOpenApproval={handleOpenApproval}
+                      onSubmitGoal={(goalText) => handleCreateIntent(goalText, 'feat')}
+                    />
+                  </div>
+                )}
 
-        {/* View 2: Skills Registry Catalog (Firebase, GitHub, GCloud, AGY) */}
-        {currentView === 'skills' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <SkillsCatalog onDispatchSkill={handleDispatchSkill} />
-          </div>
-        )}
+                {/* View: Node Studio (Visual Platform & DevContainer Pipeline Engine) */}
+                {currentView === 'node' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <NodeStudioView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      onHandoffPlan={(plan) => {
+                        handleCreateIntent(plan.title, 'feat');
+                        setCurrentView('chat');
+                      }}
+                      onNavigateToChat={() => setCurrentView('chat')}
+                    />
+                  </div>
+                )}
 
-        {/* View 3: Memory Explorer (Episodic, Semantic/ADRs, Rules, Vector Store) */}
-        {currentView === 'memory' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <MemoryExplorer activeWorkspace={activeWorkspace} />
-          </div>
-        )}
+                {/* View: Zero (Zeroshot v8 Engine & Invariants) */}
+                {currentView === 'zero' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <ZeroView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                    />
+                  </div>
+                )}
 
-        {/* View 4: Enterprise Telemetry & Cognitive Stats */}
-        {currentView === 'stats' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <EnterpriseStats
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              items={items}
-              localNode={localNode}
-            />
-          </div>
-        )}
+                {/* View 2: Skills Registry Catalog (Firebase, GitHub, GCloud, AGY) */}
+                {currentView === 'skills' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <SkillsCatalog onDispatchSkill={handleDispatchSkill} />
+                  </div>
+                )}
 
-        {/* View 5: High-Density Terminal User Interface (TUI) */}
-        {currentView === 'tui' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <TuiView
-              items={visibleItems}
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              onFanOutAgents={handleFanOutAgents}
-              onAdvanceStage={handleAdvanceStage}
-              onRecurseAgent={handleRecurseAgent}
-              onSelectView={setCurrentView}
-              onDispatchSkill={handleDispatchSkill}
-            />
-          </div>
-        )}
+                {/* View 3: Memory Explorer (Episodic, Semantic/ADRs, Rules, Vector Store) */}
+                {currentView === 'memory' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <MemoryExplorer activeWorkspace={activeWorkspace} />
+                  </div>
+                )}
 
-        {/* View 6: Connection & System Settings Panel */}
-        {currentView === 'settings' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <PetriSettings
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-              onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
-            />
-          </div>
-        )}
+                {/* View 4: Enterprise Telemetry & Cognitive Stats */}
+                {currentView === 'stats' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <EnterpriseStats
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      items={items}
+                      localNode={localNode}
+                    />
+                  </div>
+                )}
 
-        {/* View 7: Enterprise AI Governance & SAIF Compliance */}
-        {currentView === 'governance' && (
-          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <GovernanceView
-              activeWorkspace={activeWorkspace}
-              activeUser={activeUser}
-            />
-          </div>
-        )}
+                {/* View 5: High-Density Terminal User Interface (TUI) */}
+                {currentView === 'tui' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <TuiView
+                      items={visibleItems}
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      onFanOutAgents={handleFanOutAgents}
+                      onAdvanceStage={handleAdvanceStage}
+                      onRecurseAgent={handleRecurseAgent}
+                      onSelectView={setCurrentView}
+                      onDispatchSkill={handleDispatchSkill}
+                    />
+                  </div>
+                )}
+
+                {/* View 6: Connection & System Settings Panel */}
+                {currentView === 'settings' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <PetriSettings
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                      onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
+                    />
+                  </div>
+                )}
+
+                {/* View 7: Enterprise AI Governance & SAIF Compliance */}
+                {currentView === 'governance' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <GovernanceView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Agentation Live Preview Panel (When active or toggled) */}

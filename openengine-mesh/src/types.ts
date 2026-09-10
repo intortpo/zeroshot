@@ -197,16 +197,36 @@ export interface MemoryEntry {
 
 export type UserRole = 'owner' | 'lead_architect' | 'senior_dev' | 'security_auditor' | 'viewer';
 
+export type SystemTier = 'superadmin' | 'control' | 'consumer';
+
+export interface TierPermissions {
+  canManageGovernance: boolean;
+  canManageUsers: boolean;
+  canManageProviders: boolean;
+  canAccessTui: boolean;
+  canApproveGates: boolean;
+  canDeploy: boolean;
+  canEditWorkflows: boolean;
+  canRunDevContainers: boolean;
+  canSteerCognition: boolean;
+  canViewAuditLedger: boolean;
+  canSubmitFeedback: boolean;
+  canInteractAssistant: boolean;
+  canViewPreview: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
   avatar?: string;
   role: UserRole;
+  tier: SystemTier;
   organization: string;
   canApproveGates: boolean;
   canDeploy: boolean;
   canEditRules: boolean;
+  permissions?: Partial<TierPermissions>;
 }
 
 export interface EnterpriseStats {
@@ -227,7 +247,7 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance';
+export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance' | 'consumer';
 
 // ECC (Everything Claude Code) Engine & Optimization Types
 export interface EccOptimizationState {

@@ -5,8 +5,12 @@ import {
   Check,
   Plus,
   Mail,
+  Shield,
+  Wrench,
+  Users,
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { UserProfile, SystemTier } from '../types';
+import { TIER_DEFINITIONS } from '../services/tierService';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -29,11 +33,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserProfile['role']>('senior_dev');
+  const [tier, setTier] = useState<SystemTier>('control');
   const [org, setOrg] = useState('Petri Zero');
 
   if (!isOpen) return null;
 
   const activeUser = users.find((u) => u.id === activeUserId) || users[0];
+  const activeTierMeta = TIER_DEFINITIONS[activeUser.tier || 'superadmin'];
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,10 +50,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       name: name.trim(),
       email: email.trim(),
       role,
+      tier,
       organization: org,
-      canApproveGates: role === 'owner' || role === 'lead_architect' || role === 'security_auditor',
-      canDeploy: role !== 'viewer',
-      canEditRules: role === 'owner' || role === 'lead_architect',
+      canApproveGates: tier === 'superadmin' || (tier === 'control' && role !== 'viewer'),
+      canDeploy: tier !== 'consumer',
+      canEditRules: tier === 'superadmin',
     };
 
     onAddUser?.(newUser);
@@ -89,30 +96,53 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div>
                 <div className="text-sm font-semibold text-stone-900 flex items-center space-x-2">
                   <span>{activeUser.name}</span>
-                  <span className="text-xs font-sans px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
-                    ACTIVE OPERATOR
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-semibold flex items-center space-x-1 ${activeTierMeta.badgeStyle.bg} ${activeTierMeta.badgeStyle.text} ${activeTierMeta.badgeStyle.border}`}>
+                    {activeUser.tier === 'superadmin' && <Shield className="w-3 h-3" />}
+                    {activeUser.tier === 'control' && <Wrench className="w-3 h-3" />}
+                    {activeUser.tier === 'consumer' && <Users className="w-3 h-3" />}
+                    <span>{activeTierMeta.label.toUpperCase()}</span>
                   </span>
                 </div>
                 <div className="text-xs text-stone-500 flex items-center space-x-1.5 mt-0.5">
                   <Mail className="w-3.5 h-3.5 text-stone-400" />
                   <span>{activeUser.email}</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="text-stone-600 font-medium capitalize">{activeUser.role.replace('_', ' ')}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-200/60 text-center text-xs">
+          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-stone-200/60 text-center text-xs">
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-xs text-stone-400 font-sans">ROLE</div>
-              <div className="font-semibold text-stone-800 capitalize mt-0.5">{activeUser.role.replace('_', ' ')}</div>
+              <div className="text-[10px] text-stone-400 font-mono">TIER</div>
+              <div className={`font-semibold text-xs mt-0.5 capitalize ${activeTierMeta.badgeStyle.text}`}>
+                {activeUser.tier || 'superadmin'}
+              </div>
             </div>
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-xs text-stone-400 font-sans">GATE APPROVAL</div>
-              <div className="font-semibold text-emerald-700 mt-0.5">Authorized</div>
+              <div className="text-[10px] text-stone-400 font-mono">SAIF GOVERNANCE</div>
+              <div className={`font-semibold text-xs mt-0.5 ${
+                activeUser.tier === 'superadmin' ? 'text-purple-700' : activeUser.tier === 'control' ? 'text-stone-600' : 'text-stone-400'
+              }`}>
+                {activeUser.tier === 'superadmin' ? 'Full Root' : activeUser.tier === 'control' ? 'Read-Only' : 'Blocked'}
+              </div>
             </div>
             <div className="p-2 rounded-xl bg-white border border-stone-200/60">
-              <div className="text-xs text-stone-400 font-sans">DEPLOY PERMISSION</div>
-              <div className="font-semibold text-emerald-700 mt-0.5">Enabled</div>
+              <div className="text-[10px] text-stone-400 font-mono">NODE & CONTAINER</div>
+              <div className={`font-semibold text-xs mt-0.5 ${
+                activeUser.tier === 'consumer' ? 'text-stone-400' : 'text-emerald-700'
+              }`}>
+                {activeUser.tier === 'consumer' ? 'Disabled' : 'Enabled'}
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-white border border-stone-200/60">
+              <div className="text-[10px] text-stone-400 font-mono">GATE APPROVAL</div>
+              <div className={`font-semibold text-xs mt-0.5 ${
+                activeUser.canApproveGates ? 'text-emerald-700' : 'text-stone-400'
+              }`}>
+                {activeUser.canApproveGates ? (activeUser.tier === 'superadmin' ? 'Unrestricted' : 'Stage 1-5') : 'None'}
+              </div>
             </div>
           </div>
         </div>
@@ -136,6 +166,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {users.map((u) => {
               const isSelected = u.id === activeUserId;
+              const uTierMeta = TIER_DEFINITIONS[u.tier || 'superadmin'];
               return (
                 <div
                   key={u.id}
@@ -151,13 +182,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       {u.name.charAt(0)}
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-stone-900">{u.name}</div>
-                      <div className="text-xs text-stone-500">{u.email}</div>
+                      <div className="text-xs font-semibold text-stone-900 flex items-center space-x-2">
+                        <span>{u.name}</span>
+                        <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${uTierMeta.badgeStyle.bg} ${uTierMeta.badgeStyle.text} ${uTierMeta.badgeStyle.border}`}>
+                          {uTierMeta.label.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-stone-500">{u.email}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-sans px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 capitalize">
+                    <span className="text-[11px] font-sans px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 capitalize">
                       {u.role.replace('_', ' ')}
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-emerald-600" />}
@@ -190,7 +226,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={tier}
+                onChange={(e) => setTier(e.target.value as SystemTier)}
+                className="px-3 py-2 rounded-xl bg-white border border-stone-200 text-stone-900 focus:outline-none focus:border-stone-900 font-semibold"
+              >
+                <option value="superadmin">🛡️ SuperAdmin</option>
+                <option value="control">⚙️ Control</option>
+                <option value="consumer">👥 Consumer</option>
+              </select>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserProfile['role'])}

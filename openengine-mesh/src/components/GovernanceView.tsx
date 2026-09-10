@@ -18,6 +18,7 @@ import {
   UserProfile,
 } from '../types';
 import { governanceService } from '../services/governanceService';
+import { tierService } from '../services/tierService';
 import { AgentCognitionHUD } from './AgentCognitionHUD';
 
 interface GovernanceViewProps {
@@ -27,7 +28,7 @@ interface GovernanceViewProps {
 
 export const GovernanceView: React.FC<GovernanceViewProps> = ({
   activeWorkspace: _activeWorkspace,
-  activeUser: _activeUser,
+  activeUser,
 }) => {
   const [pillars, setPillars] = useState<SaifAuditPillar[]>(() =>
     governanceService.getPillars()
@@ -43,6 +44,8 @@ export const GovernanceView: React.FC<GovernanceViewProps> = ({
   >('saif');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditToast, setAuditToast] = useState<string | null>(null);
+
+  const isSuperAdmin = activeUser?.tier === 'superadmin';
 
   useEffect(() => {
     return governanceService.subscribe(() => {
@@ -68,6 +71,13 @@ export const GovernanceView: React.FC<GovernanceViewProps> = ({
   };
 
   const handleTogglePolicy = (policyId: string) => {
+    if (!isSuperAdmin) {
+      showToast('Policy modification restricted: SuperAdmin tier required.');
+      if (activeUser) {
+        tierService.recordBoundaryViolation(activeUser, `Toggle policy ${policyId}`);
+      }
+      return;
+    }
     governanceService.togglePolicy(policyId);
     showToast('Updated governance policy threshold');
   };
@@ -103,6 +113,13 @@ export const GovernanceView: React.FC<GovernanceViewProps> = ({
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 {overallScore}% · A+ POSTURE
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                isSuperAdmin
+                  ? 'bg-purple-50 text-purple-700 border-purple-200'
+                  : 'bg-stone-100 text-stone-600 border-stone-200'
+              }`}>
+                {isSuperAdmin ? 'SUPERADMIN ROOT' : 'CONTROL AUDIT-ONLY'}
               </span>
             </div>
             <p className="text-xs text-stone-500 font-sans">
@@ -292,6 +309,15 @@ export const GovernanceView: React.FC<GovernanceViewProps> = ({
                 </p>
               </div>
             </div>
+
+            {!isSuperAdmin && (
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 flex items-center space-x-2.5">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Read-Only Compliance Mode:</strong> Your current tier is <strong>CONTROL</strong>. Modifying fail-closed safety policies or security gate thresholds requires <strong>SUPERADMIN</strong> privileges.
+                </span>
+              </div>
+            )}
 
             <div className="space-y-3">
               {policies.map((pol) => (
