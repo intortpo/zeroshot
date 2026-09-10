@@ -20,6 +20,8 @@ import {
   Users,
   Server,
   GraduationCap,
+  Menu,
+  Database,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -64,8 +66,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 }) => {
   const [cognition, setCognition] = useState(() => agentCognitionService.getState());
   const [isModulesMenuOpen, setIsModulesMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isTierMenuOpen, setIsTierMenuOpen] = useState(false);
   const modulesMenuRef = useRef<HTMLDivElement | null>(null);
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
   const tierMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeTier: SystemTier = activeUser?.tier || 'superadmin';
@@ -80,6 +84,9 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
       if (modulesMenuRef.current && !modulesMenuRef.current.contains(event.target as Node)) {
         setIsModulesMenuOpen(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
       if (tierMenuRef.current && !tierMenuRef.current.contains(event.target as Node)) {
         setIsTierMenuOpen(false);
       }
@@ -88,7 +95,19 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isModuleActive = currentView === 'zero' || currentView === 'skills' || currentView === 'memory';
+  const isModuleActive =
+    currentView === 'zero' ||
+    currentView === 'skills' ||
+    currentView === 'memory' ||
+    currentView === 'federated';
+
+  const isMoreViewActive =
+    currentView === 'server' ||
+    currentView === 'edm' ||
+    currentView === 'governance' ||
+    currentView === 'stats' ||
+    currentView === 'tui' ||
+    currentView === 'settings';
 
   return (
     <header
@@ -327,7 +346,29 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               </button>
 
               {isModulesMenuOpen && (
-                <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  {/* Federated Data Hub */}
+                  <button
+                    onClick={() => {
+                      onSelectView('federated');
+                      setIsModulesMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'federated'
+                        ? 'bg-sky-50 text-sky-900 font-medium border border-sky-100'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Database className="w-4 h-4 text-sky-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Federated Data</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-700">Encrypted</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Docs, Media, Drive & Classroom RAG</div>
+                    </div>
+                  </button>
+
                   <button
                     onClick={() => {
                       onSelectView('zero');
@@ -339,7 +380,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
                   >
-                    <Disc className="w-4 h-4 text-[#FF5F1F]" />
+                    <Disc className="w-4 h-4 text-[#FF5F1F] shrink-0" />
                     <div>
                       <div className="text-xs font-semibold">Zero Game Studio</div>
                       <div className="text-[10px] text-stone-400 font-normal">Bevy 0.15 & Avian Physics</div>
@@ -357,7 +398,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold">Skills Catalog</div>
                       <div className="text-[10px] text-stone-400 font-normal">ECC Unified-Memory & Diagram</div>
@@ -375,7 +416,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
                   >
-                    <Brain className="w-4 h-4 text-indigo-600" />
+                    <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold">Memory Explorer</div>
                       <div className="text-[10px] text-stone-400 font-normal">Vault Scopes & Vector Store</div>
@@ -385,113 +426,186 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               )}
             </div>
 
-            <button
-              onClick={() => onSelectView('stats')}
-              className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'stats'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-            >
-              <BarChart3 className={`w-4 h-4 ${currentView === 'stats' ? 'text-stone-900' : 'text-stone-400'}`} />
-              <span>Stats</span>
-            </button>
-
-            <button
-              onClick={() => onSelectView('tui')}
-              className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'tui'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-            >
-              <Terminal className="w-4 h-4" />
-              <span>TUI</span>
-            </button>
-
-            <button
-              onClick={() => onSelectView('governance')}
-              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                currentView === 'governance'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-              title={
-                activeTier === 'superadmin'
-                  ? 'Enterprise AI Governance & Full SAIF Policy Toggles'
-                  : 'Enterprise AI Governance & SAIF Compliance (Read-Only)'
-              }
-            >
-              <ShieldCheck className={`w-4 h-4 ${currentView === 'governance' ? 'text-emerald-700' : 'text-stone-400'}`} />
-              <span>Governance</span>
-              <span className={`ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono border ${
-                activeTier === 'superadmin' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              }`}>
-                {activeTier === 'superadmin' ? 'Root' : 'Audit'}
-              </span>
-            </button>
-
-            {activeTier === 'superadmin' && (
+            {/* Hamburger / Extended Tools Menu for Platforms, Server, EDM & Ops */}
+            <div className="relative" ref={moreMenuRef}>
               <button
-                onClick={() => onSelectView('settings')}
-                className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                  currentView === 'settings'
-                    ? 'border-stone-900 text-stone-950 font-semibold'
-                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl text-xs sm:text-sm font-sans transition-all cursor-pointer border ${
+                  isMoreViewActive
+                    ? 'border-stone-800 bg-stone-900 text-white font-medium shadow-xs'
+                    : 'border-transparent text-stone-500 hover:text-stone-900 hover:bg-stone-100/70 font-normal'
                 }`}
+                title="Extended Platform Operations & Diagnostics"
               >
-                <Sliders className={`w-4 h-4 ${currentView === 'settings' ? 'text-stone-900' : 'text-stone-400'}`} />
-                <span>Settings</span>
+                <Menu className="w-4 h-4" />
+                <span>More</span>
+                {isMoreViewActive && (
+                  <span className="text-[9px] font-mono px-1.5 py-0.2 bg-stone-800 text-stone-200 rounded uppercase">
+                    {currentView}
+                  </span>
+                )}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
 
-            {/* Petri Server: Container Manager, Reverse Proxy & SmartShield */}
-            <button
-              onClick={() => onSelectView('server')}
-              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                currentView === 'server'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-              title="Petri Server: Container Manager, Reverse Proxy & SmartShield"
-            >
-              <Server className={`w-4 h-4 ${currentView === 'server' ? 'text-indigo-600' : 'text-stone-400'}`} />
-              <span>Server</span>
-              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Petri
-              </span>
-            </button>
+              {isMoreMenuOpen && (
+                <div className="absolute top-full right-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  <div className="px-3 py-1.5 text-[10px] font-mono uppercase text-stone-400 font-semibold border-b border-stone-100 mb-1">
+                    Platform Tools & Operations
+                  </div>
 
-            {/* EDM: Quantum-Enhanced Educational Data Mining */}
-            <button
-              onClick={() => onSelectView('edm')}
-              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                currentView === 'edm'
-                  ? 'border-teal-600 text-teal-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-              title="Quantum-Enhanced Educational Data Mining (Q-Matrix + DINA + QSVC)"
-            >
-              <GraduationCap className={`w-4 h-4 ${currentView === 'edm' ? 'text-teal-600' : 'text-stone-400'}`} />
-              <span>EDM</span>
-              <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-teal-50 text-teal-700 border border-teal-200">
-                QML
-              </span>
-            </button>
+                  {/* 1. EDM Diagnostics */}
+                  <button
+                    onClick={() => {
+                      onSelectView('edm');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'edm'
+                        ? 'bg-teal-50 text-teal-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <GraduationCap className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>EDM Diagnostics</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Q-Matrix, DINA CDM & QSVC</div>
+                    </div>
+                  </button>
 
-            {/* Quick Link to Consumer Portal for SuperAdmin / Control */}
-            <button
-              onClick={() => onSelectView('consumer')}
-              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'consumer'
-                  ? 'border-sky-600 text-sky-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-              title="Preview the Consumer Experience"
-            >
-              <Eye className="w-3.5 h-3.5 text-sky-500" />
-              <span>Consumer</span>
-            </button>
+                  {/* 2. Petri Server */}
+                  <button
+                    onClick={() => {
+                      onSelectView('server');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'server'
+                        ? 'bg-indigo-50 text-indigo-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Server className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Petri Server</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-indigo-100 text-indigo-800">Docker</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Reverse Proxy & SmartShield</div>
+                    </div>
+                  </button>
+
+                  {/* 3. Governance */}
+                  <button
+                    onClick={() => {
+                      onSelectView('governance');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'governance'
+                        ? 'bg-purple-50 text-purple-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Governance & SAIF</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-purple-100 text-purple-800">
+                          {activeTier === 'superadmin' ? 'Root' : 'Audit'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Enterprise Policy & Gate Controls</div>
+                    </div>
+                  </button>
+
+                  {/* 4. Stats */}
+                  <button
+                    onClick={() => {
+                      onSelectView('stats');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'stats'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4 text-stone-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Enterprise Stats</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Telemetry & Economic Impact</div>
+                    </div>
+                  </button>
+
+                  {/* 5. TUI */}
+                  <button
+                    onClick={() => {
+                      onSelectView('tui');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'tui'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Terminal className="w-4 h-4 text-stone-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Terminal UI</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Fast Keyboard & CLI Console</div>
+                    </div>
+                  </button>
+
+                  {/* 6. Settings (Superadmin only) */}
+                  {activeTier === 'superadmin' && (
+                    <button
+                      onClick={() => {
+                        onSelectView('settings');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                        currentView === 'settings'
+                          ? 'bg-stone-100 text-stone-900 font-medium'
+                          : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                      }`}
+                    >
+                      <Sliders className="w-4 h-4 text-stone-600 shrink-0" />
+                      <div>
+                        <div className="text-xs font-semibold">Platform Settings</div>
+                        <div className="text-[10px] text-stone-400 font-normal">Mesh Config & Security Keys</div>
+                      </div>
+                    </button>
+                  )}
+
+                  <div className="border-t border-stone-100 my-1" />
+
+                  {/* 7. Consumer Portal Preview */}
+                  <button
+                    onClick={() => {
+                      onSelectView('consumer');
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'consumer'
+                        ? 'bg-sky-50 text-sky-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Eye className="w-4 h-4 text-sky-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Consumer Portal</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-800">Preview</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Client Experience & Request Desk</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </nav>

@@ -44,10 +44,31 @@ const server = Bun.serve({
       );
     }
 
-    // Zero-Latency Data Endpoint for Presentation Layer (Svelte)
+    // Zero-Latency Data Endpoint for Presentation Layer (Svelte / React)
     if (url.pathname === '/firebase/students') {
-      const students = await firebaseSource.getAllStudents();
+      const termParam = url.searchParams.get('term');
+      const students = termParam
+        ? await firebaseSource.getStudentsByTerm(termParam)
+        : await firebaseSource.getAllStudents();
       return new Response(JSON.stringify(students, null, 2), { headers });
+    }
+
+    // Stage Next Semester endpoint
+    if (url.pathname === '/firebase/terms/stage-next' && req.method === 'POST') {
+      const body = await req.json().catch(() => ({}));
+      const sourceTerm = body.sourceTerm || 'AY2026 Sem 1';
+      const targetTerm = body.targetTerm || 'AY2026 Sem 2';
+      const stagedCount = await firebaseSource.stageNextTerm(sourceTerm, targetTerm);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          sourceTerm,
+          targetTerm,
+          stagedCount,
+          timestamp: Date.now(),
+        }, null, 2),
+        { headers }
+      );
     }
 
     // Trigger Friday 17:00 Tactical Cron

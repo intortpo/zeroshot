@@ -201,7 +201,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
           ...prev,
         ]);
       } else if (e.key === '1') onSelectView?.('board');
-      else if (e.key === '2') onSelectView?.('graph');
+      else if (e.key === '2') onSelectView?.('node');
       else if (e.key === '3') onSelectView?.('zero');
       else if (e.key === '4') onSelectView?.('skills');
       else if (e.key === '5') onSelectView?.('memory');
@@ -258,7 +258,8 @@ export const TuiView: React.FC<TuiViewProps> = ({
     } else if (cmd === 'clear') {
       setConsoleLogs([]);
     } else if (cmd === 'board') onSelectView?.('board');
-    else if (cmd === 'graph') onSelectView?.('graph');
+    else if (cmd === 'graph' || cmd === 'node' || cmd === 'studio') onSelectView?.('node');
+    else if (cmd === 'federated' || cmd === 'docs') onSelectView?.('federated');
     else if (cmd === 'zero') onSelectView?.('zero');
     else if (cmd === 'memory') onSelectView?.('memory');
     else if (cmd === 'stats') onSelectView?.('stats');
@@ -524,10 +525,10 @@ export const TuiView: React.FC<TuiViewProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => onSelectView?.('graph')}
+            onClick={() => onSelectView?.('node')}
             className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-600 transition-colors"
           >
-            [2] GRAPH
+            [2] NODE STUDIO
           </button>
           <button
             type="button"

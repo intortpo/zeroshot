@@ -11,6 +11,7 @@ export interface FirebaseStudentDoc {
   studentId: string;
   name: string; // Tokenized pseudonym in production
   cohort: string;
+  term?: string; // e.g. "AY2026 Sem 1" | "AY2026 Sem 2"
   itemResponses: Record<string, number>; // item_id -> binary 0/1
   rawWeeklyLogs: RawStudentWeeklyLog[];
   normalizedTimeline?: NormalizedStudentFrame[];
@@ -70,6 +71,7 @@ export class FirebaseSourceOfTruth {
       studentId: 'std_402_october_dip',
       name: 'Student #402 (Cohort Fall 2026)',
       cohort: 'Linguistics Core A',
+      term: 'AY2026 Sem 1',
       itemResponses: {
         item_q1_vocab: 1,
         item_q2_cloze: 0,
@@ -93,6 +95,7 @@ export class FirebaseSourceOfTruth {
       studentId: 'std_108_stable_high',
       name: 'Student #108 (Cohort Fall 2026)',
       cohort: 'Linguistics Core A',
+      term: 'AY2026 Sem 1',
       itemResponses: {
         item_q1_vocab: 1,
         item_q2_cloze: 1,
@@ -116,6 +119,7 @@ export class FirebaseSourceOfTruth {
       studentId: 'std_215_syntax_divergent',
       name: 'Student #215 (Cohort Fall 2026)',
       cohort: 'Linguistics Core A',
+      term: 'AY2026 Sem 1',
       itemResponses: {
         item_q1_vocab: 1,
         item_q2_cloze: 1,
@@ -138,6 +142,39 @@ export class FirebaseSourceOfTruth {
 
   public async getAllStudents(): Promise<FirebaseStudentDoc[]> {
     return Array.from(this.students.values());
+  }
+
+  public async getStudentsByTerm(term: string = 'AY2026 Sem 1'): Promise<FirebaseStudentDoc[]> {
+    return Array.from(this.students.values()).filter(
+      (s) => (s.term || 'AY2026 Sem 1') === term
+    );
+  }
+
+  public async stageNextTerm(
+    sourceTerm: string = 'AY2026 Sem 1',
+    targetTerm: string = 'AY2026 Sem 2'
+  ): Promise<number> {
+    const existingInSource = await this.getStudentsByTerm(sourceTerm);
+    let count = 0;
+    for (const s of existingInSource) {
+      const targetId = `${s.studentId}_${targetTerm.replace(/\s+/g, '_').toLowerCase()}`;
+      if (!this.students.has(targetId)) {
+        this.students.set(targetId, {
+          ...s,
+          studentId: targetId,
+          term: targetTerm,
+          rawWeeklyLogs: [
+            { week: 1, attendedDays: 0, totalDays: 4, hoursLate: 0, homeworkPoints: 0, homeworkMaxPoints: 100 }
+          ],
+          normalizedTimeline: undefined,
+          diagnostic_profile: s.diagnostic_profile, // Keep prior mastery baseline
+          risk_alert: undefined,
+          lastEvaluatedAt: undefined,
+        });
+        count++;
+      }
+    }
+    return count;
   }
 
   public async getStudent(studentId: string): Promise<FirebaseStudentDoc | null> {

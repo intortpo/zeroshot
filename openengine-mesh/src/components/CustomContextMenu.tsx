@@ -9,10 +9,10 @@ import {
   MousePointerClick,
   FileText,
   RotateCw,
-  Workflow,
   MessageSquare,
   Network,
   Eye,
+  Database,
 } from 'lucide-react';
 import { PetriViewMode } from '../types';
 
@@ -349,11 +349,11 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
 
           <button
             type="button"
-            onClick={() => handleQuickNavigate('graph')}
+            onClick={() => handleQuickNavigate('federated')}
             className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-stone-100 text-stone-700 transition-colors"
           >
-            <Workflow className="w-3 h-3 text-[#0ABAB5]" />
-            <span className="text-[11px] font-medium">Orchestration Graph</span>
+            <Database className="w-3 h-3 text-sky-600" />
+            <span className="text-[11px] font-medium">Federated Data (Docs & RAG)</span>
           </button>
 
           <button

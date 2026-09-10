@@ -264,7 +264,8 @@ export type PetriViewMode =
   | 'governance'
   | 'consumer'
   | 'server'
-  | 'edm';
+  | 'edm'
+  | 'federated';
 
 export interface SteerableConceptWord {
   id: string;

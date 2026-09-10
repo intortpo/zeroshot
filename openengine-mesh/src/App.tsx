@@ -24,6 +24,7 @@ import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
+import { FederatedDataView } from './components/federated/FederatedDataView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
 import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
@@ -45,6 +46,13 @@ export function App() {
 
   // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings' | 'governance' | 'consumer'
   const [currentView, setCurrentView] = useState<PetriViewMode>('board');
+  const handleSelectView = (view: PetriViewMode) => {
+    if (view === 'graph') {
+      setCurrentView('node');
+    } else {
+      setCurrentView(view);
+    }
+  };
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
   const isMobile = useIsMobile(768);
@@ -518,7 +526,7 @@ function inferPetriKind(text: string): PetriItemKind {
           onOpenUserModal={() => setIsUserModalOpen(true)}
           onSelectTier={handleSelectTier}
           currentView={currentView}
-          onSelectView={setCurrentView}
+          onSelectView={handleSelectView}
           isPreviewOpen={isPreviewOpen}
           onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
           isCognitionOpen={isCognitionOpen}
@@ -720,6 +728,13 @@ function inferPetriKind(text: string): PetriItemKind {
                     />
                   </div>
                 )}
+
+                {/* View 10: Federated Data Hub, Secure Store & Doc RAG */}
+                {currentView === 'federated' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <FederatedDataView />
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -743,7 +758,7 @@ function inferPetriKind(text: string): PetriItemKind {
       {isMobile && (
         <MobileBottomNav
           currentView={currentView}
-          onSelectView={(view) => setCurrentView(view)}
+          onSelectView={handleSelectView}
           onOpenMore={() => setIsMobileMoreOpen(true)}
           isCognitionActive={isCognitionOpen}
         />
@@ -754,7 +769,7 @@ function inferPetriKind(text: string): PetriItemKind {
         isOpen={isMobileMoreOpen}
         onClose={() => setIsMobileMoreOpen(false)}
         currentView={currentView}
-        onSelectView={(view) => setCurrentView(view)}
+        onSelectView={handleSelectView}
         activeUser={activeUser}
         activeWorkspace={activeWorkspace}
         onOpenUserModal={() => setIsUserModalOpen(true)}
@@ -825,7 +840,7 @@ function inferPetriKind(text: string): PetriItemKind {
 
       {/* Global Custom Right-Click Context Menu & Text Selection Copy */}
       <CustomContextMenu
-        onSelectView={(view) => setCurrentView(view)}
+        onSelectView={handleSelectView}
         currentView={currentView}
         onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
       />
