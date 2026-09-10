@@ -40,11 +40,7 @@ def test_uniform_runtime_requires_an_explicit_harness() -> None:
 
 def direct_client(fake_native: Path) -> Client:
     return Client(
-        target=DirectTarget(
-            "http://127.0.0.1:8080",
-            repository="owner/repo",
-            default_branch="main",
-        ),
+        target=DirectTarget("http://127.0.0.1:8080"),
         runtime=runtime(),
         environment={
             "OPENROUTER_API_KEY": "test-only",
@@ -90,7 +86,12 @@ def test_run_waits_for_terminal_result(fake_native: Path, tmp_path: Path) -> Non
 def test_direct_target_uses_the_same_client_and_durable_run_surface(fake_native: Path) -> None:
     async def exercise() -> None:
         async with direct_client(fake_native) as client:
-            run = await client.submit("inspect it")
+            run = await client.submit(
+                "inspect it",
+                repository="owner/repo",
+                branch="main",
+                revision="0123456789abcdef0123456789abcdef01234567",
+            )
             status = await run.status()
             assert status.phase == "admitted"
             summaries = await client.list_runs()
@@ -108,10 +109,18 @@ def test_direct_target_uses_the_same_client_and_durable_run_surface(fake_native:
     assert arguments[0][0] == "run"
     assert "--validate-only" in arguments[0]
     assert arguments[1][:2] == ["target", "add"]
-    assert arguments[2][:2] == ["target", "setup"]
+    assert all(args[:2] != ["target", "setup"] for args in arguments)
     run = next(args for args in arguments if args[0] == "run" and "--detach" in args)
     assert run[run.index("--target") : run.index("--target") + 2] == ["--target", "python-sdk"]
+    assert run[run.index("--repository") : run.index("--repository") + 2] == [
+        "--repository",
+        "owner/repo",
+    ]
     assert run[run.index("--branch") : run.index("--branch") + 2] == ["--branch", "main"]
+    assert run[run.index("--revision") : run.index("--revision") + 2] == [
+        "--revision",
+        "0123456789abcdef0123456789abcdef01234567",
+    ]
     logs = next(args for args in arguments if args[0] == "logs")
     assert logs[logs.index("--after") + 1] == "v2:2"
     assert logs[logs.index("--execution") + 1] == "worker-1"
@@ -143,6 +152,9 @@ def test_custom_graph_and_runtime_are_forwarded_unchanged(fake_native: Path) -> 
         graph=GraphSpec.from_dict(graph),
         initial_input={"ticket": "OE-123"},
         runtime=RuntimePlan.from_dict(runtime_plan),
+        repository="owner/repository",
+        branch="release",
+        revision="0123456789abcdef0123456789abcdef01234567",
         submission_key="oe-123",
     )
 
@@ -155,10 +167,18 @@ def test_custom_graph_and_runtime_are_forwarded_unchanged(fake_native: Path) -> 
         item for item in read_invocations(fake_native) if item["args"] and item["args"][0] == "run"
     ]
     assert len(runs) == 2
-    assert all(item["--input"] == {"ticket": "OE-123"} for item in runs)
-    assert all(item["--graph"] == graph for item in runs)
-    assert all(item["--runtime-config"] == runtime_plan for item in runs)
-    assert all("--uniform-runtime-config" not in item["args"] for item in runs)
+    for item in runs:
+        assert item["--input"] == {"ticket": "OE-123"}
+        assert item["--graph"] == graph
+        assert item["--runtime-config"] == runtime_plan
+        assert "--uniform-runtime-config" not in item["args"]
+        arguments = item["args"]
+        assert arguments[arguments.index("--repository") + 1] == "owner/repository"
+        assert arguments[arguments.index("--branch") + 1] == "release"
+        assert (
+            arguments[arguments.index("--revision") + 1]
+            == "0123456789abcdef0123456789abcdef01234567"
+        )
 
 
 def test_presets_are_read_from_executable(fake_native: Path) -> None:

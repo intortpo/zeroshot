@@ -89,7 +89,6 @@ where
     match command {
         NativeV2CliCommand::TargetAdd(request) => backend.target_add(request).await?,
         NativeV2CliCommand::TargetLogin { name } => backend.target_login(&name).await?,
-        NativeV2CliCommand::TargetSetup(request) => backend.target_setup(request).await?,
         _ => {
             return Err(NativeV2CliError::Usage(
                 "expected a target operation".to_owned(),
@@ -252,7 +251,7 @@ where
     S: DetachSignal,
     W: Write,
 {
-    let Some(receipt) = submit_run(&run, context).await? else {
+    let Some(receipt) = submit_run(&run, context, output).await? else {
         write_json(output, &serde_json::json!({ "valid": true }))?;
         return Ok(CliOutcome::Completed);
     };

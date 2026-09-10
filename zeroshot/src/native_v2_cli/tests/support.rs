@@ -31,11 +31,6 @@ pub(super) enum Call {
     TargetLogin {
         name: String,
     },
-    TargetSetup {
-        name: String,
-        repository: String,
-        default_branch: Option<String>,
-    },
     Submit {
         target: Option<String>,
         title: RunTitle,
@@ -135,6 +130,7 @@ where
 #[derive(Clone, Default)]
 pub(super) struct FakeBackend {
     calls: Arc<Mutex<Vec<Call>>>,
+    failed_submit: bool,
     pending_watch: bool,
     reconnect_watch: bool,
     permanent_reopen_watch: bool,
@@ -151,6 +147,13 @@ pub(super) enum CursorCallKind {
 }
 
 impl FakeBackend {
+    pub(super) fn with_failed_submit() -> Self {
+        Self {
+            failed_submit: true,
+            ..Self::default()
+        }
+    }
+
     pub(super) fn with_pending_watch() -> Self {
         Self {
             pending_watch: true,
@@ -241,17 +244,6 @@ impl NativeV2CliBackend for FakeBackend {
         Ok(())
     }
 
-    async fn target_setup(&self, request: TargetSetup) -> Result<(), NativeV2CliError> {
-        self.calls.lock().assert_value().push(Call::TargetSetup {
-            name: request.name,
-            repository: request.repository,
-            default_branch: request
-                .default_branch
-                .map(|branch| branch.as_str().to_owned()),
-        });
-        Ok(())
-    }
-
     async fn run_submit(
         &self,
         target: Option<&str>,
@@ -262,6 +254,7 @@ impl NativeV2CliBackend for FakeBackend {
             connections,
             github_token,
             run_id: _,
+            source: _,
             profile: _,
         } = request;
         self.calls.lock().assert_value().push(Call::Submit {
@@ -274,6 +267,9 @@ impl NativeV2CliBackend for FakeBackend {
             branch: intent.branch.map(|branch| branch.as_str().to_owned()),
             submission_key: intent.submission_key.as_str().to_owned(),
         });
+        if self.failed_submit {
+            return Err(NativeV2CliError::Protocol("submission rejected".to_owned()));
+        }
         Ok(RunSubmitResult {
             run_id: RunId::new("run-public"),
         })

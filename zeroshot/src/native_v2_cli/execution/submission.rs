@@ -23,6 +23,9 @@ use crate::native_v2_delivery::GITHUB_TOKEN_ENV;
 
 #[path = "submission/profiles.rs"]
 mod profiles;
+
+#[path = "named_source.rs"]
+mod named_source;
 pub(super) use profiles::materialize_profile;
 use profiles::{ResolvedRunProfile, resolve_run_profile};
 
@@ -134,6 +137,7 @@ where
         intent,
         connections,
         github_token,
+        source: None,
         profile: resolved.remote_selector,
     })
 }
@@ -146,7 +150,8 @@ async fn prepare_validated_submission_with_environment<F>(
 where
     F: Fn(&str) -> Option<OsString>,
 {
-    let params = prepare_submission_with_environment(run, resolved, available)?;
+    let mut params = prepare_submission_with_environment(run, resolved, available)?;
+    params.source = named_source::resolve(run, params.github_token.as_deref()).await?;
     NativeV2Admission
         .validate_intent(&params.intent, DeliveryPolicy::Optional)
         .await
@@ -154,12 +159,14 @@ where
     Ok(params)
 }
 
-pub(super) async fn submit_run<B>(
+pub(super) async fn submit_run<B, W>(
     run: &RunCommand,
     context: &CliExecutionContext<'_, B>,
+    output: &mut W,
 ) -> Result<Option<RunSubmitResult>, NativeV2CliError>
 where
     B: NativeV2CliBackend,
+    W: Write,
 {
     let resolved = resolve_run_profile(run, context.backend).await?;
     let params =
@@ -167,11 +174,31 @@ where
     if run.validate_only {
         return Ok(None);
     }
-    context
+    let source_record = named_source_record(run, &params);
+    let receipt = context
         .backend
         .run_submit(run.target.as_deref(), params)
-        .await
-        .map(Some)
+        .await?;
+    if let Some(record) = source_record {
+        write_json(output, &record)?;
+    }
+    Ok(Some(receipt))
+}
+
+fn named_source_record(run: &RunCommand, params: &PreparedRunRequest) -> Option<serde_json::Value> {
+    let target = run.target.as_ref()?;
+    let source = params.source.as_ref()?;
+    let resolved = &source.resolved;
+    Some(serde_json::json!({
+        "target": target,
+        "source": format!(
+            "{}@{}#{}",
+            resolved.repository.as_str(),
+            resolved.branch.as_str(),
+            resolved.revision.as_str()
+        ),
+        "dirty": source.dirty,
+    }))
 }
 
 fn validate_github_token(value: String) -> Result<String, NativeV2CliError> {

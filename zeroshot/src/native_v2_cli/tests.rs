@@ -3,7 +3,9 @@ use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use openengine_cluster_protocol::{RunTitle, RuntimePlan};
+use openengine_cluster_protocol::{
+    RunTitle, RuntimePlan, SourceBranchId, SourceRepositoryId, SourceRevisionId,
+};
 use openengine_cluster_testkit::assertions::{AssertError, AssertValue};
 use serde_json::{json, Value};
 
@@ -118,6 +120,10 @@ fn run_args(graph: &Path, input: &Path, runtime: &Path, extra: &[&str]) -> Vec<O
         OsString::from("run"),
         OsString::from("--target"),
         OsString::from("prod"),
+        OsString::from("--repository"),
+        OsString::from("open-engine/zeroshot"),
+        OsString::from("--revision"),
+        OsString::from("0123456789abcdef0123456789abcdef01234567"),
         OsString::from("--title"),
         OsString::from("Repair checkout"),
         OsString::from("--graph"),
@@ -127,6 +133,9 @@ fn run_args(graph: &Path, input: &Path, runtime: &Path, extra: &[&str]) -> Vec<O
         OsString::from("--runtime-config"),
         runtime.as_os_str().to_owned(),
     ];
+    if !extra.contains(&"--branch") {
+        values.extend([OsString::from("--branch"), OsString::from("main")]);
+    }
     values.extend(extra.iter().map(OsString::from));
     values
 }
@@ -326,8 +335,43 @@ async fn run_follows_by_default_and_forwards_per_run_intent_unchanged() {
         ]
     );
     let lines = String::from_utf8(output).assert_value();
-    assert!(lines.contains("\"runId\":\"run-public\""));
+    let mut values = lines
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).assert_value());
+    let source = values.next().assert_value();
+    assert_eq!(
+        source["source"],
+        "open-engine/zeroshot@feature#0123456789abcdef0123456789abcdef01234567"
+    );
+    assert_eq!(source["target"], "prod");
+    assert!(source["dirty"].is_boolean());
+    assert_eq!(values.next().assert_value()["runId"], "run-public");
     assert!(lines.contains("\"phase\":\"finished\""));
+}
+
+#[tokio::test]
+async fn rejected_named_submission_does_not_emit_source_metadata() {
+    let files = FixtureFiles::new(graph(), json!({"task":"reject it"}));
+    let command = parse_native_v2_args(run_args(
+        &files.graph,
+        &files.input,
+        &files.runtime,
+        &["--detach"],
+    ))
+    .assert_value();
+    let backend = FakeBackend::with_failed_submit();
+    let mut output = std::io::Cursor::new(Vec::new());
+
+    let result = execute_native_v2_cli(command, &backend, &mut NeverDetach, &mut output)
+        .await
+        .map_err(|error| error.to_string());
+
+    assert_eq!(
+        result,
+        Err("Zeroshot OECP request failed: submission rejected".to_owned())
+    );
+    assert_eq!(output.position(), 0);
+    assert!(matches!(backend.calls().as_slice(), [Call::Submit { .. }]));
 }
 
 #[tokio::test]

@@ -22,7 +22,6 @@ const HELP_PATHS: &[&[&str]] = &[
     &["target"],
     &["target", "add"],
     &["target", "login"],
-    &["target", "setup"],
     &["target", "serve"],
     &["connection"],
     &["connection", "list"],
@@ -188,16 +187,6 @@ fn help_explains_delivery_authentication_and_local_run_safety() {
             "--direct",
             "unauthenticated direct access",
             "hosted authentication",
-        ],
-    );
-
-    let target_setup = successful_stdout(&["target", "setup", "--help"]);
-    assert_prose(
-        &target_setup,
-        &[
-            "local profile for a named target",
-            "only the local named-target registry",
-            "does not configure the remote target",
         ],
     );
 
