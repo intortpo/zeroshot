@@ -25,6 +25,8 @@ import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { FederatedDataView } from './components/federated/FederatedDataView';
+import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
+import { McpServerManagerView } from './components/mcp/McpServerManagerView';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
 import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
@@ -44,8 +46,8 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings' | 'governance' | 'consumer'
-  const [currentView, setCurrentView] = useState<PetriViewMode>('board');
+  // Enterprise View: 'focus' (default) | 'chat' | 'board' | 'node' | 'generative_*' | 'mcp' | etc.
+  const [currentView, setCurrentView] = useState<PetriViewMode>('focus');
   const handleSelectView = (view: PetriViewMode) => {
     if (view === 'graph') {
       setCurrentView('node');
@@ -103,7 +105,7 @@ export function App() {
     if (newTier === 'consumer') {
       setCurrentView('consumer');
     } else if (currentView === 'consumer') {
-      setCurrentView('board');
+      setCurrentView('focus');
     }
   };
 
@@ -659,15 +661,43 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
 
-                {/* View 4: Enterprise Telemetry & Cognitive Stats */}
-                {currentView === 'stats' && (
+                {/* View 4: Enterprise Telemetry, Tokens & Cognitive Stats */}
+                {(currentView === 'stats' || currentView === 'stats_telemetry' || currentView === 'stats_tokens') && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
                     <EnterpriseStats
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
                       items={items}
                       localNode={localNode}
+                      subTab={
+                        currentView === 'stats_telemetry'
+                          ? 'telemetry'
+                          : currentView === 'stats_tokens'
+                          ? 'tokens'
+                          : 'all'
+                      }
                     />
+                  </div>
+                )}
+
+                {/* View: Generative Suite & Open Design Studio */}
+                {(currentView === 'generative_video' ||
+                  currentView === 'generative_audio' ||
+                  currentView === 'generative_image' ||
+                  currentView === 'generative_multimodal' ||
+                  currentView === 'generative_design') && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <GenerativeSuiteView
+                      currentView={currentView}
+                      onSelectView={setCurrentView}
+                    />
+                  </div>
+                )}
+
+                {/* View: MCP Server Protocol Manager */}
+                {currentView === 'mcp' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <McpServerManagerView />
                   </div>
                 )}
 

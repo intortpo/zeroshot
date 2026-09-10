@@ -258,14 +258,22 @@ export type PetriViewMode =
   | 'skills'
   | 'memory'
   | 'stats'
+  | 'stats_telemetry'
+  | 'stats_tokens'
   | 'zero'
+  | 'mcp'
   | 'tui'
   | 'settings'
   | 'governance'
   | 'consumer'
   | 'server'
   | 'edm'
-  | 'federated';
+  | 'federated'
+  | 'generative_video'
+  | 'generative_audio'
+  | 'generative_image'
+  | 'generative_multimodal'
+  | 'generative_design';
 
 export interface SteerableConceptWord {
   id: string;

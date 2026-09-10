@@ -20,8 +20,14 @@ import {
   Users,
   Server,
   GraduationCap,
-  Menu,
   Database,
+  Video,
+  Mic,
+  Palette,
+  Layers,
+  Coins,
+  Activity,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -65,11 +71,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   onToggleCognition,
 }) => {
   const [cognition, setCognition] = useState(() => agentCognitionService.getState());
-  const [isModulesMenuOpen, setIsModulesMenuOpen] = useState(false);
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  type MenuDropdownType = 'dev' | 'gen' | 'modules' | 'stats' | 'data' | 'system' | null;
+  const [openDropdown, setOpenDropdown] = useState<MenuDropdownType>(null);
   const [isTierMenuOpen, setIsTierMenuOpen] = useState(false);
-  const modulesMenuRef = useRef<HTMLDivElement | null>(null);
-  const moreMenuRef = useRef<HTMLDivElement | null>(null);
+  const navContainerRef = useRef<HTMLElement | null>(null);
   const tierMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeTier: SystemTier = activeUser?.tier || 'superadmin';
@@ -81,11 +86,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modulesMenuRef.current && !modulesMenuRef.current.contains(event.target as Node)) {
-        setIsModulesMenuOpen(false);
-      }
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
-        setIsMoreMenuOpen(false);
+      if (navContainerRef.current && !navContainerRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
       }
       if (tierMenuRef.current && !tierMenuRef.current.contains(event.target as Node)) {
         setIsTierMenuOpen(false);
@@ -95,19 +97,39 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isModuleActive =
+  const isDevActive =
+    currentView === 'chat' ||
+    currentView === 'plan' ||
+    currentView === 'board' ||
+    currentView === 'node';
+
+  const isGenActive =
+    currentView === 'generative_video' ||
+    currentView === 'generative_audio' ||
+    currentView === 'generative_image' ||
+    currentView === 'generative_multimodal' ||
+    currentView === 'generative_design';
+
+  const isModulesActive =
     currentView === 'zero' ||
     currentView === 'skills' ||
-    currentView === 'memory' ||
-    currentView === 'federated';
+    currentView === 'mcp' ||
+    currentView === 'memory';
 
-  const isMoreViewActive =
-    currentView === 'server' ||
+  const isStatsActive =
+    currentView === 'stats_telemetry' ||
+    currentView === 'stats_tokens';
+
+  const isDataActive =
+    currentView === 'federated' ||
     currentView === 'edm' ||
     currentView === 'governance' ||
-    currentView === 'stats' ||
-    currentView === 'tui' ||
-    currentView === 'settings';
+    currentView === 'stats';
+
+  const isSystemActive =
+    currentView === 'settings' ||
+    currentView === 'server' ||
+    currentView === 'tui';
 
   return (
     <header
@@ -253,8 +275,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </div>
       </div>
 
-      {/* Center: Main Enterprise View Navigation (Tier-Adapted, Desktop Only) */}
-      <nav className="hidden md:flex items-center space-x-6 sm:space-x-8">
+      {/* Center: Main Enterprise View Navigation (Categorized Hierarchy) */}
+      <nav ref={navContainerRef} className="hidden md:flex items-center space-x-3 lg:space-x-5">
         {/* CONSUMER TIER: Shows Consumer Portal Only */}
         {activeTier === 'consumer' ? (
           <button
@@ -272,22 +294,14 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
             </span>
           </button>
         ) : (
-          /* SUPERADMIN & CONTROL TIERS: Engineering & Platform Views */
+          /* SUPERADMIN & CONTROL TIERS: Categorized Enterprise Nav */
           <>
+            {/* 0. Focus (Direct Zen Button - Default View) */}
             <button
-              onClick={() => onSelectView('chat')}
-              className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'chat'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-            >
-              <MessageSquare className={`w-4 h-4 ${currentView === 'chat' ? 'text-stone-900' : 'text-stone-400'}`} />
-              <span>Chat</span>
-            </button>
-
-            <button
-              onClick={() => onSelectView('focus')}
+              onClick={() => {
+                onSelectView('focus');
+                setOpenDropdown(null);
+              }}
               className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
                 currentView === 'focus'
                   ? 'border-stone-900 text-stone-950 font-semibold'
@@ -302,77 +316,217 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               </span>
             </button>
 
-            <button
-              onClick={() => onSelectView('board')}
-              className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
-                currentView === 'board'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-            >
-              <Kanban className={`w-4 h-4 ${currentView === 'board' ? 'text-stone-900' : 'text-stone-400'}`} />
-              <span>Board</span>
-            </button>
-
-            <button
-              onClick={() => onSelectView('node')}
-              className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                currentView === 'node'
-                  ? 'border-stone-900 text-stone-950 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
-              }`}
-              title="Node Studio Pipeline Engine & DevContainer"
-            >
-              <Network className={`w-4 h-4 ${currentView === 'node' ? 'text-stone-900' : 'text-stone-400'}`} />
-              <span>Node</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Studio
-              </span>
-            </button>
-
-            {/* Modules Dropdown Menu Group */}
-            <div className="relative" ref={modulesMenuRef}>
+            {/* 1. Development: Chat/Canvas, Board, Node */}
+            <div className="relative">
               <button
-                onClick={() => setIsModulesMenuOpen(!isModulesMenuOpen)}
-                className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                  isModuleActive
+                onClick={() => setOpenDropdown(openDropdown === 'dev' ? null : 'dev')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isDevActive
                     ? 'border-stone-900 text-stone-950 font-semibold'
                     : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
                 }`}
               >
-                <Boxes className={`w-4 h-4 ${isModuleActive ? 'text-stone-900' : 'text-stone-400'}`} />
-                <span>Modules</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isModulesMenuOpen ? 'rotate-180' : ''}`} />
+                <MessageSquare className={`w-3.5 h-3.5 ${isDevActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>Development</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'dev' ? 'rotate-180' : ''}`} />
               </button>
 
-              {isModulesMenuOpen && (
+              {openDropdown === 'dev' && (
                 <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
-                  {/* Federated Data Hub */}
                   <button
                     onClick={() => {
-                      onSelectView('federated');
-                      setIsModulesMenuOpen(false);
+                      onSelectView('chat');
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'federated'
-                        ? 'bg-sky-50 text-sky-900 font-medium border border-sky-100'
+                      currentView === 'chat' || currentView === 'plan'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
                   >
-                    <Database className="w-4 h-4 text-sky-600 shrink-0" />
+                    <MessageSquare className="w-4 h-4 text-indigo-600 shrink-0" />
                     <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Federated Data</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-700">Encrypted</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Docs, Media, Drive & Classroom RAG</div>
+                      <div className="text-xs font-semibold">Chat / Canvas</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Interactive Plan & ECC Canvas</div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => {
+                      onSelectView('board');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'board'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Kanban className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Board</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Kanban Delivery & Merged Items</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('node');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'node'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Network className="w-4 h-4 text-sky-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Node</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-50 text-sky-700">Studio</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Visual Pipelines & DevContainers</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Generative: Video, Audio, Image, Multi-Modal, Design Studio */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'gen' ? null : 'gen')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isGenActive
+                    ? 'border-stone-900 text-stone-950 font-semibold'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+                }`}
+              >
+                <Palette className={`w-3.5 h-3.5 ${isGenActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>Generative</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'gen' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openDropdown === 'gen' && (
+                <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_design');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'generative_design'
+                        ? 'bg-amber-50 text-amber-950 font-medium border border-amber-200/60'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Palette className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Design Studio</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-amber-100 text-amber-800">Open-Design</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">AGY CLI + MCP Multi-Device Studio</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_video');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'generative_video'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Video className="w-4 h-4 text-rose-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Video</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Motion Synthesis & Text-to-Video</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_audio');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'generative_audio'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Audio</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Neural TTS, SFX & Music Synthesis</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_image');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'generative_image'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <ImageIcon className="w-4 h-4 text-purple-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Image</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Diffusion Renders & Visual Assets</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('generative_multimodal');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'generative_multimodal'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Multi-Modal</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Cross-Modal Reasoning & Composition</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Modules: Zero Game Studio, Skills, MCP Server/Edit/Creation */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'modules' ? null : 'modules')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isModulesActive
+                    ? 'border-stone-900 text-stone-950 font-semibold'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+                }`}
+              >
+                <Boxes className={`w-3.5 h-3.5 ${isModulesActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>Modules</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'modules' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openDropdown === 'modules' && (
+                <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  <button
+                    onClick={() => {
                       onSelectView('zero');
-                      setIsModulesMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'zero'
@@ -383,14 +537,14 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     <Disc className="w-4 h-4 text-[#FF5F1F] shrink-0" />
                     <div>
                       <div className="text-xs font-semibold">Zero Game Studio</div>
-                      <div className="text-[10px] text-stone-400 font-normal">Bevy 0.15 & Avian Physics</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Bevy 0.15 & Avian Physics Engine</div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => {
                       onSelectView('skills');
-                      setIsModulesMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'skills'
@@ -400,15 +554,36 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                   >
                     <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
-                      <div className="text-xs font-semibold">Skills Catalog</div>
-                      <div className="text-[10px] text-stone-400 font-normal">ECC Unified-Memory & Diagram</div>
+                      <div className="text-xs font-semibold">Skills</div>
+                      <div className="text-[10px] text-stone-400 font-normal">ECC Continuous Learning Catalog</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('mcp');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'mcp'
+                        ? 'bg-indigo-50 text-indigo-950 font-medium border border-indigo-200/60'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Network className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>MCP Server</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-indigo-100 text-indigo-800">Protocol</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Server Edit, Creation & Tools</div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => {
                       onSelectView('memory');
-                      setIsModulesMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'memory'
@@ -416,7 +591,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                     }`}
                   >
-                    <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <Brain className="w-4 h-4 text-purple-600 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold">Memory Explorer</div>
                       <div className="text-[10px] text-stone-400 font-normal">Vault Scopes & Vector Store</div>
@@ -426,38 +601,107 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
               )}
             </div>
 
-            {/* Hamburger / Extended Tools Menu for Platforms, Server, EDM & Ops */}
-            <div className="relative" ref={moreMenuRef}>
+            {/* 4. Stats: Telemetry, Token Spend/Compaction/Breakdown */}
+            <div className="relative">
               <button
-                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl text-xs sm:text-sm font-sans transition-all cursor-pointer border ${
-                  isMoreViewActive
-                    ? 'border-stone-800 bg-stone-900 text-white font-medium shadow-xs'
-                    : 'border-transparent text-stone-500 hover:text-stone-900 hover:bg-stone-100/70 font-normal'
+                onClick={() => setOpenDropdown(openDropdown === 'stats' ? null : 'stats')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isStatsActive
+                    ? 'border-stone-900 text-stone-950 font-semibold'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
                 }`}
-                title="Extended Platform Operations & Diagnostics"
               >
-                <Menu className="w-4 h-4" />
-                <span>More</span>
-                {isMoreViewActive && (
-                  <span className="text-[9px] font-mono px-1.5 py-0.2 bg-stone-800 text-stone-200 rounded uppercase">
-                    {currentView}
-                  </span>
-                )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
+                <BarChart3 className={`w-3.5 h-3.5 ${isStatsActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>Stats</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'stats' ? 'rotate-180' : ''}`} />
               </button>
 
-              {isMoreMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
-                  <div className="px-3 py-1.5 text-[10px] font-mono uppercase text-stone-400 font-semibold border-b border-stone-100 mb-1">
-                    Platform Tools & Operations
-                  </div>
+              {openDropdown === 'stats' && (
+                <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  <button
+                    onClick={() => {
+                      onSelectView('stats_telemetry');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'stats_telemetry'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Telemetry</div>
+                      <div className="text-[10px] text-stone-400 font-normal">MTTM, Invariants & Latency</div>
+                    </div>
+                  </button>
 
-                  {/* 1. EDM Diagnostics */}
+                  <button
+                    onClick={() => {
+                      onSelectView('stats_tokens');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'stats_tokens'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Coins className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Token Spend</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-amber-100 text-amber-800">Compaction</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Context Windows & Cache Rates</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Data: Federated, EDM, Governance, Enterprise Stat */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'data' ? null : 'data')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isDataActive
+                    ? 'border-stone-900 text-stone-950 font-semibold'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+                }`}
+              >
+                <Database className={`w-3.5 h-3.5 ${isDataActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>Data</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'data' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openDropdown === 'data' && (
+                <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  <button
+                    onClick={() => {
+                      onSelectView('federated');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'federated'
+                        ? 'bg-sky-50 text-sky-900 font-medium border border-sky-100'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Database className="w-4 h-4 text-sky-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Federated</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-700">Encrypted</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Docs, Drive, Classroom & RAG</div>
+                    </div>
+                  </button>
+
                   <button
                     onClick={() => {
                       onSelectView('edm');
-                      setIsMoreMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'edm'
@@ -468,18 +712,96 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     <GraduationCap className="w-4 h-4 text-teal-600 shrink-0" />
                     <div>
                       <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>EDM Diagnostics</span>
+                        <span>EDM</span>
                         <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
                       </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Q-Matrix, DINA CDM & QSVC</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Educational Data Mining & DINA</div>
                     </div>
                   </button>
 
-                  {/* 2. Petri Server */}
+                  <button
+                    onClick={() => {
+                      onSelectView('governance');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'governance'
+                        ? 'bg-purple-50 text-purple-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Governance</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-purple-100 text-purple-800">SAIF</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Root Gate Policies & Safety Bounds</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('stats');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'stats'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4 text-stone-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">Enterprise Stat</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Cross-Workspace Overview</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 6. System: Platform Settings, Petri Server, TUI */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'system' ? null : 'system')}
+                className={`flex items-center space-x-1 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+                  isSystemActive
+                    ? 'border-stone-900 text-stone-950 font-semibold'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+                }`}
+              >
+                <Sliders className={`w-3.5 h-3.5 ${isSystemActive ? 'text-stone-900' : 'text-stone-400'}`} />
+                <span>System</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === 'system' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openDropdown === 'system' && (
+                <div className="absolute top-full right-0 mt-2 w-64 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans">
+                  {activeTier === 'superadmin' && (
+                    <button
+                      onClick={() => {
+                        onSelectView('settings');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                        currentView === 'settings'
+                          ? 'bg-stone-100 text-stone-900 font-medium'
+                          : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                      }`}
+                    >
+                      <Sliders className="w-4 h-4 text-stone-600 shrink-0" />
+                      <div>
+                        <div className="text-xs font-semibold">Platform Settings</div>
+                        <div className="text-[10px] text-stone-400 font-normal">Mesh Config & Security Keys</div>
+                      </div>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       onSelectView('server');
-                      setIsMoreMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'server'
@@ -497,54 +819,10 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     </div>
                   </button>
 
-                  {/* 3. Governance */}
-                  <button
-                    onClick={() => {
-                      onSelectView('governance');
-                      setIsMoreMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'governance'
-                        ? 'bg-purple-50 text-purple-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Governance & SAIF</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-purple-100 text-purple-800">
-                          {activeTier === 'superadmin' ? 'Root' : 'Audit'}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Enterprise Policy & Gate Controls</div>
-                    </div>
-                  </button>
-
-                  {/* 4. Stats */}
-                  <button
-                    onClick={() => {
-                      onSelectView('stats');
-                      setIsMoreMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'stats'
-                        ? 'bg-stone-100 text-stone-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <BarChart3 className="w-4 h-4 text-stone-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold">Enterprise Stats</div>
-                      <div className="text-[10px] text-stone-400 font-normal">Telemetry & Economic Impact</div>
-                    </div>
-                  </button>
-
-                  {/* 5. TUI */}
                   <button
                     onClick={() => {
                       onSelectView('tui');
-                      setIsMoreMenuOpen(false);
+                      setOpenDropdown(null);
                     }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                       currentView === 'tui'
@@ -554,53 +832,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                   >
                     <Terminal className="w-4 h-4 text-stone-600 shrink-0" />
                     <div>
-                      <div className="text-xs font-semibold">Terminal UI</div>
+                      <div className="text-xs font-semibold">TUI</div>
                       <div className="text-[10px] text-stone-400 font-normal">Fast Keyboard & CLI Console</div>
-                    </div>
-                  </button>
-
-                  {/* 6. Settings (Superadmin only) */}
-                  {activeTier === 'superadmin' && (
-                    <button
-                      onClick={() => {
-                        onSelectView('settings');
-                        setIsMoreMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                        currentView === 'settings'
-                          ? 'bg-stone-100 text-stone-900 font-medium'
-                          : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                      }`}
-                    >
-                      <Sliders className="w-4 h-4 text-stone-600 shrink-0" />
-                      <div>
-                        <div className="text-xs font-semibold">Platform Settings</div>
-                        <div className="text-[10px] text-stone-400 font-normal">Mesh Config & Security Keys</div>
-                      </div>
-                    </button>
-                  )}
-
-                  <div className="border-t border-stone-100 my-1" />
-
-                  {/* 7. Consumer Portal Preview */}
-                  <button
-                    onClick={() => {
-                      onSelectView('consumer');
-                      setIsMoreMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'consumer'
-                        ? 'bg-sky-50 text-sky-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <Eye className="w-4 h-4 text-sky-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Consumer Portal</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-800">Preview</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Client Experience & Request Desk</div>
                     </div>
                   </button>
                 </div>

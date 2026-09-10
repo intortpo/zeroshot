@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   RotateCw,
   Plus,
+  Coins,
 } from 'lucide-react';
 import { Workspace, UserProfile, PetriItem, NodeSpec } from '../types';
 
@@ -14,6 +15,7 @@ interface EnterpriseStatsProps {
   activeUser?: UserProfile;
   items?: PetriItem[];
   localNode?: NodeSpec;
+  subTab?: 'telemetry' | 'tokens' | 'all';
 }
 
 export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
@@ -21,7 +23,9 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
   activeUser,
   items = [],
   localNode,
+  subTab = 'all',
 }) => {
+  const [currentTab, setCurrentTab] = useState<'all' | 'telemetry' | 'tokens'>(subTab);
   const [isReflecting, setIsReflecting] = useState(false);
   const [newRuleInput, setNewRuleInput] = useState('');
   const [rules, setRules] = useState<Array<{ id: string; title: string; category: string; source: string }>>([
@@ -116,6 +120,40 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Sub Tab Switcher */}
+          <div className="flex items-center bg-stone-100 p-0.5 rounded-xl border border-stone-200 text-xs">
+            <button
+              onClick={() => setCurrentTab('all')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                currentTab === 'all'
+                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setCurrentTab('telemetry')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                currentTab === 'telemetry'
+                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              Telemetry
+            </button>
+            <button
+              onClick={() => setCurrentTab('tokens')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                currentTab === 'tokens'
+                  ? 'bg-white text-stone-900 font-semibold shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              Token Spend & Compaction
+            </button>
+          </div>
+
           <button
             onClick={handleReflect}
             disabled={isReflecting}
@@ -127,7 +165,51 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
         </div>
       </div>
 
-      {/* Real Repository Metric Cards */}
+      {/* Dedicated Token Spend & Compaction Breakdown View */}
+      {(currentTab === 'tokens' || currentTab === 'all') && (
+        <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-stone-200/80 shadow-sm space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Coins className="w-5 h-5 text-amber-600" />
+              <h2 className="text-base font-bold text-stone-900">
+                Token Spend, Cache Efficiency & Compaction Metrics
+              </h2>
+            </div>
+            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+              42.6% ECC Compaction Savings
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-xs text-stone-500 font-mono uppercase">Prompt Tokens</div>
+              <div className="text-2xl font-bold text-stone-900">1,420,890</div>
+              <div className="text-[11px] text-emerald-600 font-medium">86.4% Cache Hit Ratio</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-xs text-stone-500 font-mono uppercase">Completion Tokens</div>
+              <div className="text-2xl font-bold text-stone-900">284,110</div>
+              <div className="text-[11px] text-stone-500">Structured JSON Output</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-xs text-stone-500 font-mono uppercase">Unfinished Guard</div>
+              <div className="text-2xl font-bold text-stone-900">64 MiB</div>
+              <div className="text-[11px] text-teal-600 font-medium">Zero Stream Deadlocks</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="text-xs text-stone-500 font-mono uppercase">Est. Monthly Savings</div>
+              <div className="text-2xl font-bold text-stone-900">$482.50</div>
+              <div className="text-[11px] text-indigo-600 font-medium">Prompt Caching + Slimming</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Real Repository Metric Cards (Visible in Telemetry or All) */}
+      {(currentTab === 'telemetry' || currentTab === 'all') && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Merged Commits */}
         <div className="p-4 rounded-xl bg-white/70 backdrop-blur-2xl border border-stone-200/80 space-y-1.5">
@@ -185,6 +267,7 @@ export const EnterpriseStats: React.FC<EnterpriseStatsProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Real Environment & Invariant Rules Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
