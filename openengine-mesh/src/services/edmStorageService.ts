@@ -884,3 +884,309 @@ export function getSampleEdmStudents(sourceId: string = 'f-below-passing'): Stud
   return ingestFederatedDataFile(sourceId).students;
 }
 
+export interface SubmersionNode {
+  id: string;
+  label: string;
+  position: [number, number, number]; // [x, y, z] in 3D coordinate space
+  velocity: number;
+  riskLevel: 'green' | 'amber' | 'red';
+  isSubmerged: boolean;
+  scorePct: number;
+  benchmarkPct: number;
+  details?: {
+    pseudonym?: string;
+    cohort?: string;
+    category?: string;
+    rationale?: string;
+    sourceFile?: string;
+    submergedDepth?: number;
+  };
+}
+
+export interface SubmersionParticle {
+  id: string;
+  origin: [number, number, number];
+  velocity: [number, number, number];
+  color: string;
+  life: number;
+}
+
+export interface SubmersionManifoldGrid {
+  resolution: number; // e.g. 20x20
+  heights: number[][]; // elevation matrix
+  xBounds: [number, number];
+  yBounds: [number, number];
+  axisLabels: string[];
+}
+
+export interface SubmersionManifest {
+  id: string;
+  title: string;
+  academicTerm: string;
+  mode: 'individual_latent' | 'cohort_velocity_field';
+  hyperplaneElevation: number; // Critical Z-threshold (submersion waterline)
+  nodes: SubmersionNode[];
+  manifoldGrid?: SubmersionManifoldGrid;
+  trajectoryStreamlines?: Array<{
+    studentId: string;
+    points: [number, number, number][];
+    velocityDelta: number;
+    color: string;
+  }>;
+  summaryStats: {
+    totalEntities: number;
+    submergedCount: number;
+    submergedPercentage: number;
+    meanVelocity: number;
+    criticalDeficits: string[];
+  };
+}
+
+/**
+ * Generates an authoritative 3D Petri Submersion Manifest for an individual student's
+ * latent cognitive competency manifold (DINA model).
+ */
+export function generateStudentSubmersionManifest(student: StudentEdmRecord): SubmersionManifest {
+  const skills = CANONICAL_LATENT_SKILLS;
+  const positions: Array<[number, number]> = [
+    [-45, -45], // Vocab (Quadrant III)
+    [45, -45],  // Grammar (Quadrant IV)
+    [45, 45],   // Reading Comp (Quadrant I)
+    [-45, 45],  // Synthesis (Quadrant II)
+  ];
+
+  const nodes: SubmersionNode[] = [];
+  const submergedWaterline = 0; // Z=0 corresponds to 50% normalized baseline
+
+  let totalMastery = 0;
+  const criticalDeficits: string[] = [];
+
+  skills.forEach((skill, idx) => {
+    const prob = student.latentMastery[skill.id] ?? 0.5;
+    totalMastery += prob;
+    // Map probability [0, 1] to Z-elevation [-50, +50]
+    const zElevation = Number(((prob * 100) - 50).toFixed(1));
+    const isSubmerged = zElevation < submergedWaterline;
+
+    if (prob < 0.5) {
+      criticalDeficits.push(skill.name);
+    }
+
+    const [bx, by] = positions[idx];
+    nodes.push({
+      id: `node-${skill.id}`,
+      label: skill.name,
+      position: [bx, by, zElevation],
+      velocity: student.compositeVelocity,
+      riskLevel: prob >= skill.benchmarkTarget ? 'green' : prob >= 0.5 ? 'amber' : 'red',
+      isSubmerged,
+      scorePct: Math.round(prob * 100),
+      benchmarkPct: Math.round(skill.benchmarkTarget * 100),
+      details: {
+        category: 'Latent Competency Apex',
+        rationale: skill.description,
+        submergedDepth: isSubmerged ? Math.abs(zElevation) : 0,
+      },
+    });
+  });
+
+  const avgMastery = totalMastery / Math.max(1, skills.length);
+  const studentZ = Number(((avgMastery * 100) - 50).toFixed(1));
+
+  // Center student centroid node
+  nodes.push({
+    id: `node-${student.id}-centroid`,
+    label: student.pseudonym,
+    position: [0, 0, studentZ],
+    velocity: student.compositeVelocity,
+    riskLevel: student.qsvcRiskLevel,
+    isSubmerged: studentZ < submergedWaterline,
+    scorePct: Math.round(avgMastery * 100),
+    benchmarkPct: 80,
+    details: {
+      pseudonym: student.pseudonym,
+      cohort: student.cohort,
+      category: 'Student Cognitive Centroid',
+      rationale: student.pedagogicalRationale,
+      sourceFile: student.sourceFile,
+      submergedDepth: studentZ < submergedWaterline ? Math.abs(studentZ) : 0,
+    },
+  });
+
+  // Generate 20x20 Bivariate Spline Manifold Heightfield
+  const resolution = 20;
+  const heights: number[][] = [];
+  const xBounds: [number, number] = [-60, 60];
+  const yBounds: [number, number] = [-60, 60];
+
+  const zV = nodes[0].position[2];
+  const zG = nodes[1].position[2];
+  const zR = nodes[2].position[2];
+  const zS = nodes[3].position[2];
+
+  for (let i = 0; i < resolution; i++) {
+    const row: number[] = [];
+    const u = i / (resolution - 1); // 0 to 1 along Y
+    for (let j = 0; j < resolution; j++) {
+      const v = j / (resolution - 1); // 0 to 1 along X
+      // Bilinear interpolation between the 4 apex corners + Gaussian bump for centroid
+      const bottom = zV * (1 - v) + zG * v;
+      const top = zS * (1 - v) + zR * v;
+      let z = bottom * (1 - u) + top * u;
+
+      // Central gravity attraction to student composite centroid
+      const distFromCenter = Math.hypot(v - 0.5, u - 0.5);
+      const gaussian = Math.exp(-12 * distFromCenter * distFromCenter);
+      z = z * (1 - gaussian) + studentZ * gaussian;
+
+      row.push(Number(z.toFixed(2)));
+    }
+    heights.push(row);
+  }
+
+  // Trajectory streamlines from student's weekly timeline
+  const streamPoints: Array<[number, number, number]> = student.weeklyTimeline.map((f, i) => {
+    const t = i / Math.max(1, student.weeklyTimeline.length - 1);
+    const x = -40 + t * 80;
+    const y = (f.normHomework - 0.7) * 80;
+    const z = (f.normAttendance * 100) - 50;
+    return [Number(x.toFixed(1)), Number(y.toFixed(1)), Number(z.toFixed(1))];
+  });
+
+  const submergedCount = nodes.filter((n) => n.isSubmerged).length;
+
+  return {
+    id: `submersion-manifest-${student.id}`,
+    title: `Petri Submersion · ${student.pseudonym}`,
+    academicTerm: 'AY2026 Sem 1',
+    mode: 'individual_latent',
+    hyperplaneElevation: submergedWaterline,
+    nodes,
+    manifoldGrid: {
+      resolution,
+      heights,
+      xBounds,
+      yBounds,
+      axisLabels: ['Vocabulary', 'Syntax', 'Reading', 'Synthesis'],
+    },
+    trajectoryStreamlines: [
+      {
+        studentId: student.id,
+        points: streamPoints,
+        velocityDelta: student.compositeVelocity,
+        color: student.qsvcRiskLevel === 'red' ? '#e11d48' : student.qsvcRiskLevel === 'amber' ? '#f59e0b' : '#0d9488',
+      },
+    ],
+    summaryStats: {
+      totalEntities: nodes.length,
+      submergedCount,
+      submergedPercentage: Math.round((submergedCount / nodes.length) * 100),
+      meanVelocity: student.compositeVelocity,
+      criticalDeficits,
+    },
+  };
+}
+
+/**
+ * Generates a 3D Cohort Velocity & Risk Field Submersion Manifest for an entire enrolled cohort.
+ */
+export function generateCohortSubmersionManifest(
+  students: StudentEdmRecord[],
+  threshold: number = 0.50
+): SubmersionManifest {
+  const submergedWaterline = 0;
+  const nodes: SubmersionNode[] = [];
+  const streamlines: Array<{
+    studentId: string;
+    points: [number, number, number][];
+    velocityDelta: number;
+    color: string;
+  }> = [];
+
+  let totalVelocity = 0;
+  const deficitsMap: Record<string, number> = {};
+
+  students.forEach((st) => {
+    totalVelocity += st.compositeVelocity;
+    const avgMastery =
+      Object.values(st.latentMastery).reduce((a, b) => a + b, 0) /
+      Math.max(1, Object.keys(st.latentMastery).length);
+
+    // Track common deficit skills across cohort
+    Object.entries(st.latentMastery).forEach(([skId, p]) => {
+      if (p < threshold) {
+        deficitsMap[skId] = (deficitsMap[skId] || 0) + 1;
+      }
+    });
+
+    // 3D coordinates:
+    // X = Attendance Velocity scaled [-70, 70]
+    // Y = Homework Score deviation scaled [-60, 60]
+    // Z = Composite Latent Cognitive Mastery scaled [-50, 50] (Z=0 is 50% waterline)
+    const lastFrame = st.weeklyTimeline[st.weeklyTimeline.length - 1];
+    const x = Math.min(75, Math.max(-75, st.compositeVelocity * 220));
+    const y = Math.min(65, Math.max(-65, ((lastFrame ? lastFrame.normHomework : 0.7) - 0.70) * 160));
+    const z = Number(((avgMastery * 100) - 50).toFixed(1));
+
+    const isSubmerged = z < submergedWaterline || st.qsvcRiskLevel === 'red';
+
+    nodes.push({
+      id: `cohort-node-${st.id}`,
+      label: st.pseudonym,
+      position: [Number(x.toFixed(1)), Number(y.toFixed(1)), z],
+      velocity: st.compositeVelocity,
+      riskLevel: st.qsvcRiskLevel,
+      isSubmerged,
+      scorePct: Math.round(avgMastery * 100),
+      benchmarkPct: Math.round(threshold * 100),
+      details: {
+        pseudonym: st.pseudonym,
+        cohort: st.cohort,
+        category: 'Cohort Trajectory Node',
+        rationale: st.pedagogicalRationale,
+        sourceFile: st.sourceFile,
+        submergedDepth: isSubmerged ? Math.abs(z) : 0,
+      },
+    });
+
+    // Generate longitudinal particle stream for each student
+    const points: Array<[number, number, number]> = st.weeklyTimeline.map((frame, i) => {
+      const t = i / Math.max(1, st.weeklyTimeline.length - 1);
+      const px = x - (1 - t) * (st.compositeVelocity * 80);
+      const py = (frame.normHomework - 0.70) * 120;
+      const pz = (frame.normAttendance * 100) - 50;
+      return [Number(px.toFixed(1)), Number(py.toFixed(1)), Number(pz.toFixed(1))];
+    });
+
+    streamlines.push({
+      studentId: st.id,
+      points,
+      velocityDelta: st.compositeVelocity,
+      color: st.qsvcRiskLevel === 'red' ? '#e11d48' : st.qsvcRiskLevel === 'amber' ? '#f59e0b' : '#0d9488',
+    });
+  });
+
+  const submergedCount = nodes.filter((n) => n.isSubmerged).length;
+  const criticalDeficits = Object.entries(deficitsMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([skId]) => CANONICAL_LATENT_SKILLS.find((s) => s.id === skId)?.name || skId);
+
+  return {
+    id: `cohort-submersion-${Date.now()}`,
+    title: 'AY2026 Semester 1 Cohort Petri Submersion Manifold',
+    academicTerm: 'AY2026 Sem 1',
+    mode: 'cohort_velocity_field',
+    hyperplaneElevation: submergedWaterline,
+    nodes,
+    trajectoryStreamlines: streamlines,
+    summaryStats: {
+      totalEntities: nodes.length,
+      submergedCount,
+      submergedPercentage: Math.round((submergedCount / Math.max(1, nodes.length)) * 100),
+      meanVelocity: Number((totalVelocity / Math.max(1, nodes.length)).toFixed(3)),
+      criticalDeficits,
+    },
+  };
+}
+
+

@@ -27,7 +27,8 @@ import {
   generatePedagogicalRationale,
 } from '../../services/edmStorageService';
 import { execInDevContainer } from '../../services/devcontainerService';
-import { EdmRadarChart } from './EdmRadarChart';
+import { PetriSubmersionCanvas } from './PetriSubmersionCanvas';
+import { PetriHourglassStream } from './PetriHourglassStream';
 import { EdmEarlyWarningCard } from './EdmEarlyWarningCard';
 import { Workspace, UserProfile } from '../../types';
 
@@ -61,7 +62,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   const [qMatrix, setQMatrix] = useState<QMatrixItem[]>(() => CANONICAL_Q_MATRIX);
   const [isExecutingPipeline, setIsExecutingPipeline] = useState(false);
   const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'diagnostics' | 'qmatrix' | 'ingestion'>('diagnostics');
+  const [activeTab, setActiveTab] = useState<'diagnostics' | 'qmatrix' | 'ingestion' | 'hourglass'>('diagnostics');
   const [interventionNotice, setInterventionNotice] = useState<string | null>(null);
 
   // Ingest source when selectedFederatedFileId changes from parent
@@ -340,6 +341,16 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         >
           Secure XLSX Ingestion Vault & RAG
         </button>
+        <button
+          onClick={() => setActiveTab('hourglass')}
+          className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'hourglass'
+              ? 'border-teal-600 text-teal-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          Petri Funnel Hourglass Stream (Chats & Git)
+        </button>
       </div>
 
       {/* Intervention Toast Alert */}
@@ -462,10 +473,11 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                   <p className="text-[11px] text-slate-400 mb-3 text-center">
                     Disentangles slipping & guessing noise from true competency
                   </p>
-                  <EdmRadarChart
-                    skills={CANONICAL_LATENT_SKILLS}
-                    masteryProbabilities={selectedStudent.latentMastery}
-                    size={280}
+                  <PetriSubmersionCanvas
+                    student={selectedStudent}
+                    cohort={students}
+                    onSelectStudent={(id) => setSelectedStudentId(id)}
+                    height={300}
                   />
                 </div>
 
@@ -674,6 +686,13 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Tab 4: Petri Funnel Hourglass Stream (Cognitive & Git Flows) */}
+        {activeTab === 'hourglass' && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <PetriHourglassStream />
           </div>
         )}
       </div>

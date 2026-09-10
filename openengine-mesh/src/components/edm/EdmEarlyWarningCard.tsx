@@ -5,11 +5,11 @@ import {
   AlertTriangle,
   TrendingDown,
   TrendingUp,
-  Activity,
   Sparkles,
   BookOpen,
 } from 'lucide-react';
 import { StudentEdmRecord } from '../../services/edmStorageService';
+import { SubmersionTrajectoryRibbon } from './SubmersionTrajectoryRibbon';
 
 interface EdmEarlyWarningCardProps {
   student: StudentEdmRecord;
@@ -78,39 +78,8 @@ export const EdmEarlyWarningCard: React.FC<EdmEarlyWarningCardProps> = ({
         </div>
       </div>
 
-      {/* Weekly Longitudinal Momentum Sparkline Bars */}
-      <div className="mb-3 bg-white/70 rounded-lg p-2.5 border border-slate-200/80">
-        <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 mb-1.5">
-          <span className="flex items-center gap-1">
-            <Activity className="w-3 h-3 text-slate-400" />
-            5-Week Normalized Attendance & Homework Velocity
-          </span>
-          <span className="text-[10px] text-slate-400">Strictly t ∈ [0.0, 1.0]</span>
-        </div>
-        <div className="grid grid-cols-5 gap-1.5">
-          {student.weeklyTimeline.map((frame) => (
-            <div key={`wk-${frame.week}`} className="flex flex-col items-center gap-1">
-              <div className="w-full bg-slate-100 rounded h-12 flex items-end p-0.5 gap-0.5">
-                {/* Attendance Bar */}
-                <div
-                  className="w-1/2 bg-teal-500 rounded-xs transition-all duration-300"
-                  style={{ height: `${Math.round(frame.normAttendance * 100)}%` }}
-                  title={`W${frame.week} Attendance: ${Math.round(frame.normAttendance * 100)}%`}
-                />
-                {/* Homework Bar */}
-                <div
-                  className={`w-1/2 rounded-xs transition-all duration-300 ${
-                    frame.normHomework < 0.6 ? 'bg-rose-400' : 'bg-indigo-400'
-                  }`}
-                  style={{ height: `${Math.round(frame.normHomework * 100)}%` }}
-                  title={`W${frame.week} Homework: ${Math.round(frame.normHomework * 100)}%`}
-                />
-              </div>
-              <span className="text-[10px] font-mono text-slate-500">W{frame.week}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Petri Momentum Submersion Trajectory Ribbon */}
+      <SubmersionTrajectoryRibbon timeline={student.weeklyTimeline} className="mb-3" />
 
       {/* Pedagogical Diagnostic Rationale */}
       <div className="text-xs text-slate-700 leading-relaxed font-sans bg-white/60 rounded-lg p-3 border border-slate-200/70 whitespace-pre-line mb-3">

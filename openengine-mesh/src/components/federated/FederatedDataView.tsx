@@ -17,10 +17,20 @@ import {
   Upload,
   Plus,
   X,
+  Box,
+  Globe,
 } from 'lucide-react';
 import { documentRag, RagAnswerResponse } from '../../services/documentRagService';
 import { googleClassroom } from '../../services/googleClassroomService';
 import { encryptedStorage } from '../../services/encryptedStorageService';
+import { PetriSubmersionCanvas } from '../edm/PetriSubmersionCanvas';
+import { PetriBrowserOperator } from '../browser/PetriBrowserOperator';
+import { MotionContainer } from '../motion/MotionContainer';
+import {
+  SubmersionManifest,
+  getSampleEdmStudents,
+  generateCohortSubmersionManifest,
+} from '../../services/edmStorageService';
 
 export interface FederatedFileItem {
   id: string;
@@ -181,9 +191,13 @@ interface FederatedDataViewProps {
 }
 
 export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEdm }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'documents' | 'media' | 'slides' | 'google' | 'rag'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'documents' | 'media' | 'slides' | 'google' | 'rag' | 'operator'>('all');
   const [activeTerm, setActiveTerm] = useState<string>('AY2026 Sem 1');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // 3D Submersion Modal State
+  const [submersionModalManifest, setSubmersionModalManifest] = useState<SubmersionManifest | null>(null);
+  const [submersionModalTitle, setSubmersionModalTitle] = useState<string>('');
   
   // Google Drive Browser State
   const [selectedDriveFolder, setSelectedDriveFolder] = useState<string>('all');
@@ -541,7 +555,7 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
 
         <button
           onClick={() => setActiveTab('rag')}
-          className={`py-3 border-b-2 font-medium transition-all flex items-center space-x-1.5 ${
+          className={`py-3 border-b-2 font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
             activeTab === 'rag'
               ? 'border-indigo-600 text-indigo-900 font-semibold'
               : 'border-transparent text-stone-500 hover:text-stone-800'
@@ -549,6 +563,21 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
         >
           <Sparkles className="w-4 h-4 text-indigo-600" />
           <span>Full File Doc RAG</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('operator')}
+          className={`py-3 border-b-2 font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+            activeTab === 'operator'
+              ? 'border-emerald-600 text-emerald-900 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          <Globe className="w-4 h-4 text-emerald-600" />
+          <span>Browser Operator</span>
+          <span className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Intranet
+          </span>
         </button>
       </div>
 
@@ -611,7 +640,12 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
             </div>
 
             {/* Grid of Files */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <MotionContainer
+              staggerChildren
+              preset="gentle"
+              staggerMs={30}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
               {filteredFiles.map((file) => (
                 <div
                   key={file.id}
@@ -681,6 +715,21 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
                           <span>Feed to EDM</span>
                         </button>
                       )}
+                      {(file.type === 'sheet' || file.tags.includes('edm') || file.tags.includes('grades') || file.tags.includes('midterms')) && (
+                        <button
+                          onClick={() => {
+                            const students = getSampleEdmStudents();
+                            const manifest = generateCohortSubmersionManifest(students, 50);
+                            setSubmersionModalManifest(manifest);
+                            setSubmersionModalTitle(file.name);
+                          }}
+                          className="text-indigo-700 hover:text-indigo-900 font-semibold flex items-center space-x-1 px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
+                          title="Submerse dataset into 3D Volumetric Manifold"
+                        >
+                          <Box className="w-3 h-3 text-indigo-600" />
+                          <span>3D Submersion</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setRagQuery(`What information is in ${file.name}?`);
@@ -696,7 +745,7 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
                   </div>
                 </div>
               ))}
-            </div>
+            </MotionContainer>
           </div>
         )}
 
@@ -1128,9 +1177,42 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
                       ))}
                     </div>
                   </div>
+
+                  {/* 3D Volumetric Petri Submersion Manifold (Integrated RAG Visualization) */}
+                  {ragResponse.submersionManifest && (
+                    <div className="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Box className="w-4 h-4 text-teal-600" />
+                          <h4 className="text-xs font-bold text-stone-900 uppercase font-mono">
+                            Petri Submersion 3D Field: {ragResponse.submersionManifest.title}
+                          </h4>
+                        </div>
+                        <span className="text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-semibold">
+                          Three.js WebGL Interactive Volumetric Mesh
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-500">
+                        Interactive 3D WebGL orbit controls, QSVC risk hyperplane, and student velocity streamlines.
+                      </p>
+                      <div className="h-[420px] w-full rounded-xl overflow-hidden border border-stone-200 bg-stone-950 shadow-inner">
+                        <PetriSubmersionCanvas
+                          manifest={ragResponse.submersionManifest}
+                          height={420}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* TAB 7: Petri Browser Operator (Live Intranet Extraction into Vault) */}
+        {activeTab === 'operator' && (
+          <div className="h-[760px] w-full rounded-2xl overflow-hidden border border-stone-200">
+            <PetriBrowserOperator />
           </div>
         )}
       </div>
@@ -1251,6 +1333,43 @@ export const FederatedDataView: React.FC<FederatedDataViewProps> = ({ onFeedToEd
               >
                 {isIngesting ? 'Ingesting...' : 'Select Files to Ingest'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3D Submersion Modal Dialog */}
+      {submersionModalManifest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-4 font-sans flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                  <Box className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-stone-900 flex items-center space-x-2">
+                    <span>Petri 3D Submersion Volumetric Field</span>
+                    <span className="text-[10px] font-mono font-normal text-stone-400">({submersionModalTitle})</span>
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    Volumetric manifold elevated by student latent mastery with particle streamlines.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSubmersionModalManifest(null)}
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="h-[480px] w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-950">
+              <PetriSubmersionCanvas
+                manifest={submersionModalManifest}
+                height={480}
+              />
             </div>
           </div>
         </div>

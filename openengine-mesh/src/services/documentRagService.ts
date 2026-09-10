@@ -5,6 +5,12 @@
  */
 
 import { encryptedStorage, EncryptedEnvelope } from './encryptedStorageService';
+import {
+  SubmersionManifest,
+  generateStudentSubmersionManifest,
+  generateCohortSubmersionManifest,
+  getSampleEdmStudents,
+} from './edmStorageService';
 
 export interface RagChunk {
   id: string;
@@ -19,7 +25,7 @@ export interface RagChunk {
 export interface RagDocument {
   id: string;
   title: string;
-  fileType: 'xlsx' | 'pdf' | 'docx' | 'md' | 'slide' | 'txt' | 'csv';
+  fileType: 'xlsx' | 'pdf' | 'docx' | 'md' | 'slide' | 'txt' | 'csv' | 'submersion_manifold' | 'submersion_chart';
   sizeBytes: number;
   indexedAt: number;
   totalChunks: number;
@@ -45,6 +51,8 @@ export interface RagAnswerResponse {
     snippet: string;
   }>;
   executionTimeMs: number;
+  submersionManifest?: SubmersionManifest;
+  hasSpatialVisual?: boolean;
 }
 
 class DocumentRagService {
@@ -237,6 +245,34 @@ class DocumentRagService {
       synthesizedAnswer = `Based on verified curriculum records in ${best.chunk.documentTitle} (${best.chunk.section}):\n\n${best.chunk.content}\n\n[Additional Context from ${topMatches.length} source chunks with ${(best.score * 100).toFixed(1)}% semantic confidence]`;
     }
 
+    // Detect spatial / submersion visual queries
+    const lowerQ = queryText.toLowerCase();
+    const isSpatialQuery =
+      lowerQ.includes('submersion') ||
+      lowerQ.includes('manifold') ||
+      lowerQ.includes('landscape') ||
+      lowerQ.includes('3d') ||
+      lowerQ.includes('failing') ||
+      lowerQ.includes('below passing') ||
+      lowerQ.includes('velocity') ||
+      lowerQ.includes('leo') ||
+      lowerQ.includes('star') ||
+      lowerQ.includes('grade 1');
+
+    let submersionManifest: SubmersionManifest | undefined;
+    if (isSpatialQuery) {
+      const sampleStudents = getSampleEdmStudents('f-below-passing');
+      if (lowerQ.includes('leo') || lowerQ.includes('3667')) {
+        const leo = sampleStudents.find((s) => s.id.includes('leo')) || sampleStudents[0];
+        submersionManifest = generateStudentSubmersionManifest(leo);
+      } else if (lowerQ.includes('star') || lowerQ.includes('3068')) {
+        const star = sampleStudents.find((s) => s.id.includes('star')) || sampleStudents[1];
+        submersionManifest = generateStudentSubmersionManifest(star);
+      } else {
+        submersionManifest = generateCohortSubmersionManifest(sampleStudents);
+      }
+    }
+
     const elapsed = Math.round(performance.now() - startTime);
 
     return {
@@ -249,6 +285,8 @@ class DocumentRagService {
         snippet: m.chunk.content.length > 180 ? `${m.chunk.content.substring(0, 180)}...` : m.chunk.content,
       })),
       executionTimeMs: elapsed,
+      submersionManifest,
+      hasSpatialVisual: !!submersionManifest,
     };
   }
 
@@ -334,6 +372,24 @@ Key Objectives for Semester 2:
       'md',
       'AY2026 Sem 2',
       ['ay2026_sem2', 'curriculum', 'strategic', 'blueprint']
+    );
+
+    // Document 5: 3D Petri Submersion Manifold & Velocity Field (AY2026 Sem 1)
+    this.ingestDocument(
+      'AY2026 Semester 1 Cohort Petri Submersion Manifold & Velocity Field',
+      `=== Petri Submersion 3D Manifold Specification (AY2026 Sem 1) ===
+Topological Coordinate System:
+- X-Axis: Longitudinal Attendance Velocity (scaled [-75, +75]). Negative values indicate accelerating absence drift.
+- Y-Axis: Homework Score Deviation from Grade Section Mean (scaled [-65, +65]).
+- Z-Axis: Composite Latent Cognitive Mastery Elevation (Z = P(Mastery)*100 - 50, range [-50, +50]).
+Quantum Risk Hyperplane Boundary:
+- Decision plane set at Z_crit = 0.0 (equivalent to 50% baseline passing grade).
+- Submerged Entities: Students with elevation Z < 0.0 are visually submerged below the risk waterline.
+- Primary Submerged Cluster: 324 students flagged with below-passing marks in Grade 1 Section 2, led by Leo (#3667, Mandarin and Math IP deficits, Z = -18.5) and Star (#3068, 5 subject failures, Z = -28.0).
+- Curricular Remediation: RAG dispatches prerequisite micro-modules to pull students back above the Z_crit waterline prior to end-of-term examinations.`,
+      'submersion_manifold',
+      'AY2026 Sem 1',
+      ['submersion', 'manifold', 'velocity', '3d', 'quantum_hyperplane', 'ay2026']
     );
   }
 }
