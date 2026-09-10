@@ -1,29 +1,33 @@
 services:
-  # 1. Petri Server — Zero-Trust Gateway
-  #    Auth, SmartShield, auto-TLS, rate limiting, reverse proxy.
-  #    This is the front door. All traffic flows through here.
-  #    Base image: azukaar/cosmos-server (upstream engine)
-  petri-server:
-    image: azukaar/cosmos-server:latest
-    container_name: petri-server
+  # 1. Petri IAM & Zero-Trust Gateway — Zitadel v4 + PostgreSQL 16
+  #    Enterprise OAuth2, OIDC discovery, Passkey/2FA, RBAC, organizations.
+  #    This is the front door on ports 80/8080.
+  petri-zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    container_name: petri-zitadel
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"   # HTTP/3 QUIC
-      - "4040:4040"     # Petri admin/management API
-    environment:
-      # Upstream image env vars (required by base image)
-      - COSMOS_HTTP_PORT=80
-      - COSMOS_HTTPS_PORT=443
+      - "80:8080"
+      - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/petri/vault/server_data:/var/lib/cosmos  # upstream data path
-      - /var/lib/petri/vault/server_config:/config
+      - /var/lib/petri/vault/zitadel/config.yaml:/config.yaml
     depends_on:
-      - petri-web
-      - petri-engine
-      - playwright-runner
+      - petri-postgres
+    command: ["start", "--config", "/config.yaml", "--masterkey", "${ZITADEL_MASTERKEY:-PetriMasterKey32ByteString2026!!}"]
+
+  # 1b. Persistent PostgreSQL 16 Backend for Zitadel on 50GB Vault Disk
+  petri-postgres:
+    image: postgres:16-alpine
+    container_name: petri-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=zitadel
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-PetriPostgres2026!}
+      - POSTGRES_DB=zitadel
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/petri/vault/postgres:/var/lib/postgresql/data
 
   # 2. Petri Web UI (SPA)
   #    Internal only — Petri Server proxies authenticated traffic here.

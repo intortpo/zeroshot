@@ -57,36 +57,56 @@ impl TacticalRiskClassifier {
     }
 
     pub fn evaluate(&self, input: &TacticalRiskInput) -> TacticalRiskAlert {
-        let p_vocab = input
+        // Support both Quantum Computing skills and Classical Discourse skills
+        let p_k1 = input
             .dina_profile
             .mastery_probabilities
-            .get("skill_vocab")
+            .get("skill_superposition")
+            .or_else(|| input.dina_profile.mastery_probabilities.get("skill_vocab"))
             .copied()
             .unwrap_or(0.5);
-        let p_grammar = input
+        let p_k2 = input
             .dina_profile
             .mastery_probabilities
-            .get("skill_grammar")
+            .get("skill_pauli_measurement")
+            .or_else(|| {
+                input
+                    .dina_profile
+                    .mastery_probabilities
+                    .get("skill_grammar")
+            })
             .copied()
             .unwrap_or(0.5);
-        let p_reading = input
+        let p_k3 = input
             .dina_profile
             .mastery_probabilities
-            .get("skill_reading_comp")
+            .get("skill_entanglement")
+            .or_else(|| {
+                input
+                    .dina_profile
+                    .mastery_probabilities
+                    .get("skill_reading_comp")
+            })
             .copied()
             .unwrap_or(0.5);
-        let p_synth = input
+        let p_k4 = input
             .dina_profile
             .mastery_probabilities
-            .get("skill_synthesis")
+            .get("skill_qpe")
+            .or_else(|| {
+                input
+                    .dina_profile
+                    .mastery_probabilities
+                    .get("skill_synthesis")
+            })
             .copied()
             .unwrap_or(0.5);
 
         let features = [
-            p_vocab,
-            p_grammar,
-            p_reading,
-            p_synth,
+            p_k1,
+            p_k2,
+            p_k3,
+            p_k4,
             input.norm_attendance,
             input.norm_homework,
             input.velocity,

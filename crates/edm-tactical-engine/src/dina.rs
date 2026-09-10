@@ -87,8 +87,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_dina_estimation_high_performance() {
-        let q_matrix = CurriculumQMatrix::default();
+    fn test_dina_estimation_quantum_computing() {
+        let q_matrix = CurriculumQMatrix::quantum_computing();
+        let estimator = DinaEstimator::default();
+
+        let mut responses = HashMap::new();
+        responses.insert("item_q1_bloch".to_string(), 1);
+        responses.insert("item_q2_hadamard_z".to_string(), 1);
+        responses.insert("item_q3_pauli_basis".to_string(), 1);
+        responses.insert("item_hw_bell_state".to_string(), 1);
+        responses.insert("item_hw_cnot_parity".to_string(), 1);
+        responses.insert("item_midterm_qft".to_string(), 1);
+        responses.insert("item_midterm_teleport".to_string(), 1);
+        responses.insert("item_final_qpe_shor".to_string(), 1);
+
+        let profile = estimator.estimate_profile(&responses, &q_matrix);
+        assert_eq!(profile.mastery_vector, vec![1, 1, 1, 1]);
+        assert!(profile.mastery_probabilities["skill_superposition"] > 0.8);
+        assert!(profile.mastery_probabilities["skill_qpe"] > 0.8);
+    }
+
+    #[test]
+    fn test_dina_estimation_classical_discourse() {
+        let q_matrix = CurriculumQMatrix::classical_discourse();
         let estimator = DinaEstimator::default();
 
         let mut responses = HashMap::new();
