@@ -30,6 +30,7 @@ import {
   Activity,
   Image as ImageIcon,
   FolderGit2,
+  Clock,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -126,6 +127,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   const isDataActive =
     currentView === 'federated' ||
     currentView === 'edm' ||
+    currentView === 'midterm_clockin_demo' ||
     currentView === 'governance' ||
     currentView === 'stats';
 
@@ -760,6 +762,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
                       </div>
                       <div className="text-[10px] text-stone-400 font-normal">Educational Data Mining & DINA</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('midterm_clockin_demo');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'midterm_clockin_demo'
+                        ? 'bg-teal-50 text-teal-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Clock className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Midterm & Clock-In</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">110+</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Lieflat Charts & Telemetry</div>
                     </div>
                   </button>
 

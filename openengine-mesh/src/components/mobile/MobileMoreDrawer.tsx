@@ -25,6 +25,7 @@ import {
   Activity,
   Coins,
   Server,
+  Clock,
 } from 'lucide-react';
 import { PetriViewMode, UserProfile, Workspace } from '../../types';
 
@@ -472,6 +473,30 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                     <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">QML</span>
                   </div>
                   <div className="text-[11px] text-stone-500">Q-Matrix, DINA CDM & Quantum QSVC</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavigate('midterm_clockin_demo')}
+              className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
+                currentView === 'midterm_clockin_demo'
+                  ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
+                  : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold flex items-center space-x-1.5">
+                    <span>Midterm & Clock-In</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">110+</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500">Lieflat Charts & 24h Telemetry</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />

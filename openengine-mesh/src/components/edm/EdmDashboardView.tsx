@@ -40,6 +40,7 @@ interface EdmDashboardViewProps {
   selectedFederatedFileId?: string;
   onSelectFederatedSourceFile?: (fileId: string) => void;
   onNavigateToFederatedData?: () => void;
+  onNavigateToMidtermDemo?: () => void;
 }
 
 export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
@@ -47,6 +48,7 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
   selectedFederatedFileId,
   onSelectFederatedSourceFile,
   onNavigateToFederatedData,
+  onNavigateToMidtermDemo,
 }) => {
   const initialSourceId = selectedFederatedFileId || 'f-below-passing';
   const [activeSourceId, setActiveSourceId] = useState<string>(initialSourceId);
@@ -545,7 +547,34 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
 
         {/* Tab 2: Submersion Analytics Suite (Lieflat Charts) */}
         {activeTab === 'submersion_suite' && (
-          <div className="animate-in fade-in duration-200">
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {onNavigateToMidtermDemo && (
+              <div className="bg-gradient-to-r from-teal-950/80 via-slate-900 to-indigo-950/80 border border-teal-500/40 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-slate-100">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                      LIVE DEMO SHOWCASE
+                    </span>
+                    <span className="text-xs text-teal-400 font-mono">110+ LIEFLAT CHARTS ALMANAC</span>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-100">
+                    Midterm Exam & Clock-In Longitudinal Telemetry Demo
+                  </h3>
+                  <p className="text-xs text-slate-300 max-w-2xl">
+                    Live interactive evaluation of 849 students, IRT 2PL item curves, dynamic passing grade waterline,
+                    24-hour radial punch clock, and comprehensive 110+ chart possibilities encyclopedia.
+                  </p>
+                </div>
+                <button
+                  onClick={onNavigateToMidtermDemo}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-lg shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Launch Midterm & Clock-In Demo Page →</span>
+                </button>
+              </div>
+            )}
+
             <PetriSubmersionSuite
               students={students}
               selectedStudentId={selectedStudentId}

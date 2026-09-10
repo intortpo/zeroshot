@@ -24,6 +24,7 @@ import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
 import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
+import { MidtermClockInDemoView } from './components/edm/MidtermClockInDemoView';
 import { FederatedDataView } from './components/federated/FederatedDataView';
 import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
 import { McpServerManagerView } from './components/mcp/McpServerManagerView';
@@ -773,6 +774,16 @@ function inferPetriKind(text: string): PetriItemKind {
                       selectedFederatedFileId={selectedEdmSourceFileId}
                       onSelectFederatedSourceFile={setSelectedEdmSourceFileId}
                       onNavigateToFederatedData={() => setCurrentView('federated')}
+                      onNavigateToMidtermDemo={() => setCurrentView('midterm_clockin_demo')}
+                    />
+                  </div>
+                )}
+
+                {/* View 9b: Midterm Examination & Clock-In Longitudinal Live Demo (110+ Lieflat Charts) */}
+                {currentView === 'midterm_clockin_demo' && (
+                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-slate-950">
+                    <MidtermClockInDemoView
+                      onBackToDashboard={() => setCurrentView('edm')}
                     />
                   </div>
                 )}

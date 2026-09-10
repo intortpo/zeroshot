@@ -268,6 +268,7 @@ export type PetriViewMode =
   | 'consumer'
   | 'server'
   | 'edm'
+  | 'midterm_clockin_demo'
   | 'federated'
   | 'generative_video'
   | 'generative_audio'
