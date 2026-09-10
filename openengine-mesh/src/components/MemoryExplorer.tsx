@@ -291,7 +291,7 @@ export const MemoryExplorer: React.FC<MemoryExplorerProps> = ({ activeWorkspace 
   ];
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none space-y-8">
+    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 space-y-8">
       {/* Top Header & Telemetry */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>

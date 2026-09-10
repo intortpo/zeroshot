@@ -124,7 +124,7 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none font-sans text-xs sm:text-sm">
+    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 font-sans text-xs sm:text-sm">
       <form onSubmit={handleSave} className="max-w-5xl mx-auto space-y-6">
         {/* Settings Header */}
         <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6">

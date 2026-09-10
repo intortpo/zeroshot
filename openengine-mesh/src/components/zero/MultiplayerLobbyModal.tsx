@@ -36,7 +36,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md animate-in fade-in duration-200 select-none font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md animate-in fade-in duration-200 font-sans">
       <div className="subtle-depth w-full max-w-xl rounded-3xl p-6 sm:p-8 space-y-6 bg-white shadow-2xl border border-stone-200/90">
         {/* Lobby Modal Header */}
         <div className="flex items-center justify-between border-b border-stone-200 pb-4">

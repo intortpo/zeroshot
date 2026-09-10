@@ -13,6 +13,7 @@ import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
 import { WorkspaceModal } from './components/WorkspaceModal';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
+import { CustomContextMenu } from './components/CustomContextMenu';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode } from './types';
 
@@ -71,20 +72,6 @@ export function App() {
 
   // Canonical Petri Items across workspaces (Built directly from real repository git history)
   const [items, setItems] = useState<PetriItem[]>([
-    {
-      id: 'pt-active-01',
-      workspaceId: 'ws-petri',
-      kind: 'feat',
-      title: 'Eliminate cyberpunk styling and mock data; enforce genuine runtime telemetry',
-      stage: 'in_flight',
-      recursionDepth: 2,
-      chainOfThought: [
-        '[turn 1 · cot] Purged artificial mock metrics and cyberpunk neon shaders',
-        '[turn 2 · cot] Synchronized live Tauri IPC hardware detection and real git commit history',
-      ],
-      createdAt: Date.now() - 300000,
-      updatedAt: Date.now(),
-    },
     {
       id: 'pt-commit-97a09659',
       workspaceId: 'ws-petri',
@@ -525,6 +512,12 @@ export function App() {
           handleCreateIntent(prompt, 'feat');
           dispatchUseCase(useCaseId, prompt);
         }}
+      />
+
+      {/* Global Custom Right-Click Context Menu & Text Selection Copy */}
+      <CustomContextMenu
+        onSelectView={(view) => setCurrentView(view)}
+        currentView={currentView}
       />
     </div>
   );

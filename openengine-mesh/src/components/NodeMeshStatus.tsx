@@ -42,7 +42,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   return (
     <header
       data-tauri-drag-region
-      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-6 sm:px-10 py-3.5 flex items-center justify-between text-sm select-none z-30 font-sans"
+      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-6 sm:px-10 py-3.5 flex items-center justify-between text-sm z-30 font-sans"
     >
       {/* Left: Brand, Breadcrumbs, User & Workspace (Flat, No Rounded Boxes) */}
       <div className="flex items-center space-x-4">

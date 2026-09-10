@@ -58,7 +58,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/20 backdrop-blur-md animate-in fade-in duration-200 select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/20 backdrop-blur-md animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-white/95 backdrop-blur-2xl border border-stone-200/90 rounded-3xl p-6 sm:p-7 shadow-xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-stone-100 pb-4">

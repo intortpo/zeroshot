@@ -14,6 +14,14 @@ html, body, #root {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Crisp Tiffany Selection Highlight */
+::selection {
+  background-color: rgba(10, 186, 181, 0.28);
+  color: #042f2e;
 }
 
 /* Ensure razor-sharp text with zero blur or drop shadow */

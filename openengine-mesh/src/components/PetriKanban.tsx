@@ -77,7 +77,7 @@ export const PetriKanban: React.FC<PetriKanbanProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full overflow-x-auto p-6 sm:p-8 select-none font-sans">
+    <div className="flex-1 w-full overflow-x-auto p-6 sm:p-8 font-sans">
       <div className="flex space-x-6 min-w-[1500px] h-full items-stretch pb-6">
         {STAGES.map((col, colIdx) => {
           const columnItems = items.filter((item) => item.stage === col.stage);

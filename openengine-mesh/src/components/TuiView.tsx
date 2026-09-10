@@ -103,7 +103,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full h-full bg-zinc-950 text-zinc-300 p-2 sm:p-4 font-mono text-xs sm:text-sm select-none flex flex-col justify-between overflow-hidden">
+    <div className="flex-1 w-full h-full bg-zinc-950 text-zinc-300 p-2 sm:p-4 font-mono text-xs sm:text-sm flex flex-col justify-between overflow-hidden">
       {/* Top Statusline (Authentic Vim/Tmux Status Header) */}
       <div className="bg-zinc-900 border border-zinc-700/80 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center space-x-3">

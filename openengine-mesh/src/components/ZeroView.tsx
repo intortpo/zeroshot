@@ -1516,7 +1516,7 @@ fn main() {
   };
 
   return (
-    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 select-none font-sans text-xs sm:text-sm">
+    <div className="flex-1 w-full overflow-y-auto p-6 sm:p-10 font-sans text-xs sm:text-sm">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Zero Studio Master Header with Subtle Depth */}
         <div className="subtle-depth rounded-2xl p-6 sm:p-8 space-y-6">
