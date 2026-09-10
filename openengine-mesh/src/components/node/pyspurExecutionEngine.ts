@@ -477,3 +477,165 @@ export function createEvaluatorSuiteWorkflow(): PySpurWorkflow {
     updatedAt: Date.now(),
   };
 }
+
+/**
+ * Canonical Petri Orchestration Pipeline Workflow:
+ * Ingestion (@orchestrator) -> Worker Synthesis in DevContainer (@debugger-agent) -> 
+ * Invariant & Acceptance Matrix (@verifier-matrix) -> Review Gate (Human-in-the-Loop) -> 
+ * Self-Healing Repair Loop (@debugger-agent) -> Git CAS Squash Merge Delivery (@delivery-worker)
+ */
+export function createPetriOrchestrationWorkflow(goalPrompt?: string): PySpurWorkflow {
+  const prompt =
+    goalPrompt ||
+    'Implement bounded SQLite retry queues with backpressure and acceptance test suite';
+
+  const nodes: PySpurNode[] = [
+    {
+      id: 'node-petri-input',
+      type: 'input',
+      label: 'Goal Ingestion & Spec Scope',
+      sublabel: 'Parse invariants & repro scope',
+      role: '@orchestrator',
+      iconName: 'Target',
+      position: { x: 50, y: 160 },
+      status: 'idle',
+      config: {
+        promptTemplate: prompt,
+      },
+    },
+    {
+      id: 'node-petri-worker',
+      type: 'code',
+      label: 'Worker Patch Synthesis',
+      sublabel: 'Executes repro test in DevContainer',
+      role: '@debugger-agent',
+      iconName: 'Box',
+      position: { x: 320, y: 160 },
+      status: 'idle',
+      config: {
+        codeExecutionTarget: 'devcontainer',
+        pythonCode: `import sys, time\nprint(f"[worker-synthesis] Ingested goal: ${prompt.replace(/"/g, '\\"')}")\nprint("[worker-synthesis] Running minimal failing reproduction in /workspace...")\nprint("[worker-synthesis] Synthesizing AST patch and verifying backpressure invariant...")\nprint("[worker-synthesis] Reproduction passed. Patch staged.")\nsys.exit(0)`,
+      },
+    },
+    {
+      id: 'node-petri-verify',
+      type: 'evaluator',
+      label: 'Acceptance Test Matrix',
+      sublabel: 'Parallel regression & invariant check',
+      role: '@verifier-matrix',
+      iconName: 'ShieldCheck',
+      position: { x: 600, y: 160 },
+      status: 'idle',
+      config: {
+        evaluatorAssertions: [
+          'assert exit_code == 0',
+          'assert "Reproduction passed" in stdout',
+          'assert "Patch staged" in stdout',
+          'assert 0 unhandled exceptions',
+        ],
+        evaluatorRubricScore: 99,
+      },
+    },
+    {
+      id: 'node-petri-gate',
+      type: 'human_approval',
+      label: 'Operator Review Gate',
+      sublabel: 'HITL signoff for Git CAS merge',
+      role: 'Human Operator',
+      iconName: 'CheckCircle2',
+      position: { x: 880, y: 160 },
+      status: 'idle',
+      config: {
+        humanApprovalStatus: 'approved',
+        humanApprovalNotes: 'Acceptance matrix verified with 0 regression breaches. Ready for squash merge.',
+      },
+    },
+    {
+      id: 'node-petri-repair',
+      type: 'branch',
+      label: 'Self-Healing Router',
+      sublabel: 'Active on test failure or rejection',
+      role: '@debugger-agent',
+      iconName: 'GitBranch',
+      position: { x: 880, y: 340 },
+      status: 'idle',
+      config: {
+        conditionExpression: 'inputs.tests_passed == True and inputs.operator_approved == True',
+      },
+    },
+    {
+      id: 'node-petri-delivery',
+      type: 'output',
+      label: 'Git CAS Squash Merge',
+      sublabel: 'Commit ref verified & merged to main',
+      role: '@delivery-worker',
+      iconName: 'Workflow',
+      position: { x: 1160, y: 160 },
+      status: 'idle',
+      config: {},
+    },
+  ];
+
+  const edges: PySpurEdge[] = [
+    {
+      id: 'ep-1',
+      sourceNodeId: 'node-petri-input',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-worker',
+      targetHandle: 'in',
+      isActive: false,
+    },
+    {
+      id: 'ep-2',
+      sourceNodeId: 'node-petri-worker',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-verify',
+      targetHandle: 'in',
+      isActive: false,
+    },
+    {
+      id: 'ep-3',
+      sourceNodeId: 'node-petri-verify',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-gate',
+      targetHandle: 'in',
+      isActive: false,
+    },
+    {
+      id: 'ep-4',
+      sourceNodeId: 'node-petri-gate',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-delivery',
+      targetHandle: 'in',
+      isActive: false,
+    },
+    {
+      id: 'ep-5',
+      sourceNodeId: 'node-petri-verify',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-repair',
+      targetHandle: 'in',
+      isActive: false,
+    },
+    {
+      id: 'ep-6',
+      sourceNodeId: 'node-petri-repair',
+      sourceHandle: 'out',
+      targetNodeId: 'node-petri-worker',
+      targetHandle: 'in',
+      isActive: false,
+    },
+  ];
+
+  return {
+    id: 'wf-petri-orchestration',
+    name: 'Petri Orchestration Pipeline (Canonical)',
+    description:
+      'Autonomous 6-stage software change lifecycle: Ingestion -> DevContainer Synthesis -> Invariant Verification -> Review Gate -> Self-Healing Loop -> Git CAS Delivery.',
+    templateKey: 'petri_orchestration',
+    nodes,
+    edges,
+    updatedAt: Date.now(),
+  };
+}
+

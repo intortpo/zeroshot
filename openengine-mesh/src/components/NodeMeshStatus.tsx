@@ -15,8 +15,10 @@ import {
   Boxes,
   Network,
   Eye,
+  ShieldCheck,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode } from '../types';
+import { agentCognitionService } from '../services/agentCognitionService';
 
 interface NodeMeshStatusProps {
   localNode: NodeSpec;
@@ -32,6 +34,8 @@ interface NodeMeshStatusProps {
   onSelectView: (view: PetriViewMode) => void;
   isPreviewOpen?: boolean;
   onTogglePreview?: () => void;
+  isCognitionOpen?: boolean;
+  onToggleCognition?: () => void;
 }
 
 export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
@@ -48,9 +52,16 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   onSelectView,
   isPreviewOpen = false,
   onTogglePreview,
+  isCognitionOpen = false,
+  onToggleCognition,
 }) => {
+  const [cognition, setCognition] = useState(() => agentCognitionService.getState());
   const [isModulesMenuOpen, setIsModulesMenuOpen] = useState(false);
   const modulesMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    return agentCognitionService.subscribe(setCognition);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -265,6 +276,22 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </button>
 
         <button
+          onClick={() => onSelectView('governance')}
+          className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
+            currentView === 'governance'
+              ? 'border-stone-900 text-stone-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
+          }`}
+          title="Enterprise AI Governance & SAIF Compliance"
+        >
+          <ShieldCheck className={`w-4 h-4 ${currentView === 'governance' ? 'text-emerald-700' : 'text-stone-400'}`} />
+          <span>Governance</span>
+          <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+            98%
+          </span>
+        </button>
+
+        <button
           onClick={() => onSelectView('settings')}
           className={`flex items-center space-x-2 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 ${
             currentView === 'settings'
@@ -279,6 +306,28 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
       {/* Right Controls: Flat Indicators & Actions (No Rounded Boxes) */}
       <div className="flex items-center space-x-5 text-xs font-sans">
+        {/* Agent Live Thinking & Concept HUD Trigger */}
+        {onToggleCognition && (
+          <button
+            type="button"
+            onClick={onToggleCognition}
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-xs font-sans transition-all cursor-pointer ${
+              isCognitionOpen
+                ? 'bg-[#0ABAB5] text-white border-[#0ABAB5] shadow-xs'
+                : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 border-stone-200'
+            }`}
+            title="Inspect Agent Live Thinking & Active Concept"
+          >
+            <Brain className={`w-3.5 h-3.5 ${isCognitionOpen ? 'text-white' : 'text-[#0ABAB5]'}`} />
+            <span className="font-medium hidden sm:inline">Thinking</span>
+            {cognition.isThinking ? (
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            ) : (
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5]" />
+            )}
+          </button>
+        )}
+
         {/* Google Workspace DWD Trigger */}
         <button
           onClick={onOpenDwdModal}

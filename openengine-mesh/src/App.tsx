@@ -17,6 +17,8 @@ import { OrchestrationGraphView } from './components/OrchestrationGraphView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
 import { NodeStudioView } from './components/node/NodeStudioView';
 import { PreviewAgentationPanel } from './components/preview/PreviewAgentationPanel';
+import { GovernanceView } from './components/GovernanceView';
+import { AgentCognitionHUD } from './components/AgentCognitionHUD';
 import { CustomContextMenu } from './components/CustomContextMenu';
 import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
 import { useMeshLedger } from './hooks/useMeshLedger';
@@ -33,9 +35,10 @@ export function App() {
     dispatchUseCase,
   } = useMeshLedger();
 
-  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings'
+  // Enterprise View: 'board' | 'zero' | 'skills' | 'memory' | 'stats' | 'tui' | 'settings' | 'governance'
   const [currentView, setCurrentView] = useState<PetriViewMode>('board');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+  const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
 
   // Enterprise Users & Identity State (Authentic User)
   const [users, setUsers] = useState<UserProfile[]>([
@@ -480,6 +483,8 @@ function inferPetriKind(text: string): PetriItemKind {
           onSelectView={setCurrentView}
           isPreviewOpen={isPreviewOpen}
           onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
+          isCognitionOpen={isCognitionOpen}
+          onToggleCognition={() => setIsCognitionOpen(!isCognitionOpen)}
         />
 
         {/* Main Workspace Body with Optional Side-by-Side Agentation Live Preview */}
@@ -619,6 +624,16 @@ function inferPetriKind(text: string): PetriItemKind {
             />
           </div>
         )}
+
+        {/* View 7: Enterprise AI Governance & SAIF Compliance */}
+        {currentView === 'governance' && (
+          <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <GovernanceView
+              activeWorkspace={activeWorkspace}
+              activeUser={activeUser}
+            />
+          </div>
+        )}
           </div>
 
           {/* Agentation Live Preview Panel (When active or toggled) */}
@@ -682,6 +697,13 @@ function inferPetriKind(text: string): PetriItemKind {
         isOpen={isAiProviderModalOpen}
         onClose={() => setIsAiProviderModalOpen(false)}
         onSelectModel={(modelId) => setActiveAiModelId(modelId)}
+      />
+
+      {/* Global Ambient Agent Live Thinking & Concept HUD Drawer */}
+      <AgentCognitionHUD
+        mode="drawer"
+        isOpen={isCognitionOpen}
+        onClose={() => setIsCognitionOpen(false)}
       />
 
       {/* Global Custom Right-Click Context Menu & Text Selection Copy */}

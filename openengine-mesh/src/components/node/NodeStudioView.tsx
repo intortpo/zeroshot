@@ -41,11 +41,18 @@ import {
   EXPERT_DEFINITIONS,
 } from './moeWorkflowEngine';
 import {
+  createPetriOrchestrationWorkflow,
   createDevContainerCoderWorkflow,
   createEvaluatorSuiteWorkflow,
   executePySpurNode,
   getTopologicalNodeOrder,
 } from './pyspurExecutionEngine';
+import { PetriStageTimeline } from './PetriStageTimeline';
+import {
+  buildGoalGraph,
+  DynamicGoalGraph,
+  GraphStage,
+} from '../OrchestrationGraphView';
 import { DevContainerConsoleDrawer } from './DevContainerConsoleDrawer';
 import { PySpurEvalsPanel } from './PySpurEvalsPanel';
 import { execInDevContainer } from '../../services/devcontainerService';
@@ -53,6 +60,7 @@ import { execInDevContainer } from '../../services/devcontainerService';
 interface NodeStudioViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
+  initialTab?: 'canvas' | 'stages' | 'split' | 'evals' | 'devcontainer';
   onHandoffPlan?: (plan: PlanCanvasDoc) => void;
   onNavigateToChat?: () => void;
 }
@@ -83,16 +91,24 @@ const PRESET_GOALS = [
 export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
   activeWorkspace,
   activeUser: _activeUser,
+  initialTab = 'canvas',
   onHandoffPlan,
   onNavigateToChat,
 }) => {
-  // Active Workflow State
+  // Active Workflow State - Defaults to Canonical Petri Orchestration Pipeline
   const [workflow, setWorkflow] = useState<PySpurWorkflow>(() =>
-    createDefaultMoeWorkflow()
+    createPetriOrchestrationWorkflow()
   );
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('node-moe-router');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('node-petri-worker');
   const [goalPrompt, setGoalPrompt] = useState<string>(
     'Implement bounded SQLite retry queues with backpressure and acceptance test suite'
+  );
+  const [activeStage, setActiveStage] = useState<GraphStage>('input');
+  const [activeGraph, setActiveGraph] = useState<DynamicGoalGraph>(() =>
+    buildGoalGraph(
+      'Implement bounded SQLite retry queues with backpressure and acceptance test suite',
+      false
+    )
   );
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState<boolean>(false);
@@ -133,19 +149,44 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
     ).length;
   }, [workflow.nodes]);
 
-  // Studio Tab State: 'canvas' | 'evals' | 'devcontainer'
-  const [activeTab, setActiveTab] = useState<'canvas' | 'evals' | 'devcontainer'>('canvas');
+  // Studio Tab State: 'canvas' | 'stages' | 'split' | 'evals' | 'devcontainer'
+  const [activeTab, setActiveTab] = useState<'canvas' | 'stages' | 'split' | 'evals' | 'devcontainer'>(initialTab);
+
+  // Helper to map node ID to Petri GraphStage
+  const getPetriStageForNode = (nodeId: string): GraphStage => {
+    if (nodeId.includes('input')) return 'input';
+    if (nodeId.includes('worker') || nodeId.includes('code') || nodeId.includes('coder')) return 'worker';
+    if (nodeId.includes('verify') || nodeId.includes('eval')) return 'verifying';
+    if (nodeId.includes('gate') || nodeId.includes('approval') || nodeId.includes('choice')) return 'choice';
+    if (nodeId.includes('repair')) return 'repair';
+    if (nodeId.includes('delivery') || nodeId.includes('output')) return 'delivery';
+    return 'idle';
+  };
 
   // Switch Template & Reset Flow
   const handleSelectTemplate = (
-    key: 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite'
+    key:
+      | 'petri_orchestration'
+      | 'moe_planner'
+      | 'agentic_coder'
+      | 'rag_retrieval'
+      | 'human_approval'
+      | 'devcontainer_coder'
+      | 'evaluator_suite'
   ) => {
     setIsTemplateMenuOpen(false);
     let newWf: PySpurWorkflow;
     let defaultSelectedId: string;
     let defaultPrompt = goalPrompt;
 
-    if (key === 'moe_planner') {
+    if (key === 'petri_orchestration') {
+      newWf = createPetriOrchestrationWorkflow(goalPrompt);
+      defaultSelectedId = 'node-petri-worker';
+      setSynthesizedPlan(null);
+      setActiveStage('input');
+      setActiveGraph(buildGoalGraph(goalPrompt, false));
+      showToast('Loaded Canonical Petri Orchestration Pipeline');
+    } else if (key === 'moe_planner') {
       newWf = createDefaultMoeWorkflow(goalPrompt);
       defaultSelectedId = 'node-moe-router';
       setSynthesizedPlan(synthesizePlanFromMoe(goalPrompt, newWf));
@@ -245,6 +286,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
     const outputs: Record<string, any> = { input_prompt: goalPrompt };
 
     for (const nodeId of order) {
+      setActiveStage(getPetriStageForNode(nodeId));
       setWorkflow((prev) => ({
         ...prev,
         nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, status: 'running' } : n)),
@@ -263,6 +305,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
         }));
       }
     }
+    setActiveStage('merged');
     setIsRunning(false);
     showToast('Workflow execution completed successfully');
   };
@@ -273,6 +316,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
     if (!target) return;
     setIsRunning(true);
     showToast(`Executing single node: ${target.label}`);
+    setActiveStage(getPetriStageForNode(nodeId));
     setWorkflow((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, status: 'running' } : n)),
@@ -297,6 +341,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
       return n && n.status === 'idle';
     });
     if (!nextNodeId) {
+      setActiveStage('merged');
       showToast('All nodes in DAG have completed execution');
       return;
     }
@@ -310,6 +355,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
       nodes: prev.nodes.map((n) => ({ ...n, status: 'idle', outputTrace: undefined })),
       edges: prev.edges.map((e) => ({ ...e, isActive: false })),
     }));
+    setActiveStage('input');
     showToast('Workflow state reset to idle');
   };
 
@@ -621,6 +667,27 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
 
                 <button
                   type="button"
+                  onClick={() => handleSelectTemplate('petri_orchestration')}
+                  className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                    workflow.templateKey === 'petri_orchestration'
+                      ? 'bg-orange-50 text-orange-950 font-semibold border border-orange-200/60'
+                      : 'text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  <Workflow className="w-4 h-4 text-[#FF5F1F] shrink-0" />
+                  <div>
+                    <div className="text-xs font-semibold flex items-center space-x-1.5">
+                      <span>Petri Orchestration Pipeline</span>
+                      <span className="text-[9px] px-1.5 py-0.2 bg-[#FF5F1F]/15 text-[#FF5F1F] rounded-full font-bold">Canonical</span>
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-normal">
+                      6-stage: Ingestion → DevContainer → Tests → Gate → Repair → CAS Merge
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleSelectTemplate('moe_planner')}
                   className={`w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
                     workflow.templateKey === 'moe_planner'
@@ -730,7 +797,7 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
             )}
           </div>
 
-          {/* Studio View Mode Switcher: Canvas | Evals | DevContainer */}
+          {/* Studio View Mode Switcher: Canvas | Stages | Split | Evals | DevContainer */}
           <div className="flex items-center space-x-1 p-1 rounded-xl bg-stone-100 border border-stone-200 text-xs">
             <button
               type="button"
@@ -742,6 +809,31 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
               }`}
             >
               Workflow Canvas
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('stages')}
+              className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                activeTab === 'stages'
+                  ? 'bg-white shadow-xs text-orange-950 font-semibold'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Workflow className="w-3.5 h-3.5 text-[#FF5F1F]" />
+              <span>Petri Stages</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('split')}
+              className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                activeTab === 'split'
+                  ? 'bg-white shadow-xs text-stone-900 font-semibold'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <span>Split Dual</span>
             </button>
 
             <button
@@ -1359,6 +1451,56 @@ export const NodeStudioView: React.FC<NodeStudioViewProps> = ({
             )}
           </div>
         </>
+      )}
+
+      {/* Studio Tab: Petri Orchestration Stages */}
+      {activeTab === 'stages' && (
+        <PetriStageTimeline
+          workflow={workflow}
+          activeStage={activeStage}
+          activeGraph={activeGraph}
+          isRunning={isRunning}
+          onRunPipeline={handleRunAll}
+          onStepNext={handleStepNext}
+          onReset={handleResetWorkflow}
+          onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
+          selectedNodeId={selectedNodeId}
+        />
+      )}
+
+      {/* Studio Tab: Split Dual View (Canvas + Stages) */}
+      {activeTab === 'split' && (
+        <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
+          <div className="flex-1 h-full relative border-r border-stone-200">
+            <PySpurNodeCanvas
+              key={`split-${workflow.id}`}
+              workflow={workflow}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={(node) => setSelectedNodeId(node ? node.id : null)}
+              onUpdateNodePosition={handleUpdateNodePosition}
+              isRunning={isRunning}
+              onRunAll={handleRunAll}
+              onRunSingleNode={handleRunSingleNode}
+              onStepNext={handleStepNext}
+              onResetWorkflow={handleResetWorkflow}
+              onDeleteNode={handleDeleteNode}
+              onEditNode={(nodeId) => setSelectedNodeId(nodeId)}
+            />
+          </div>
+          <div className="w-full xl:w-[480px] h-full overflow-hidden border-t xl:border-t-0 xl:border-l border-stone-200">
+            <PetriStageTimeline
+              workflow={workflow}
+              activeStage={activeStage}
+              activeGraph={activeGraph}
+              isRunning={isRunning}
+              onRunPipeline={handleRunAll}
+              onStepNext={handleStepNext}
+              onReset={handleResetWorkflow}
+              onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
+              selectedNodeId={selectedNodeId}
+            />
+          </div>
+        </div>
       )}
 
       {/* Studio Tab: Test Datasets & Evals */}

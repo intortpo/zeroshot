@@ -227,7 +227,7 @@ export interface EnterpriseStats {
   invariantPassRate: number;
 }
 
-export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings';
+export type PetriViewMode = 'chat' | 'plan' | 'board' | 'graph' | 'node' | 'skills' | 'memory' | 'stats' | 'zero' | 'tui' | 'settings' | 'governance';
 
 // ECC (Everything Claude Code) Engine & Optimization Types
 export interface EccOptimizationState {
@@ -533,7 +533,7 @@ export interface PySpurWorkflow {
   id: string;
   name: string;
   description: string;
-  templateKey: 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'custom';
+  templateKey: 'petri_orchestration' | 'moe_planner' | 'agentic_coder' | 'rag_retrieval' | 'human_approval' | 'devcontainer_coder' | 'evaluator_suite' | 'custom';
   nodes: PySpurNode[];
   edges: PySpurEdge[];
   updatedAt: number;
@@ -641,5 +641,91 @@ export interface AgyRunResult {
   tokens_estimated: number;
 }
 
+// ============================================================================
+// Agent Cognition & Concept State Types
+// ============================================================================
 
+export type AgentCognitivePhase =
+  | 'idle'
+  | 'hypothesizing'
+  | 'analyzing_codebase'
+  | 'synthesizing_patch'
+  | 'verifying_invariants'
+  | 'self_critique'
+  | 'awaiting_gate';
 
+export interface AgentThinkingTurn {
+  id: string;
+  timestamp: number;
+  role: string;
+  phase: AgentCognitivePhase;
+  thought: string;
+  tokensUsed: number;
+  durationMs: number;
+  confidence: number;
+}
+
+export interface AgentWorkingConcept {
+  id: string;
+  title: string;
+  category: 'architecture' | 'security' | 'code' | 'verification' | 'governance';
+  summary: string;
+  domainTerms: string[];
+  workingHypothesis: string;
+  targetFiles: string[];
+  activeInvariants: string[];
+  relatedNodes: string[];
+  updatedAt: number;
+}
+
+export interface AgentCognitionState {
+  isThinking: boolean;
+  activePhase: AgentCognitivePhase;
+  activeConcept: AgentWorkingConcept;
+  recentTurns: AgentThinkingTurn[];
+  totalThinkingTokens: number;
+}
+
+// ============================================================================
+// Governance & SAIF Compliance Types
+// ============================================================================
+
+export interface SaifAuditCheck {
+  id: string;
+  pillar: 'foundations' | 'data_governance' | 'model_security' | 'fail_closed' | 'adversarial_defense' | 'audit_ledger';
+  title: string;
+  description: string;
+  status: 'passed' | 'warning' | 'failed';
+  evidence: string;
+  lastAuditedAt: number;
+}
+
+export interface SaifAuditPillar {
+  key: string;
+  name: string;
+  scorePercent: number;
+  checksCount: number;
+  passedCount: number;
+  checks: SaifAuditCheck[];
+}
+
+export interface GovernancePolicy {
+  id: string;
+  category: 'model_access' | 'review_gate' | 'token_ceiling' | 'secret_sanitization' | 'cas_delivery';
+  name: string;
+  description: string;
+  isEnabled: boolean;
+  severity: 'strict' | 'advisory';
+  targetScope: string;
+}
+
+export interface GovernanceAuditRecord {
+  id: string;
+  timestamp: number;
+  category: string;
+  actor: string;
+  action: string;
+  details: string;
+  status: 'verified' | 'flagged' | 'blocked';
+  receiptHash: string;
+}
