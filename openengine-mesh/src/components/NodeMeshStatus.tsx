@@ -143,10 +143,11 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'tui';
 
   return (
-    <header
-      data-tauri-drag-region
-      className="bg-white/40 backdrop-blur-2xl border-b border-stone-200/60 px-3 sm:px-10 py-2.5 sm:py-3.5 flex items-center justify-between text-sm z-30 font-sans"
-    >
+    <div className="px-3 sm:px-6 pt-3 pb-1.5 shrink-0 z-30">
+      <header
+        data-tauri-drag-region
+        className="editorial-card-elevated rounded-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-sm font-sans"
+      >
       {/* Left: Brand, Breadcrumbs, User, Tier & Workspace */}
       <div className="flex items-center space-x-3.5">
         {/* Brand */}
@@ -1077,5 +1078,6 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         </div>
       </div>
     </header>
+  </div>
   );
 };

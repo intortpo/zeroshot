@@ -503,10 +503,10 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
             )}
           </div>
 
-          {/* Singular Centered Chat Input Card */}
+          {/* Singular Centered Chat Input Card - Elevated Editorial Pill */}
           <form
             onSubmit={handleSubmit}
-            className="w-full rounded-3xl bg-white/85 backdrop-blur-xl border border-stone-200/90 shadow-[0_10px_40px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_45px_rgba(0,0,0,0.09)] transition-all p-3 sm:p-4 space-y-3"
+            className="w-full rounded-3xl editorial-card-elevated p-3.5 sm:p-5 space-y-3.5 transition-all shadow-[0_12px_44px_rgba(0,0,0,0.05)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.08)] border border-stone-200/90"
           >
             <div className="relative">
               <textarea
@@ -526,14 +526,14 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
             </div>
 
             {/* Input Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+            <div className="flex items-center justify-between pt-2.5 border-t border-stone-100/90 text-xs">
               <div className="flex items-center space-x-2 text-stone-500 font-mono text-[11px]">
-                <span>Saving to:</span>
-                <span className="font-semibold text-stone-800 font-sans">
-                  {noteScope === 'global' ? 'Global' : activeWorkspace?.name || 'zero-petri'}
+                <span className="hidden sm:inline">Scope:</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                  {noteScope === 'global' ? '🌐 Global' : `📁 ${activeWorkspace?.name || 'zero-petri'}`}
                 </span>
                 <span className="text-stone-300">·</span>
-                <span>Enter ↵</span>
+                <span className="text-stone-400 text-[10px]">Enter ↵ to reflect</span>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -543,10 +543,10 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                     triggerLightHaptic();
                     setIsListening(!isListening);
                   }}
-                  className={`p-2 rounded-xl transition-colors ${
+                  className={`p-2 rounded-xl transition-all cursor-pointer ${
                     isListening
                       ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse'
-                      : 'bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800'
+                      : 'editorial-pill text-stone-500 hover:text-stone-800 hover:bg-stone-200/70'
                   }`}
                   title="Voice dictation"
                 >
@@ -556,16 +556,22 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                 <button
                   type="submit"
                   disabled={!prompt.trim() || isThinking}
-                  className={`p-2 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer font-sans text-xs font-semibold ${
                     prompt.trim() && !isThinking
-                      ? 'bg-stone-900 text-white hover:bg-black shadow-sm'
+                      ? 'bg-stone-900 text-white hover:bg-black shadow-sm scale-100 hover:scale-[1.02]'
                       : 'bg-stone-100 text-stone-400 cursor-not-allowed'
                   }`}
                 >
                   {isThinking ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-stone-600" />
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-stone-400" />
+                      <span>Thinking...</span>
+                    </>
                   ) : (
-                    <ArrowUp className="w-4 h-4" />
+                    <>
+                      <span>Reflect</span>
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </>
                   )}
                 </button>
               </div>
@@ -646,22 +652,34 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                 })}
               </div>
 
-              {/* Conversational Response Card (No Code/Build Actions) */}
+              {/* Mya AI Agent Styled Thought Reflection Card */}
               {conversationalResponse && (
-                <div className="w-full rounded-3xl bg-white/90 backdrop-blur-xl border border-stone-200/90 shadow-lg p-5 sm:p-6 space-y-4 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                    <div className="flex items-center space-x-2 text-xs font-semibold text-stone-900">
-                      <Brain className="w-4 h-4 text-indigo-600" />
-                      <span>Gemini Thought Reflection</span>
+                <div className="w-full rounded-3xl mya-chat-bubble p-5 sm:p-7 space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between border-b border-indigo-50/80 pb-3.5">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                        <Brain className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 flex items-center space-x-1.5">
+                          <span>Mya Agent Intelligence</span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            Summarizer
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-stone-400 font-sans">
+                          Cognitive synthesis grounded in repository state
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(conversationalResponse);
-                          showToast('📋 Copied to clipboard!');
+                          showToast('📋 Copied reflection to clipboard!');
                         }}
-                        className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500 hover:text-stone-900 transition-colors"
+                        className="p-1.5 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-stone-900 transition-colors"
                         title="Copy to clipboard"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -669,27 +687,39 @@ export const CentricFocusChatView: React.FC<CentricFocusChatViewProps> = ({
                       <button
                         type="button"
                         onClick={handleReset}
-                        className="px-2.5 py-1 rounded-lg hover:bg-stone-100 text-stone-600 text-xs font-medium transition-colors"
+                        className="px-2.5 py-1 rounded-xl editorial-pill hover:bg-stone-200/80 text-stone-600 text-xs font-medium transition-colors cursor-pointer"
                       >
                         New Note
                       </button>
                     </div>
                   </div>
 
-                  <div className="text-xs sm:text-sm text-stone-800 leading-relaxed font-sans space-y-2 whitespace-pre-wrap">
+                  {/* Body Content */}
+                  <div className="text-xs sm:text-sm text-stone-800 leading-relaxed font-sans space-y-2 whitespace-pre-wrap bg-stone-50/60 p-4 rounded-2xl border border-stone-200/50">
                     {conversationalResponse}
                   </div>
 
-                  {/* Note Action Toolbar */}
-                  <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-stone-500 font-sans">
-                      Categorization: <span className="font-mono text-indigo-700">#{noteScope}</span>
+                  {/* Note Action & Category Tag Toolbar */}
+                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-[10px] uppercase font-mono text-stone-400 font-semibold tracking-wider">
+                        Categorized:
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        #{noteScope}
+                      </span>
+                      {steeredHistory.length > 0 && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                          #{steeredHistory[0]}
+                        </span>
+                      )}
                     </div>
+
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
                         onClick={handleSaveCurrentAsNote}
-                        className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer"
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-sm shadow-indigo-600/20 hover:scale-[1.02] cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Save to Zen Notes</span>

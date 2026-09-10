@@ -27,6 +27,13 @@ export default {
           danger: '#da3633',
         },
       },
+      borderRadius: {
+        '2.5xl': '1.25rem',
+        '3xl': '1.5rem',
+        '3.5xl': '1.75rem',
+        '4xl': '2rem',
+        '5xl': '2.5rem',
+      },
     },
   },
   plugins: [],

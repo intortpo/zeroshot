@@ -288,46 +288,61 @@ export const EdmDashboardView: React.FC<EdmDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* KPI Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-6 py-3 bg-white/70 border-b border-slate-200 shrink-0">
-        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
+      {/* KPI Accounting Statistics Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 px-6 py-4 bg-transparent shrink-0">
+        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 font-mono uppercase">Enrolled Cohort</span>
-            <p className="text-lg font-bold text-slate-800">{students.length} Students</p>
+            <span className="text-[10px] text-stone-500 font-mono uppercase tracking-wider">Cohort Active</span>
+            <p className="text-xl sm:text-2xl font-bold text-stone-900 font-sans tracking-tight">{students.length}</p>
+            <span className="text-[10px] font-sans text-stone-400">Total Enrolled</span>
           </div>
-          <GraduationCap className="w-5 h-5 text-slate-400" />
+          <div className="w-8 h-8 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+            <GraduationCap className="w-4.5 h-4.5" />
+          </div>
         </div>
 
-        <div className="bg-rose-50/70 p-2.5 rounded-lg border border-rose-200 flex items-center justify-between">
+        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-rose-600 font-mono uppercase font-semibold">Critical Risk</span>
-            <p className="text-lg font-bold text-rose-700">{criticalCount} Flagged</p>
+            <span className="text-[10px] text-rose-600 font-mono uppercase tracking-wider font-semibold">Critical Risk</span>
+            <p className="text-xl sm:text-2xl font-bold text-rose-700 font-sans tracking-tight">{criticalCount}</p>
+            <span className="text-[10px] font-sans text-rose-600 font-medium">Flagged &lt; 50%</span>
           </div>
-          <AlertCircle className="w-5 h-5 text-rose-500" />
+          <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+            <AlertCircle className="w-4.5 h-4.5" />
+          </div>
         </div>
 
-        <div className="bg-amber-50/70 p-2.5 rounded-lg border border-amber-200 flex items-center justify-between">
+        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-amber-600 font-mono uppercase font-semibold">Latent Warning</span>
-            <p className="text-lg font-bold text-amber-700">{warningCount} Divergent</p>
+            <span className="text-[10px] text-amber-600 font-mono uppercase tracking-wider font-semibold">Latent Warning</span>
+            <p className="text-xl sm:text-2xl font-bold text-amber-700 font-sans tracking-tight">{warningCount}</p>
+            <span className="text-[10px] font-sans text-amber-600 font-medium">Divergent Skills</span>
           </div>
-          <Sliders className="w-5 h-5 text-amber-500" />
+          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+            <Sliders className="w-4.5 h-4.5" />
+          </div>
         </div>
 
-        <div className="bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-200 flex items-center justify-between">
+        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-emerald-600 font-mono uppercase font-semibold">On-Track</span>
-            <p className="text-lg font-bold text-emerald-700">{onTrackCount} Stable</p>
+            <span className="text-[10px] text-emerald-600 font-mono uppercase tracking-wider font-semibold">On-Track</span>
+            <p className="text-xl sm:text-2xl font-bold text-emerald-700 font-sans tracking-tight">{onTrackCount}</p>
+            <span className="text-[10px] font-sans text-emerald-600 font-medium">Proficient Mastery</span>
           </div>
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-4.5 h-4.5" />
+          </div>
         </div>
 
-        <div className="bg-teal-50/70 p-2.5 rounded-lg border border-teal-200 flex items-center justify-between col-span-2 md:col-span-1">
+        <div className="editorial-stat-card p-3.5 sm:p-4 rounded-2.5xl flex items-center justify-between col-span-2 md:col-span-1">
           <div>
-            <span className="text-[11px] text-teal-600 font-mono uppercase font-semibold">Quantum Kernel</span>
-            <p className="text-lg font-bold text-teal-800">Fidelity 98.4%</p>
+            <span className="text-[10px] text-teal-600 font-mono uppercase tracking-wider font-semibold">Quantum Fidelity</span>
+            <p className="text-xl sm:text-2xl font-bold text-teal-900 font-sans tracking-tight">98.4%</p>
+            <span className="text-[10px] font-sans text-teal-700 font-medium">QSVC Kernel</span>
           </div>
-          <Sparkles className="w-5 h-5 text-teal-600" />
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600">
+            <Sparkles className="w-4.5 h-4.5" />
+          </div>
         </div>
       </div>
 
