@@ -19,6 +19,8 @@ use petri_server::{
     get_petri_server_status, list_petri_containers, manage_petri_container,
     get_petri_container_logs, get_petri_routes, save_petri_route,
     toggle_petri_smartshield, get_petri_market_apps, install_petri_market_app,
+    get_tailscale_network_details, tailscale_connect, tailscale_disconnect,
+    tailscale_set_exit_node, tailscale_set_advertise_exit_node,
 };
 use workspace::select_folder;
 
@@ -58,6 +60,11 @@ pub fn run() {
             toggle_petri_smartshield,
             get_petri_market_apps,
             install_petri_market_app,
+            get_tailscale_network_details,
+            tailscale_connect,
+            tailscale_disconnect,
+            tailscale_set_exit_node,
+            tailscale_set_advertise_exit_node,
         ])
         .run(tauri::generate_context!())
         .expect("error while running petri application");

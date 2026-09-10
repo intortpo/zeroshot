@@ -30,13 +30,14 @@ import {
   UserProfile,
 } from '../../types';
 import { petriServerService } from '../../services/petriServerService';
+import { TailscaleMeshPanel } from './TailscaleMeshPanel';
 
 interface PetriServerViewProps {
   activeWorkspace?: Workspace;
   activeUser?: UserProfile;
 }
 
-type ServerSubTab = 'overview' | 'containers' | 'proxy' | 'market' | 'storage';
+type ServerSubTab = 'overview' | 'tailscale' | 'containers' | 'proxy' | 'market' | 'storage';
 
 export const PetriServerView: React.FC<PetriServerViewProps> = ({
   activeWorkspace: _activeWorkspace,
@@ -223,6 +224,19 @@ export const PetriServerView: React.FC<PetriServerViewProps> = ({
 
         <button
           type="button"
+          onClick={() => setActiveTab('tailscale')}
+          className={`py-3 border-b-2 font-medium flex items-center space-x-2 transition-all cursor-pointer ${
+            activeTab === 'tailscale'
+              ? 'border-indigo-600 text-indigo-950 font-semibold'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          <Network className="w-4 h-4 text-cyan-600" />
+          <span>Tailscale Mesh</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('containers')}
           className={`py-3 border-b-2 font-medium flex items-center space-x-2 transition-all cursor-pointer ${
             activeTab === 'containers'
@@ -371,6 +385,20 @@ export const PetriServerView: React.FC<PetriServerViewProps> = ({
                   <div className="text-[11px] text-stone-500">Peer load balancer active</div>
                 </div>
               </div>
+
+              <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+                <span className="text-xs text-stone-500">
+                  Inspect cluster peers, manage exit nodes, and configure mesh credentials.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('tailscale')}
+                  className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs flex items-center space-x-1.5"
+                >
+                  <span>Manage Mesh & Exit Nodes</span>
+                  <ExternalLink className="w-3 h-3 text-cyan-400" />
+                </button>
+              </div>
             </div>
 
             {/* SmartShield Zero-Trust Security Suite */}
@@ -481,6 +509,14 @@ export const PetriServerView: React.FC<PetriServerViewProps> = ({
               </div>
             </div>
           </div>
+        )}
+
+        {/* TAB: Tailscale Zero-Trust Mesh & Exit Node Orchestration */}
+        {activeTab === 'tailscale' && (
+          <TailscaleMeshPanel
+            isSuperAdmin={isSuperAdmin}
+            onToast={showToast}
+          />
         )}
 
         {/* TAB 2: Container Management */}

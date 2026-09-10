@@ -470,3 +470,241 @@ fn chrono_now_ms() -> i64 {
         .unwrap_or_default()
         .as_millis() as i64
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TailscalePeerNodeInfo {
+    pub id: String,
+    pub host_name: String,
+    pub dns_name: String,
+    pub os: String,
+    pub tailscale_ips: Vec<String>,
+    pub online: bool,
+    pub is_exit_node: bool,
+    pub is_active_exit_node: bool,
+    pub exit_node_option: bool,
+    pub last_seen: Option<String>,
+    pub relay: Option<String>,
+    pub country: Option<String>,
+    pub city: Option<String>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TailscaleSelfNodeInfo {
+    pub host_name: String,
+    pub dns_name: String,
+    pub tailscale_ips: Vec<String>,
+    pub is_exit_node: bool,
+    pub advertised_exit_node: bool,
+    pub active_exit_node: Option<String>,
+    pub exit_node_allow_lan: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TailscaleNetworkDetailsInfo {
+    pub backend_state: String,
+    pub self_node: TailscaleSelfNodeInfo,
+    pub peers: Vec<TailscalePeerNodeInfo>,
+    pub active_exit_node: Option<String>,
+    pub exit_node_allow_lan: bool,
+    pub auth_url: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_tailscale_network_details() -> Result<TailscaleNetworkDetailsInfo, String> {
+    let output = Command::new("tailscale")
+        .args(["status", "--json"])
+        .output()
+        .map_err(|e| format!("Failed to execute tailscale status: {}", e))?;
+
+    let val: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Failed to parse tailscale status json: {}", e))?;
+
+    let backend_state = val["BackendState"].as_str().unwrap_or("Stopped").to_string();
+    let auth_url = val["AuthURL"].as_str().map(|s| s.to_string());
+
+    let self_val = &val["Self"];
+    let self_hostname = self_val["HostName"].as_str().unwrap_or("po").to_string();
+    let self_dns = self_val["DNSName"].as_str().unwrap_or("").trim_end_matches('.').to_string();
+    let self_ips: Vec<String> = self_val["TailscaleIPs"]
+        .as_array()
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+        .unwrap_or_default();
+
+    let self_is_exit = self_val["ExitNode"].as_bool().unwrap_or(false);
+    let self_exit_opt = self_val["ExitNodeOption"].as_bool().unwrap_or(false);
+
+    let mut active_exit_node_id: Option<String> = None;
+    let exit_node_allow_lan = false;
+
+    let mut peers: Vec<TailscalePeerNodeInfo> = Vec::new();
+    if let Some(peer_obj) = val["Peer"].as_object() {
+        for (node_key, p) in peer_obj {
+            let id = p["ID"].as_str().unwrap_or(node_key).to_string();
+            let host_name = p["HostName"].as_str().unwrap_or("peer").to_string();
+            let dns_name = p["DNSName"].as_str().unwrap_or("").trim_end_matches('.').to_string();
+            let os = p["OS"].as_str().unwrap_or("unknown").to_string();
+            let online = p["Online"].as_bool().unwrap_or(false);
+            let is_exit_node = p["ExitNode"].as_bool().unwrap_or(false);
+            let exit_node_option = p["ExitNodeOption"].as_bool().unwrap_or(false);
+            let active = p["Active"].as_bool().unwrap_or(false);
+
+            if is_exit_node && active {
+                active_exit_node_id = Some(host_name.clone());
+            }
+
+            let ips: Vec<String> = p["TailscaleIPs"]
+                .as_array()
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                .unwrap_or_default();
+
+            let tags: Vec<String> = p["Tags"]
+                .as_array()
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                .unwrap_or_default();
+
+            let last_seen = p["LastSeen"].as_str().map(|s| s.to_string());
+            let relay = p["Relay"].as_str().filter(|s| !s.is_empty()).map(|s| s.to_string());
+
+            let country = p["Location"]["Country"].as_str().map(|s| s.to_string());
+            let city = p["Location"]["City"].as_str().map(|s| s.to_string());
+
+            peers.push(TailscalePeerNodeInfo {
+                id,
+                host_name,
+                dns_name,
+                os,
+                tailscale_ips: ips,
+                online,
+                is_exit_node,
+                is_active_exit_node: is_exit_node && active,
+                exit_node_option,
+                last_seen,
+                relay,
+                country,
+                city,
+                tags,
+            });
+        }
+    }
+
+    peers.sort_by(|a, b| {
+        b.online.cmp(&a.online)
+            .then_with(|| b.exit_node_option.cmp(&a.exit_node_option))
+            .then_with(|| a.host_name.cmp(&b.host_name))
+    });
+
+    let self_node = TailscaleSelfNodeInfo {
+        host_name: self_hostname,
+        dns_name: self_dns,
+        tailscale_ips: self_ips,
+        is_exit_node: self_is_exit,
+        advertised_exit_node: self_exit_opt,
+        active_exit_node: active_exit_node_id.clone(),
+        exit_node_allow_lan,
+    };
+
+    Ok(TailscaleNetworkDetailsInfo {
+        backend_state,
+        self_node,
+        peers,
+        active_exit_node: active_exit_node_id,
+        exit_node_allow_lan,
+        auth_url,
+    })
+}
+
+#[tauri::command]
+pub fn tailscale_connect(auth_key: Option<String>) -> Result<String, String> {
+    let mut cmd = Command::new("tailscale");
+    cmd.arg("up");
+    cmd.arg("--operator");
+    if let Ok(user) = std::env::var("USER") {
+        cmd.arg(user);
+    } else {
+        cmd.arg("hideo");
+    }
+
+    if let Some(key) = auth_key {
+        let trimmed = key.trim();
+        if !trimmed.is_empty() {
+            cmd.arg(format!("--authkey={}", trimmed));
+            cmd.arg("--reset");
+        }
+    }
+
+    let output = cmd.output().map_err(|e| format!("Failed to run tailscale up: {}", e))?;
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if output.status.success() {
+        Ok(if stdout.is_empty() { "Connected to Tailscale mesh!".to_string() } else { stdout })
+    } else {
+        let combined = format!("{}
+{}", stdout, stderr);
+        if combined.contains("login") || combined.contains("https://login.tailscale.com") {
+            Ok(combined)
+        } else {
+            Err(combined)
+        }
+    }
+}
+
+#[tauri::command]
+pub fn tailscale_disconnect() -> Result<String, String> {
+    let output = Command::new("tailscale")
+        .arg("down")
+        .output()
+        .map_err(|e| format!("Failed to run tailscale down: {}", e))?;
+
+    if output.status.success() {
+        Ok("Tailscale disconnected successfully.".to_string())
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Error disconnecting: {}", err))
+    }
+}
+
+#[tauri::command]
+pub fn tailscale_set_exit_node(exit_node: Option<String>, allow_lan: bool) -> Result<String, String> {
+    let mut cmd = Command::new("tailscale");
+    cmd.arg("set");
+
+    let node_val = exit_node.unwrap_or_default();
+    cmd.arg(format!("--exit-node={}", node_val));
+    cmd.arg(format!("--exit-node-allow-lan-access={}", allow_lan));
+
+    let output = cmd.output().map_err(|e| format!("Failed to run tailscale set exit-node: {}", e))?;
+    if output.status.success() {
+        if node_val.is_empty() {
+            Ok("Cleared active exit node. Direct routing restored.".to_string())
+        } else {
+            Ok(format!("Active exit node set to: {}", node_val))
+        }
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Failed to set exit node: {}", err))
+    }
+}
+
+#[tauri::command]
+pub fn tailscale_set_advertise_exit_node(enable: bool) -> Result<String, String> {
+    let mut cmd = Command::new("tailscale");
+    cmd.arg("set");
+    cmd.arg(format!("--advertise-exit-node={}", enable));
+
+    let output = cmd.output().map_err(|e| format!("Failed to run tailscale set advertise-exit-node: {}", e))?;
+    if output.status.success() {
+        Ok(if enable {
+            "Host is now advertising as an Exit Node to the mesh.".to_string()
+        } else {
+            "Host exit node advertisement disabled.".to_string()
+        })
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Failed to update exit node advertisement: {}", err))
+    }
+}

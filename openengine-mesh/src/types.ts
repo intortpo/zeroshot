@@ -343,6 +343,40 @@ export interface PetriMarketApp {
   docsUrl: string;
 }
 
+export interface TailscalePeerNode {
+  id: string;
+  hostName: string;
+  dnsName: string;
+  os: string;
+  tailscaleIps: string[];
+  online: boolean;
+  isExitNode: boolean;
+  isActiveExitNode: boolean;
+  exitNodeOption: boolean;
+  lastSeen?: string;
+  relay?: string;
+  country?: string;
+  city?: string;
+  tags?: string[];
+}
+
+export interface TailscaleNetworkDetails {
+  backendState: 'Running' | 'Stopped' | 'NeedsLogin' | 'Starting' | 'Unknown';
+  selfNode: {
+    hostName: string;
+    dnsName: string;
+    tailscaleIps: string[];
+    isExitNode: boolean;
+    advertisedExitNode: boolean;
+    activeExitNode?: string;
+    exitNodeAllowLan: boolean;
+  };
+  peers: TailscalePeerNode[];
+  activeExitNode?: string;
+  exitNodeAllowLan: boolean;
+  authUrl?: string;
+}
+
 // ECC (Everything Claude Code) Engine & Optimization Types
 export interface EccOptimizationState {
   // 1. Token Optimization
