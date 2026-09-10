@@ -6,13 +6,13 @@ import {
   TrendingUp,
   Award,
   Sparkles,
-  Info,
   CheckCircle2
 } from 'lucide-react';
 import { ClockInRadialDial } from './charts/ClockInRadialDial';
 import { MidtermIrtEvaluator } from './charts/MidtermIrtEvaluator';
 import { LieflatAlmanacGrid } from './charts/LieflatAlmanacGrid';
 import { ChartOptionDefinition } from '../../services/lieflatCatalogService';
+import { PetriColorCustomizer } from '../common/PetriColorCustomizer';
 
 type TabMode = 'overview' | 'midterm' | 'clock_in' | 'almanac';
 
@@ -40,35 +40,35 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
   return (
     <div className={`space-y-6 max-w-[1600px] mx-auto p-4 sm:p-6 text-slate-100 ${className}`}>
       {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-teal-900/40 pb-5">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-teal-400 mb-1">
             <span>Petri EDM</span>
             <span>/</span>
-            <span>LONGITUDINAL DEMO</span>
+            <span>STUDIO</span>
             <span>/</span>
             <span className="text-slate-400">MIDTERM & CLOCK-IN</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-3">
-            Midterm Exam & Clock-In Telemetry Studio
-            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-              110+ Chart Almanac
+            <span>Midterm & Clock-In Studio</span>
+            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-semibold bg-[#071620] text-teal-300 border border-teal-700/50">
+              110+ Chart Options
             </span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-            Live demonstration of Lieflat Submersion charting capabilities: bimodal IRT examination evaluation,
-            circadian 24-hour radial punch clocks, longitudinal attendance heatmaps, and a comprehensive 110+ chart taxonomy.
-          </p>
         </div>
 
-        {onBackToDashboard && (
-          <button
-            onClick={onBackToDashboard}
-            className="px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-teal-500/50 text-xs font-medium text-slate-300 hover:text-white transition-colors"
-          >
-            ← Back to EDM Dashboard
-          </button>
-        )}
+        <div className="flex items-center space-x-3">
+          <PetriColorCustomizer />
+
+          {onBackToDashboard && (
+            <button
+              onClick={onBackToDashboard}
+              className="px-3.5 py-2 rounded-xl bg-[#071620] border border-teal-900/50 hover:border-teal-700/60 text-xs font-mono font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+            >
+              ← Back to EDM Studio
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Primary Tab Navigation */}
@@ -148,31 +148,34 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
       {/* TAB 1: OVERVIEW & SYNTHESIS */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Key Empirical Takeaways Banner */}
-          <div className="bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-950/80 border border-teal-500/30 rounded-2xl p-6 shadow-xl">
+          {/* Key Empirical Takeaways Banner - Solid Obsidian */}
+          <div className="bg-[#071620] border border-teal-900/40 rounded-2xl p-5 shadow-lg">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-300">
-                <Award className="w-7 h-7" />
+              <div className="p-3 bg-[#041017] border border-teal-800/60 rounded-xl text-teal-300">
+                <Award className="w-6 h-6" />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-base font-bold text-slate-100">
-                  Empirical Finding: Circadian Clock-In Punctuality Directly Predicts Exam Mastery
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl">
-                  Analysis of 849 students across 16 weeks demonstrates a strong positive Pearson correlation
-                  (<strong className="text-teal-300 font-mono">r = 0.784, p &lt; 0.001</strong>) between early check-in
-                  behavior and midterm exam scores. Students clocking in during the morning surge window (07:45 – 08:15 AM)
-                  achieve an average score of <strong className="text-emerald-400 font-mono">86.4%</strong>, compared to
-                  <strong className="text-amber-400 font-mono"> 58.7%</strong> for irregular or tardy cohorts.
-                </p>
-                <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-mono">
+              <div className="space-y-2 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-slate-100 font-mono">
+                    Circadian Clock-In & Exam Mastery Telemetry
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs font-mono">
+                    <span className="px-2 py-0.5 rounded bg-[#041017] border border-teal-800 text-teal-300 font-bold">
+                      r = 0.784
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-[#041017] border border-teal-800 text-teal-300 font-bold">
+                      p &lt; 0.001
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-4 pt-1 text-xs font-mono">
                   <span className="flex items-center gap-1.5 text-teal-300">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 849 Student Population
                   </span>
-                  <span className="flex items-center gap-1.5 text-emerald-300">
+                  <span className="flex items-center gap-1.5 text-teal-300">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 25 Item IRT 2PL Validation
                   </span>
-                  <span className="flex items-center gap-1.5 text-teal-400">
+                  <span className="flex items-center gap-1.5 text-teal-300">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 16-Week Longitudinal Heatmap
                   </span>
                 </div>
@@ -232,9 +235,9 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
             </div>
             <button
               onClick={() => setActiveTab('almanac')}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-md shadow-teal-500/20"
+              className="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs font-mono whitespace-nowrap cursor-pointer transition-colors shadow-xs"
             >
-              Open 110+ Chart Encyclopedia
+              Open 110+ Chart Almanac
             </button>
           </div>
         </div>
@@ -243,13 +246,6 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
       {/* TAB 2: MIDTERM EVALUATION STUDIO */}
       {activeTab === 'midterm' && (
         <div className="space-y-4">
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
-            <span>
-              Adjust the passing grade threshold slider in real-time to watch examinees transition across the waterline.
-              Inspect the IRT 2PL difficulty and discrimination curve for all 25 exam items.
-            </span>
-          </div>
           <MidtermIrtEvaluator />
         </div>
       )}
@@ -257,13 +253,6 @@ export const MidtermClockInDemoView: React.FC<MidtermClockInDemoViewProps> = ({
       {/* TAB 3: CLOCK-IN TELEMETRY STUDIO */}
       {activeTab === 'clock_in' && (
         <div className="space-y-4">
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
-            <span>
-              The 24-hour circular radial chronometer displays circadian punch volumes. Click &quot;Simulate Live Clock-In&quot; to inject
-              real-time biometrics events into the live gateway stream.
-            </span>
-          </div>
           <ClockInRadialDial />
         </div>
       )}

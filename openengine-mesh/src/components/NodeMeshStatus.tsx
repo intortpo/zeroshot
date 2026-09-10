@@ -32,6 +32,7 @@ import {
   FolderGit2,
   Clapperboard,
   FolderArchive,
+  GitMerge,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
@@ -107,6 +108,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'board' ||
     currentView === 'node' ||
     currentView === 'projects' ||
+    currentView === 'git' ||
     currentView === 'companion';
 
   const isGenActive =
@@ -414,9 +416,30 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     <div>
                       <div className="text-xs font-semibold flex items-center space-x-1.5">
                         <span>Projects</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-50 text-teal-700">Git</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-50 text-teal-700">Hub</span>
                       </div>
                       <div className="text-[10px] text-stone-400 font-normal">Multi-Account GitHub & Repos</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onSelectView('git');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'git'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <GitMerge className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Git</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-50 text-teal-700">Trunk</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">Petri Funnel & Releases</div>
                     </div>
                   </button>
 

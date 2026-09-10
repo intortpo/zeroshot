@@ -1,34 +1,45 @@
 {
-    email admin@theopenengine.com
+    admin off
 }
 
-:80, {$PETRI_DOMAIN:petri.bbs.ac.th} {
+:80, :443 {
     encode gzip zstd
 
-    # Security Headers
+    # Petri SmartShield Security Headers
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
         Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
     }
 
-    # Rust API & WebSocket Engine
-    handle /api/* {
-        reverse_proxy petri-server:4040
+    # Petri Server Cluster Daemon & WebSocket (Port 4040)
+    @api {
+        path /api/* /ws/*
+    }
+    handle @api {
+        reverse_proxy 127.0.0.1:4040 {
+            transport http {
+                dial_timeout 5s
+            }
+        }
     }
 
-    handle /ws/* {
-        reverse_proxy petri-server:4040
+    # Petri Playwright Operator Worker (Port 3000)
+    @playwright {
+        path /playwright/*
     }
-
-    # Playwright Automation Worker
-    handle /playwright/* {
-        reverse_proxy playwright-runner:3000
+    handle @playwright {
+        reverse_proxy 127.0.0.1:3000
     }
 
     # Petri Web UI Static SPA
     handle {
-        reverse_proxy petri-web:80
+        root * /usr/share/caddy
+        try_files {path} /index.html
+        file_server
     }
 }
+

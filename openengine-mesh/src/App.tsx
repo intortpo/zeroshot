@@ -33,6 +33,7 @@ import { FederatedDataView } from './components/federated/FederatedDataView';
 import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
 import { McpServerManagerView } from './components/mcp/McpServerManagerView';
 import { ProjectsHubView } from './components/projects/ProjectsHubView';
+import { PetriGitDevelopmentView } from './components/git/PetriGitDevelopmentView';
 import { MotionContainer } from './components/motion/MotionContainer';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
 import { MobileBottomNav } from './components/mobile/MobileBottomNav';
@@ -786,7 +787,7 @@ function inferPetriKind(text: string): PetriItemKind {
 
                 {/* View 9b: Midterm Examination & Clock-In Longitudinal Live Demo (110+ Lieflat Charts) */}
                 {currentView === 'midterm_clockin_demo' && (
-                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-slate-950">
+                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-[#041017]">
                     <MidtermClockInDemoView
                       onBackToDashboard={() => setCurrentView('edm')}
                     />
@@ -829,6 +830,16 @@ function inferPetriKind(text: string): PetriItemKind {
                     <AssetLibraryView
                       onNavigateToVideoFlow={() => setCurrentView('video_flow')}
                       onNavigateToEdmStudio={() => setCurrentView('edm')}
+                    />
+                  </div>
+                )}
+
+                {/* View 14: Git Development Hub & Horizontal Petri Funnel */}
+                {currentView === 'git' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200 bg-[#041017]">
+                    <PetriGitDevelopmentView
+                      activeWorkspace={activeWorkspace}
+                      activeUser={activeUser}
                     />
                   </div>
                 )}

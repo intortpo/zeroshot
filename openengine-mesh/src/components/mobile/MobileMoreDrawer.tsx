@@ -27,6 +27,7 @@ import {
   Server,
   Clapperboard,
   FolderArchive,
+  GitMerge,
 } from 'lucide-react';
 import { PetriViewMode, UserProfile, Workspace } from '../../types';
 
@@ -208,6 +209,30 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                     <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-100 text-sky-700">Pipeline</span>
                   </div>
                   <div className="text-[11px] text-stone-500">Visual Platform & DevContainers</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavigate('git')}
+              className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
+                currentView === 'git'
+                  ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
+                  : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                  <GitMerge className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold flex items-center space-x-1.5">
+                    <span>Git Development</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Trunk</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500">Horizontal Funnel & Release Fanout</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />

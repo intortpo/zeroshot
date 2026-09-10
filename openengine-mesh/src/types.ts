@@ -278,7 +278,8 @@ export type PetriViewMode =
   | 'generative_multimodal'
   | 'generative_design'
   | 'projects'
-  | 'gallery';
+  | 'gallery'
+  | 'git';
 
 export type VideoFlowTransitionType =
   | 'cut'
