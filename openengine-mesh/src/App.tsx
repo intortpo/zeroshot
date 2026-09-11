@@ -20,7 +20,8 @@ import { CustomContextMenu } from './components/CustomContextMenu';
 import { AiProviderMonitorModal } from './components/models/AiProviderMonitorModal';
 import { ConsumerPortalView } from './components/consumer/ConsumerPortalView';
 import { PetriServerView } from './components/server/PetriServerView';
-import { CentricFocusChatView } from './components/focus/CentricFocusChatView';
+import { PetriAntigravityCloudView } from './components/antigravity/PetriAntigravityCloudView';
+import { GitHubProjectsBoard } from './components/projects/GitHubProjectsBoard';
 import { EdmDashboardView } from './components/edm/EdmDashboardView';
 import { MidtermClockInDemoView } from './components/edm/MidtermClockInDemoView';
 import { AssetLibraryView } from './components/gallery/AssetLibraryView';
@@ -30,7 +31,6 @@ import { GeminiThoughtDrawer } from './components/companion/GeminiThoughtDrawer'
 import { FederatedDataView } from './components/federated/FederatedDataView';
 import { GenerativeSuiteView } from './components/generative/GenerativeSuiteView';
 import { McpServerManagerView } from './components/mcp/McpServerManagerView';
-import { ProjectsHubView } from './components/projects/ProjectsHubView';
 import { PetriGitDevelopmentView } from './components/git/PetriGitDevelopmentView';
 import { MotionContainer } from './components/motion/MotionContainer';
 import { TierBoundaryGuard } from './components/TierBoundaryGuard';
@@ -39,10 +39,51 @@ import { MobileMoreDrawer } from './components/mobile/MobileMoreDrawer';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
-import { PetriTesseractStudioView } from './components/studio/PetriTesseractStudioView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { executeCodingTurn } from './services/autonomousCoderService';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
+
+const STORAGE_WORKSPACES_KEY = 'petri_workspaces_v1';
+const STORAGE_ACTIVE_WS_KEY = 'petri_active_workspace_id_v1';
+
+const DEFAULT_WORKSPACES: Workspace[] = [
+  {
+    id: 'ws-petri',
+    name: 'zero-petri',
+    repo: 'foxlight/zero-petri',
+    branch: 'main',
+    repoUrl: 'https://github.com/foxlight/zero-petri',
+    path: '/home/hideo/Documents/GitHub/zero-petri',
+    itemCount: 7,
+    isPrivate: false,
+    defaultBranch: 'main',
+    lastSyncedAt: Date.now(),
+  },
+  {
+    id: 'ws-cluster',
+    name: 'cluster-runtime',
+    repo: 'the-open-engine-company/open-engine-core',
+    branch: 'main',
+    repoUrl: 'https://github.com/the-open-engine-company/open-engine-core',
+    path: '/home/hideo/Documents/GitHub/open-engine-core',
+    itemCount: 3,
+    isPrivate: true,
+    defaultBranch: 'main',
+    lastSyncedAt: Date.now(),
+  },
+  {
+    id: 'ws-target',
+    name: 'zeroshot-target',
+    repo: 'the-open-engine-company/zeroshot-target',
+    branch: 'main',
+    repoUrl: 'https://github.com/the-open-engine-company/zeroshot-target',
+    path: '/home/hideo/Documents/GitHub/zeroshot-target',
+    itemCount: 2,
+    isPrivate: false,
+    defaultBranch: 'main',
+    lastSyncedAt: Date.now(),
+  },
+];
 
 export function App() {
   const {
@@ -54,15 +95,14 @@ export function App() {
     loadDwdCredentials,
     dispatchUseCase,
   } = useMeshLedger();
+  void GoogleWorkspaceDwdModal;
+  void loadDwdCredentials;
+  void dispatchUseCase;
 
-  // Enterprise View: 'node' (default Studio & Tesseract) | 'chat' | 'focus' | 'board' | etc.
-  const [currentView, setCurrentView] = useState<PetriViewMode>('node');
+  // Enterprise View: 'antigravity' (default Cloud Run & Docker agy sessions) | 'projects' | 'board' | etc.
+  const [currentView, setCurrentView] = useState<PetriViewMode>('antigravity');
   const handleSelectView = (view: PetriViewMode) => {
-    if (view === 'graph') {
-      setCurrentView('node');
-    } else {
-      setCurrentView(view);
-    }
+    setCurrentView(view);
   };
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [isCognitionOpen, setIsCognitionOpen] = useState<boolean>(false);
@@ -77,23 +117,55 @@ export function App() {
 
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
+  void isDwdModalOpen;
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
   const [isAiProviderModalOpen, setIsAiProviderModalOpen] = useState(false);
   const [activeAiModelId, setActiveAiModelId] = useState('gemini-3.8-flash-high');
   const [selectedItem, setSelectedItem] = useState<PetriItem | null>(null);
   const [selectedEdmSourceFileId, setSelectedEdmSourceFileId] = useState<string>('f-below-passing');
 
-  // Workspaces State (Authentic Local Repository)
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([
-    {
-      id: 'ws-petri',
-      name: 'zero-petri',
-      repo: 'foxlight/zero-petri',
-      path: '/home/hideo/Documents/GitHub/zero-petri',
-      itemCount: 7,
-    },
-  ]);
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('ws-petri');
+  // Workspaces State (Authentic Local Repository with LocalStorage Persistence)
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_WORKSPACES;
+    try {
+      const saved = localStorage.getItem(STORAGE_WORKSPACES_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load workspaces from localStorage', e);
+    }
+    return DEFAULT_WORKSPACES;
+  });
+
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_ACTIVE_WS_KEY);
+        if (saved) return saved;
+      } catch {}
+    }
+    return 'ws-petri';
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_WORKSPACES_KEY, JSON.stringify(workspaces));
+    } catch (e) {
+      console.warn('Failed to save workspaces to localStorage', e);
+    }
+  }, [workspaces]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_ACTIVE_WS_KEY, activeWorkspaceId);
+    } catch {}
+  }, [activeWorkspaceId]);
 
   // Active User Profile
   const activeUser = useMemo(
@@ -116,7 +188,7 @@ export function App() {
     if (newTier === 'consumer') {
       setCurrentView('consumer');
     } else if (currentView === 'consumer') {
-      setCurrentView('focus');
+      setCurrentView('antigravity');
     }
   };
 
@@ -508,17 +580,63 @@ function inferPetriKind(text: string): PetriItemKind {
   };
 
   // Create new workspace
-  const handleCreateWorkspace = (name: string, repo: string, path: string) => {
+  const handleCreateWorkspace = (
+    dataOrName: string | Omit<Workspace, 'id' | 'itemCount'>,
+    maybeRepo?: string,
+    maybePath?: string
+  ) => {
     const newWsId = `ws-${Math.random().toString(36).substring(2, 7)}`;
-    const newWs: Workspace = {
-      id: newWsId,
-      name,
-      repo,
-      path,
-      itemCount: 0,
-    };
+    let newWs: Workspace;
+
+    if (typeof dataOrName === 'string') {
+      const name = dataOrName;
+      const repo = maybeRepo || 'local/repo';
+      const path = maybePath || `/workspaces/${name.toLowerCase().replace(/\s+/g, '-')}`;
+      newWs = {
+        id: newWsId,
+        name,
+        repo,
+        branch: 'main',
+        repoUrl: repo.includes('://') ? repo : `https://github.com/${repo}`,
+        path,
+        itemCount: 0,
+        lastSyncedAt: Date.now(),
+      };
+    } else {
+      newWs = {
+        id: newWsId,
+        name: dataOrName.name,
+        repo: dataOrName.repo,
+        branch: dataOrName.branch || 'main',
+        repoUrl:
+          dataOrName.repoUrl ||
+          (dataOrName.repo.includes('://') ? dataOrName.repo : `https://github.com/${dataOrName.repo}`),
+        path: dataOrName.path,
+        isPrivate: dataOrName.isPrivate,
+        accountId: dataOrName.accountId,
+        defaultBranch: dataOrName.defaultBranch || 'main',
+        itemCount: 0,
+        lastSyncedAt: Date.now(),
+      };
+    }
+
     setWorkspaces((prev) => [...prev, newWs]);
     setActiveWorkspaceId(newWsId);
+  };
+
+  const handleUpdateWorkspace = (updated: Workspace) => {
+    setWorkspaces((prev) => prev.map((ws) => (ws.id === updated.id ? updated : ws)));
+  };
+
+  const handleDeleteWorkspace = (id: string) => {
+    setWorkspaces((prev) => {
+      const filtered = prev.filter((ws) => ws.id !== id);
+      if (filtered.length === 0) return prev;
+      if (activeWorkspaceId === id) {
+        setActiveWorkspaceId(filtered[0].id);
+      }
+      return filtered;
+    });
   };
 
   const handleOpenApproval = (item: PetriItem) => {
@@ -657,21 +775,13 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
 
-                {/* View: Centric Focus Chat with Steerable Thinking Cloud */}
-                {currentView === 'focus' && (
+                {/* View: Antigravity Cloud Run Sessions (Replaces Legacy Focus and Autonomous Chat) */}
+                {currentView === 'antigravity' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <CentricFocusChatView
-                      activeWorkspace={activeWorkspace}
+                    <PetriAntigravityCloudView
                       activeUser={activeUser}
-                      users={users}
-                      onHandoffPlan={(plan) => {
-                        handleCreateIntent(plan.title, 'feat');
-                        setCurrentView('plan');
-                      }}
-                      onLogGoal={(goal) => handleCreateIntent(goal, 'feat')}
-                      onBuildIntent={(title, kind) => handleCreateIntent(title, kind)}
-                      onExecuteCode={handleExecuteCodingTurn}
-                      onNavigateToView={(v) => setCurrentView(v)}
+                      activeWorkspace={activeWorkspace}
+                      onNavigateToProjects={() => setCurrentView('projects')}
                     />
                   </div>
                 )}
@@ -703,32 +813,13 @@ function inferPetriKind(text: string): PetriItemKind {
                     </div>
                   </div>
                 )}
-         
-                {/* View: Node Studio & 4D Tesseract (Pure Inked Draft Parchment) */}
-                {(currentView === 'node' || currentView === 'tesseract') && (
-                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <PetriTesseractStudioView
-                      activeWorkspace={activeWorkspace}
-                      activeUser={activeUser}
-                      items={visibleItems}
-                      onNavigateToChat={() => setCurrentView('chat')}
-                      onUpdateUser={(updated) => {
-                        setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-                      }}
-                      onSubmitIntent={handleCreateIntent}
-                      onExecuteCode={handleExecuteCodingTurn}
-                    />
-                  </div>
-                )}
 
-                {/* View: Projects Hub (Multi-Account GitHub & Local Workspaces) */}
+                {/* View: GitHub Projects Roadmap & Tracker */}
                 {currentView === 'projects' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
-                    <ProjectsHubView
-                      activeUser={activeUser}
-                      activeWorkspace={activeWorkspace}
-                      onSelectWorkspace={(ws) => setActiveWorkspaceId(ws.id)}
-                      onNavigateToView={(v) => setCurrentView(v as PetriViewMode)}
+                    <GitHubProjectsBoard
+                      onLaunchSession={() => setCurrentView('antigravity')}
+                      onNavigateToView={(v) => setCurrentView(v)}
                     />
                   </div>
                 )}
@@ -886,7 +977,7 @@ function inferPetriKind(text: string): PetriItemKind {
 
                 {/* View 11: Petri Video Flow (Real AI Video Editor & Scene Generator) */}
                 {currentView === 'video_flow' && (
-                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200 bg-slate-950">
+                  <div className="flex-1 flex flex-col overflow-y-auto animate-in fade-in duration-200">
                     <PetriVideoFlowEditor
                       onOpenCompanion={() => setIsCompanionDrawerOpen(true)}
                     />
@@ -960,7 +1051,6 @@ function inferPetriKind(text: string): PetriItemKind {
         activeWorkspace={activeWorkspace}
         onOpenUserModal={() => setIsUserModalOpen(true)}
         onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
-        onOpenDwdModal={() => setIsDwdModalOpen(true)}
         onOpenAiProviderModal={() => setIsAiProviderModalOpen(true)}
       />
 
@@ -987,6 +1077,8 @@ function inferPetriKind(text: string): PetriItemKind {
         activeWorkspaceId={activeWorkspaceId}
         onSelectWorkspace={(id) => setActiveWorkspaceId(id)}
         onCreateWorkspace={handleCreateWorkspace}
+        onUpdateWorkspace={handleUpdateWorkspace}
+        onDeleteWorkspace={handleDeleteWorkspace}
       />
 
       {/* Gated PR / Signoff Modal */}
@@ -998,17 +1090,7 @@ function inferPetriKind(text: string): PetriItemKind {
         onReject={handleRejectGate}
       />
 
-      {/* Google Workspace & DWD Key Manager Modal */}
-      <GoogleWorkspaceDwdModal
-        isOpen={isDwdModalOpen}
-        onClose={() => setIsDwdModalOpen(false)}
-        status={googleDwdStatus}
-        onLoadCredentials={loadDwdCredentials}
-        onSelectUseCase={(useCaseId, prompt) => {
-          handleCreateIntent(prompt, 'feat');
-          dispatchUseCase(useCaseId, prompt);
-        }}
-      />
+      {/* DWD Modal hidden per security policy */}
 
       {/* AI Models & Providers Monitor & Setup Center Modal */}
       <AiProviderMonitorModal

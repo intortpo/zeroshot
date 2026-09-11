@@ -13,8 +13,14 @@ export interface Workspace {
   id: string;
   name: string;
   repo: string;
+  branch?: string;
+  repoUrl?: string;
   path: string;
   itemCount: number;
+  isPrivate?: boolean;
+  accountId?: string;
+  defaultBranch?: string;
+  lastSyncedAt?: number;
 }
 
 export interface PetriItem {
@@ -253,9 +259,9 @@ export interface EnterpriseStats {
 }
 
 export type PetriViewMode =
-  | 'tesseract'
+  | 'antigravity'
+  | 'projects'
   | 'chat'
-  | 'focus'
   | 'plan'
   | 'board'
   | 'graph'

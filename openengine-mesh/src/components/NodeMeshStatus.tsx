@@ -77,6 +77,8 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
   isCognitionOpen = false,
   onToggleCognition,
 }) => {
+  void isDwdConfigured;
+  void onOpenDwdModal;
   const [cognition, setCognition] = useState(() => agentCognitionService.getState());
   type MenuDropdownType = 'dev' | 'gen' | 'modules' | 'stats' | 'data' | 'system' | null;
   const [openDropdown, setOpenDropdown] = useState<MenuDropdownType>(null);
@@ -108,7 +110,6 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'chat' ||
     currentView === 'plan' ||
     currentView === 'board' ||
-    currentView === 'node' ||
     currentView === 'projects' ||
     currentView === 'git' ||
     currentView === 'companion';
@@ -278,7 +279,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           title="Switch active workspace"
         >
           <span className="font-medium text-stone-900">{activeWorkspace?.name || 'zero-petri'}</span>
-          <span className="text-stone-400 font-sans">@main</span>
+          <span className="text-stone-400 font-sans">@{activeWorkspace?.branch || 'main'}</span>
           <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
         </button>
 
@@ -310,23 +311,23 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
         ) : (
           /* SUPERADMIN & CONTROL TIERS: Categorized Enterprise Nav */
           <>
-            {/* 0. Focus (Direct Zen Button - Default View) */}
+            {/* 0. Antigravity Sessions (Primary Default View) */}
             <button
               onClick={() => {
-                onSelectView('focus');
+                onSelectView('antigravity');
                 setOpenDropdown(null);
               }}
               className={`flex items-center space-x-1.5 py-1 text-xs sm:text-sm font-sans transition-all border-b-2 cursor-pointer ${
-                currentView === 'focus'
+                currentView === 'antigravity'
                   ? 'border-stone-900 text-stone-950 font-semibold'
                   : 'border-transparent text-stone-500 hover:text-stone-800 font-normal'
               }`}
-              title="Centric Focus Chat with Steerable Thinking"
+              title="Antigravity Cloud Run Container Sessions"
             >
-              <Sparkles className={`w-4 h-4 ${currentView === 'focus' ? 'text-indigo-600' : 'text-stone-400'}`} />
-              <span>Focus</span>
+              <Terminal className={`w-4 h-4 ${currentView === 'antigravity' ? 'text-indigo-600' : 'text-stone-400'}`} />
+              <span>Antigravity</span>
               <span className="ml-0.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Zen
+                Cloud
               </span>
             </button>
 
@@ -383,26 +384,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                     </div>
                   </button>
 
-                  <button
-                    onClick={() => {
-                      onSelectView('node');
-                      setOpenDropdown(null);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'node'
-                        ? 'bg-stone-100 text-stone-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <Network className="w-4 h-4 text-sky-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Node</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-sky-50 text-sky-700">Studio</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Visual Pipelines & DevContainers</div>
-                    </div>
-                  </button>
+
 
                   <button
                     onClick={() => {
@@ -1006,19 +988,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           </button>
         )}
 
-        {/* Google Workspace DWD Trigger (Desktop Only, Available in Mobile Drawer) */}
-        <button
-          onClick={onOpenDwdModal}
-          className="hidden md:flex items-center space-x-1.5 text-stone-600 hover:text-stone-900 transition-colors font-medium"
-          title="Google Workspace Domain-Wide Delegation (.json)"
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              isDwdConfigured ? 'bg-emerald-500' : 'bg-stone-400'
-            }`}
-          />
-          <span>Google DWD</span>
-        </button>
+        {/* DWD UI hidden per security policy */}
 
         {/* Live Project Preview & Agentation Trigger */}
         {onTogglePreview && (

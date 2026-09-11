@@ -122,14 +122,20 @@ export const PetriGitDevelopmentView: React.FC<PetriGitDevelopmentViewProps> = (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-teal-950 text-teal-300 border border-teal-800/60">
                 main trunk
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#041017] text-slate-300 border border-teal-900/40">
-                {activeWorkspace?.repo || 'foxlight/zero-petri'}
-              </span>
+              <a
+                href={activeWorkspace?.repoUrl || `https://github.com/${activeWorkspace?.repo || 'foxlight/zero-petri'}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open on GitHub"
+                className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#041017] text-slate-300 hover:text-teal-200 border border-teal-900/40 hover:border-teal-700 transition-colors flex items-center space-x-1"
+              >
+                <span>{activeWorkspace?.repo || 'foxlight/zero-petri'}</span>
+              </a>
             </div>
             <div className="flex items-center space-x-3 text-xs font-mono text-slate-400 mt-0.5">
               <span className="flex items-center space-x-1">
                 <GitBranch className="w-3.5 h-3.5 text-teal-400" />
-                <span>Branch: main (single release trunk)</span>
+                <span>Branch: {activeWorkspace?.branch || 'main'}</span>
               </span>
               <span>•</span>
               <span className="flex items-center space-x-1">
