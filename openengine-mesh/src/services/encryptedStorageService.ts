@@ -56,6 +56,21 @@ class EncryptedStorageService {
     data: string | ArrayBuffer,
     metadata?: EncryptedEnvelope['metadata']
   ): Promise<EncryptedEnvelope> {
+    if (typeof window !== 'undefined' && (!window.crypto || !window.crypto.subtle)) {
+      const plainText = typeof data === 'string' ? data : this.bufferToBase64(data);
+      return {
+        ciphertext: btoa(encodeURIComponent(plainText)),
+        iv: btoa('insecure-http-iv'),
+        salt: btoa('insecure-http-salt'),
+        algorithm: 'INSECURE-FALLBACK',
+        createdAt: Date.now(),
+        metadata: {
+          ...metadata,
+          sizeBytes: typeof data === 'string' ? data.length : data.byteLength,
+        },
+      };
+    }
+
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const key = await this.getKey(salt);
@@ -90,6 +105,21 @@ class EncryptedStorageService {
    * Decrypts an EncryptedEnvelope back to a string or ArrayBuffer
    */
   public async decryptData(envelope: EncryptedEnvelope, asBinary = false): Promise<string | ArrayBuffer> {
+    if (
+      envelope.algorithm === 'INSECURE-FALLBACK' ||
+      (typeof window !== 'undefined' && (!window.crypto || !window.crypto.subtle))
+    ) {
+      try {
+        const decoded = decodeURIComponent(atob(envelope.ciphertext));
+        if (asBinary) {
+          return this.base64ToBuffer(decoded);
+        }
+        return decoded;
+      } catch {
+        return envelope.ciphertext;
+      }
+    }
+
     const salt = new Uint8Array(this.base64ToBuffer(envelope.salt));
     const iv = new Uint8Array(this.base64ToBuffer(envelope.iv));
     const ciphertext = this.base64ToBuffer(envelope.ciphertext);

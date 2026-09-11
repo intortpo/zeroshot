@@ -13,6 +13,25 @@ export interface ZenChatParticipant {
   joinedAt: number;
 }
 
+export interface ZenFeaturePlan {
+  title: string;
+  goal: string;
+  targetModule: string;
+  invariants: string[];
+  stages: Array<{ name: string; status: 'completed' | 'in_progress' | 'pending'; detail: string }>;
+  canBuild?: boolean;
+}
+
+export interface ZenBuildReceipt {
+  itemId: string;
+  targetModule: string;
+  commitHash: string;
+  diff: string;
+  testLogs: string;
+  status: 'synthesizing' | 'testing' | 'committed';
+  builtAt: number;
+}
+
 export interface ZenChatMessage {
   id: string;
   channelId: string;
@@ -31,6 +50,8 @@ export interface ZenChatMessage {
     type: string;
     size?: string;
   }[];
+  plan?: ZenFeaturePlan;
+  buildReceipt?: ZenBuildReceipt;
 }
 
 export interface ZenChannel {
@@ -361,6 +382,8 @@ class ZenChatService {
     content: string;
     thought?: string;
     attachments?: ZenChatMessage['attachments'];
+    plan?: ZenFeaturePlan;
+    buildReceipt?: ZenBuildReceipt;
   }): ZenChatMessage {
     const newMsg: ZenChatMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -375,6 +398,8 @@ class ZenChatService {
       thought: params.thought,
       timestamp: Date.now(),
       attachments: params.attachments,
+      plan: params.plan,
+      buildReceipt: params.buildReceipt,
     };
 
     if (!this.messages[params.channelId]) {

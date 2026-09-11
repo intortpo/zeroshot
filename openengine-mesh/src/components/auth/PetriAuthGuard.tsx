@@ -10,38 +10,119 @@ export const STORAGE_AUTH_KEY = 'petri_authenticated_session';
 export const STORAGE_PASS_HASH_KEY = 'petri_system_pass_hash';
 export const STORAGE_OPERATOR_USER_KEY = 'petri_operator_username';
 
-// Lightweight fast SHA-256 helper for client-side cryptographic verification
-export async function sha256(message: string): Promise<string> {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+// Pure TypeScript implementation of SHA-256 (synchronous, zero crypto.subtle dependency)
+export function pureSha256(ascii: string): string {
+  function rightRotate(value: number, amount: number): number {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+
+  const mathPow = Math.pow;
+  const maxWord = mathPow(2, 32);
+  const lengthProperty = 'length';
+  let i: number;
+  let result = '';
+
+  const words: number[] = [];
+  const asciiBitLength = ascii[lengthProperty] * 8;
+
+  let hash: number[] = [];
+  const k: number[] = [];
+  let primeCounter = 0;
+
+  const isComposite: Record<number, boolean> = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = 0; i < 313; i += candidate) {
+        isComposite[i] = true;
+      }
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+
+  words[asciiBitLength >> 5] |= 0x80 << (24 - (asciiBitLength % 32));
+  words[(((asciiBitLength + 64) >> 9) << 4) + 15] = asciiBitLength;
+
+  for (i = 0; i < ascii[lengthProperty]; i++) {
+    const code = ascii.charCodeAt(i);
+    words[i >> 2] |= code << ((3 - (i % 4)) * 8);
+  }
+
+  hash = hash.slice(0);
+
+  for (let j = 0; j < words.length; j += 16) {
+    const w = words.slice(j, j + 16);
+    const oldHash = hash;
+    hash = hash.slice(0);
+
+    for (i = 0; i < 64; i++) {
+      const w15 = w[i - 15];
+      const w2 = w[i - 2];
+      const a = hash[0];
+      const e = hash[4];
+      const temp1 =
+        hash[7] +
+        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+        ((e & hash[5]) ^ (~e & hash[6])) +
+        k[i] +
+        (w[i] =
+          i < 16
+            ? w[i] || 0
+            : (w[i - 16] +
+                (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                w[i - 7] +
+                (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+              0);
+      const temp2 =
+        (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+        ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+
+    for (i = 0; i < 8; i++) {
+      hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+  }
+
+  for (i = 0; i < 8; i++) {
+    for (let j = 3; j >= 0; j--) {
+      const b = (hash[i] >> (j * 8)) & 255;
+      result += (b < 16 ? '0' : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
+export function sha256(message: string): string {
+  return pureSha256(message);
 }
 
 export function lockPetriSession(): void {
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem(STORAGE_AUTH_KEY);
     sessionStorage.removeItem('petri_current_operator');
+    sessionStorage.clear();
     zitadelAuthService.logout();
     window.location.reload();
   }
 }
 
-export async function verifyPetriPassword(password: string): Promise<boolean> {
+export function verifyPetriPassword(password: string): boolean {
   if (typeof window === 'undefined') return false;
   const storedHash = localStorage.getItem(STORAGE_PASS_HASH_KEY);
-  const testHash = await sha256(password);
+  const testHash = pureSha256(password);
   if (storedHash) {
     return testHash === storedHash;
   }
   // Default password fallback: "petri"
-  const defaultHash = await sha256('petri');
-  return testHash === defaultHash;
+  return testHash === pureSha256('petri');
 }
 
-export async function updatePetriPassword(newPassword: string): Promise<void> {
+export function updatePetriPassword(newPassword: string): void {
   if (typeof window !== 'undefined') {
-    const hash = await sha256(newPassword);
+    const hash = pureSha256(newPassword);
     localStorage.setItem(STORAGE_PASS_HASH_KEY, hash);
   }
 }
@@ -61,7 +142,9 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       try {
-        return sessionStorage.getItem(STORAGE_AUTH_KEY) === 'true';
+        const hasSession = sessionStorage.getItem(STORAGE_AUTH_KEY) === 'true';
+        const operator = sessionStorage.getItem('petri_current_operator');
+        return hasSession && !!operator;
       } catch {
         return false;
       }
@@ -76,26 +159,24 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [configuredHash, setConfiguredHash] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [configuredHash, setConfiguredHash] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_PASS_HASH_KEY) || pureSha256('petri');
+    }
+    return pureSha256('petri');
+  });
+  const [isInitializing] = useState(false);
 
   // Rate-limiting brute-force defense (3 attempts -> 30 second cooldown)
   const [failedAttempts, setFailedAttempts] = useState<number>(0);
   const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
 
-  // Setup / Load Password Hash and Operator identity
+  // Sync configuredHash if localStorage changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedHash = localStorage.getItem(STORAGE_PASS_HASH_KEY);
-      if (storedHash) {
-        setConfiguredHash(storedHash);
-        setIsInitializing(false);
-      } else {
-        // Default root password "petri" if no custom password has been initialized
-        sha256('petri').then((hash) => {
-          setConfiguredHash(hash);
-          setIsInitializing(false);
-        });
+      const stored = localStorage.getItem(STORAGE_PASS_HASH_KEY);
+      if (stored) {
+        setConfiguredHash(stored);
       }
     }
   }, []);
@@ -152,8 +233,8 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
       }
 
       // 2. Verify Cryptographic Password
-      const inputHash = await sha256(passwordInput);
-      const expectedHash = configuredHash || (await sha256('petri'));
+      const inputHash = pureSha256(passwordInput);
+      const expectedHash = configuredHash || pureSha256('petri');
 
       if (inputHash !== expectedHash) {
         registerFailure('INVALID ACCESS PASSWORD');

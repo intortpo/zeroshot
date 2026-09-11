@@ -41,7 +41,6 @@ import { useMeshLedger } from './hooks/useMeshLedger';
 import { STANDARD_TIER_PERSONAS, tierService } from './services/tierService';
 import { PetriTesseractStudioView } from './components/studio/PetriTesseractStudioView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { PetriAuthGuard } from './components/auth/PetriAuthGuard';
 import { executeCodingTurn } from './services/autonomousCoderService';
 import { PetriItem, PetriItemKind, PetriStage, Workspace, SkillCategory, UserProfile, PetriViewMode, SystemTier } from './types';
 
@@ -580,8 +579,7 @@ function inferPetriKind(text: string): PetriItemKind {
   ).length;
 
   return (
-    <PetriAuthGuard>
-      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative">
       {/* Background: Inked Drafting Vellum Paper with 24mm Grid */}
       <div 
         className="absolute inset-0 bg-[#F6F3EC] pointer-events-none z-0" 
@@ -671,6 +669,8 @@ function inferPetriKind(text: string): PetriItemKind {
                         setCurrentView('plan');
                       }}
                       onLogGoal={(goal) => handleCreateIntent(goal, 'feat')}
+                      onBuildIntent={(title, kind) => handleCreateIntent(title, kind)}
+                      onExecuteCode={handleExecuteCodingTurn}
                       onNavigateToView={(v) => setCurrentView(v)}
                     />
                   </div>
@@ -1038,7 +1038,6 @@ function inferPetriKind(text: string): PetriItemKind {
         onTogglePreview={() => setIsPreviewOpen(!isPreviewOpen)}
       />
       </div>
-    </PetriAuthGuard>
   );
 }
 
