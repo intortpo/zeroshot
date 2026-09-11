@@ -1,7 +1,8 @@
 /**
  * AGY Design Synthesizer Engine
  * Translates natural language design directives from AGY CLI into concrete
- * Tailwind HTML/TSX AST modifications, component injections, and styling transforms.
+ * Tailwind HTML/TSX AST modifications, component injections, styling transforms,
+ * and multi-page product layout scaffolds.
  */
 
 export interface SynthesisResult {
@@ -22,7 +23,152 @@ export class AgyDesignSynthesizer {
     const origLinesCount = currentCode.split('\n').length;
     const lower = instruction.toLowerCase();
 
-    // 1. DIRECTIVE: Add / Inject Metric Cards
+    // 1. DIRECTIVE: Pricing Tables & Billing Tiers
+    if (lower.includes('pricing') || lower.includes('tier') || lower.includes('plan') || lower.includes('billing')) {
+      const pricingHtml = `
+      <!-- AGY Injected: 3-Tier Responsive Pricing Matrix -->
+      <section class="my-12 px-6 max-w-6xl mx-auto">
+        <div class="text-center space-y-2 mb-8">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-teal-600 bg-teal-50 px-3 py-1 rounded-full">Transparent Pricing</span>
+          <h2 class="text-3xl font-black text-stone-900 dark:text-white">Choose Your Operational Tier</h2>
+          <p class="text-xs text-stone-500 max-w-md mx-auto">Flexible billing options designed for high-velocity autonomous teams.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-8 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-6">
+            <div>
+              <h4 class="text-base font-bold text-stone-900 dark:text-white">Starter Pilot</h4>
+              <div class="text-2xl font-black mt-2 text-stone-900 dark:text-white">฿14,500 <span class="text-xs font-normal text-stone-400">/ term</span></div>
+            </div>
+            <ul class="text-xs text-stone-600 dark:text-stone-300 space-y-2.5">
+              <li>✓ Up to 150 active profiles</li>
+              <li>✓ Standard DINA estimation</li>
+              <li>✓ Standalone CSV/PDF export</li>
+            </ul>
+            <button class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition">Deploy Pilot</button>
+          </div>
+          <div class="p-8 bg-stone-900 text-white rounded-3xl shadow-xl space-y-6 border-2 border-teal-500 relative">
+            <span class="absolute top-4 right-4 bg-teal-500 text-stone-950 text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase">Most Popular</span>
+            <div>
+              <h4 class="text-base font-bold text-white">Campus Institutional</h4>
+              <div class="text-2xl font-black mt-2 text-teal-400">฿38,000 <span class="text-xs font-normal text-stone-400">/ term</span></div>
+            </div>
+            <ul class="text-xs text-stone-300 space-y-2.5">
+              <li>✓ Up to 1,500 active profiles</li>
+              <li>✓ Real-time Q-Matrix calibration</li>
+              <li>✓ Rclone multi-cloud automated backup</li>
+              <li>✓ Dedicated counseling telemetry</li>
+            </ul>
+            <button class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-stone-950 font-bold text-xs rounded-xl shadow-md transition">Select Institutional</button>
+          </div>
+          <div class="p-8 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-6">
+            <div>
+              <h4 class="text-base font-bold text-stone-900 dark:text-white">Cluster Enterprise</h4>
+              <div class="text-2xl font-black mt-2 text-stone-900 dark:text-white">Custom SLA</div>
+            </div>
+            <ul class="text-xs text-stone-600 dark:text-stone-300 space-y-2.5">
+              <li>✓ Unlimited student cohorts</li>
+              <li>✓ Dedicated container server</li>
+              <li>✓ 24/7 Priority engineering SLA</li>
+            </ul>
+            <button class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition">Contact Enterprise</button>
+          </div>
+        </div>
+      </section>`;
+
+      if (modified.includes('</main>')) {
+        modified = modified.replace('</main>', `${pricingHtml}\n</main>`);
+      } else if (modified.includes('</body>')) {
+        modified = modified.replace('</body>', `${pricingHtml}\n</body>`);
+      } else {
+        modified += pricingHtml;
+      }
+      operations.push('Synthesized 3-tier responsive pricing matrix with highlighted institutional card');
+    }
+
+    // 2. DIRECTIVE: E-Commerce Product Catalog Grid
+    if (lower.includes('product') || lower.includes('shop') || lower.includes('catalog') || lower.includes('ecommerce') || lower.includes('store')) {
+      const productCatalogHtml = `
+      <!-- AGY Injected: E-Commerce Product Catalog Grid -->
+      <section class="my-10 px-6 max-w-6xl mx-auto">
+        <div class="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800 mb-6">
+          <div>
+            <h3 class="text-xl font-bold text-stone-900 dark:text-white">Featured Sustainable Catalog</h3>
+            <p class="text-xs text-stone-500">Handcrafted organic products with verified circular recycling.</p>
+          </div>
+          <span class="text-xs font-mono font-semibold text-emerald-600">Free Carbon-Neutral Delivery</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="p-5 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-3">
+            <div class="h-44 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-5xl">🌱</div>
+            <div class="text-[10px] font-mono text-emerald-600 font-bold uppercase">Organic Fiber</div>
+            <h4 class="font-bold text-sm text-stone-900 dark:text-white">Petri Canvas Eco-Tote</h4>
+            <div class="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800">
+              <span class="font-bold text-base text-stone-900 dark:text-white">฿890</span>
+              <button class="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-semibold rounded-xl">Add to Cart</button>
+            </div>
+          </div>
+          <div class="p-5 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-3">
+            <div class="h-44 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-5xl">☕</div>
+            <div class="text-[10px] font-mono text-emerald-600 font-bold uppercase">Thermal Bamboo</div>
+            <h4 class="font-bold text-sm text-stone-900 dark:text-white">Insulated Travel Tumbler</h4>
+            <div class="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800">
+              <span class="font-bold text-base text-stone-900 dark:text-white">฿1,250</span>
+              <button class="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-semibold rounded-xl">Add to Cart</button>
+            </div>
+          </div>
+          <div class="p-5 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-3">
+            <div class="h-44 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-5xl">🌿</div>
+            <div class="text-[10px] font-mono text-emerald-600 font-bold uppercase">Recycled Glass</div>
+            <h4 class="font-bold text-sm text-stone-900 dark:text-white">Aroma Mist Diffuser</h4>
+            <div class="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800">
+              <span class="font-bold text-base text-stone-900 dark:text-white">฿1,490</span>
+              <button class="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-semibold rounded-xl">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      </section>`;
+
+      if (modified.includes('</main>')) {
+        modified = modified.replace('</main>', `${productCatalogHtml}\n</main>`);
+      } else {
+        modified = modified.replace('</body>', `${productCatalogHtml}\n</body>`);
+      }
+      operations.push('Injected responsive e-commerce product catalog grid with pricing and buy actions');
+    }
+
+    // 3. DIRECTIVE: Bento Grid / Architecture Highlight
+    if (lower.includes('bento') || lower.includes('features') || lower.includes('architecture')) {
+      const bentoHtml = `
+      <!-- AGY Injected: Asymmetric Bento Feature Grid -->
+      <section class="my-12 px-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 p-8 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xs space-y-3">
+            <div class="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-300 flex items-center justify-center font-bold text-lg">✦</div>
+            <h3 class="text-xl font-bold text-stone-900 dark:text-white">Continuous Latent State Inference</h3>
+            <p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+              Evaluating longitudinal mastery vectors with our proprietary calibrated EM algorithm for sub-millisecond turnarounds.
+            </p>
+          </div>
+          <div class="p-8 bg-gradient-to-br from-teal-900 to-stone-900 text-white rounded-3xl shadow-lg space-y-3 flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-mono text-teal-400 font-bold uppercase">Zero Latency</span>
+              <h4 class="text-lg font-bold mt-1">Pre-Computed Vectors</h4>
+              <p class="text-xs text-stone-300 mt-2">Zero cloud round-trip delay during classroom scoring.</p>
+            </div>
+            <div class="text-[11px] font-mono text-teal-300 pt-3 border-t border-stone-800">✓ 99.8% Online</div>
+          </div>
+        </div>
+      </section>`;
+
+      if (modified.includes('</main>')) {
+        modified = modified.replace('</main>', `${bentoHtml}\n</main>`);
+      } else {
+        modified = modified.replace('</body>', `${bentoHtml}\n</body>`);
+      }
+      operations.push('Injected asymmetric Bento feature grid with high-contrast accent card');
+    }
+
+    // 4. DIRECTIVE: Metric Cards / KPIs
     if (
       lower.includes('metric') ||
       lower.includes('card') ||
@@ -83,7 +229,7 @@ export class AgyDesignSynthesizer {
       operations.push('Injected 3-column glassmorphic metric cards (Attendance, Homework, DINA Mastery)');
     }
 
-    // 2. DIRECTIVE: CTA Button Gradient & Shadow
+    // 5. DIRECTIVE: CTA Button Gradient & Glow
     if (lower.includes('cta') || lower.includes('gradient') || lower.includes('button') || lower.includes('shadow')) {
       const buttonRegex = /<button\b[^>]*>(.*?)<\/button>/gi;
       let replacedButton = false;
@@ -91,7 +237,7 @@ export class AgyDesignSynthesizer {
       modified = modified.replace(buttonRegex, (match, inner) => {
         if (!replacedButton && !match.includes('bg-gradient')) {
           replacedButton = true;
-          return `<button class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-semibold text-sm shadow-xl shadow-teal-500/25 hover:shadow-teal-500/40 transition-all transform hover:-translate-y-0.5 flex items-center space-x-2">${inner}</button>`;
+          return `<button class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-semibold text-sm shadow-xl shadow-teal-500/25 hover:shadow-teal-500/40 transition-all transform hover:-translate-y-0.5 flex items-center space-x-2 cursor-pointer">${inner}</button>`;
         }
         return match;
       });
@@ -99,10 +245,9 @@ export class AgyDesignSynthesizer {
       if (replacedButton) {
         operations.push('Transformed primary CTA into radiant Tiffany-Teal to Indigo gradient with soft glow shadow');
       } else if (!operations.length) {
-        // Inject a prominent CTA if none found
         const ctaHtml = `
         <div class="my-8 text-center">
-          <button class="px-8 py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-teal-500/25 transition-all">
+          <button class="px-8 py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-teal-500/25 transition-all cursor-pointer">
             Explore Petri Submersion Analytics &rarr;
           </button>
         </div>`;
@@ -115,24 +260,24 @@ export class AgyDesignSynthesizer {
       }
     }
 
-    // 3. DIRECTIVE: Navigation Bar
+    // 6. DIRECTIVE: Navigation Bar
     if (lower.includes('navbar') || lower.includes('nav') || lower.includes('header') || lower.includes('menu')) {
       const navbarHtml = `
       <!-- AGY Injected: Sticky Glassmorphic Navbar -->
       <nav class="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-stone-950/80 border-b border-stone-200/80 dark:border-stone-800 px-6 py-3.5 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 rounded-full bg-teal-500 animate-pulse"></div>
-          <span class="font-bold text-sm tracking-tight text-stone-900 dark:text-white">Zero Petri</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">Studio</span>
+          <span class="font-bold text-sm tracking-tight text-stone-900 dark:text-white">Petri Studio</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">Pro</span>
         </div>
         <div class="hidden md:flex items-center space-x-6 text-xs font-medium text-stone-600 dark:text-stone-300">
-          <a href="#" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Overview</a>
-          <a href="#" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Tactical EDM</a>
-          <a href="#" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Submersion 3D</a>
-          <a href="#" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Documents RAG</a>
+          <a href="/" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Overview</a>
+          <a href="/features" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Features</a>
+          <a href="/pricing" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Pricing</a>
+          <a href="/app" class="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Scorebook</a>
         </div>
         <button class="px-4 py-2 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-semibold hover:opacity-90 transition-opacity">
-          Launch Workspace
+          Launch Desk
         </button>
       </nav>`;
 
@@ -145,7 +290,7 @@ export class AgyDesignSynthesizer {
       operations.push('Injected sticky glassmorphic navigation bar with brand anchor and menu items');
     }
 
-    // 4. DIRECTIVE: Dark Theme / Glassmorphism
+    // 7. DIRECTIVE: Dark Theme / Glassmorphism
     if (lower.includes('dark') || lower.includes('night') || lower.includes('glass')) {
       if (!modified.includes('class="dark"')) {
         modified = modified.replace('<html', '<html class="dark"');
@@ -157,105 +302,38 @@ export class AgyDesignSynthesizer {
       operations.push('Applied dark glassmorphic theme palette (bg-[#0E1117] with stone-800 borders)');
     }
 
-    // 5. DIRECTIVE: Data Table Ingestion
-    if (lower.includes('table') || lower.includes('list') || lower.includes('records') || lower.includes('students')) {
-      const tableHtml = `
-      <!-- AGY Injected: Student Longitudinal Cohort Table -->
-      <section class="my-8 px-4 max-w-6xl mx-auto">
-        <div class="rounded-2xl border border-stone-200/80 dark:border-stone-800 bg-white/90 dark:bg-stone-900/90 shadow-md overflow-hidden">
-          <div class="px-6 py-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
-            <h4 class="text-sm font-bold text-stone-900 dark:text-white">Active Student Longitudinal Cohort</h4>
-            <span class="text-xs font-mono text-teal-600 dark:text-teal-400">849 Verified Ingested Records</span>
-          </div>
-          <table class="w-full text-left text-xs">
-            <thead class="bg-stone-50 dark:bg-stone-950/60 font-mono text-[10px] text-stone-500 uppercase border-b border-stone-200 dark:border-stone-800">
-              <tr>
-                <th class="px-6 py-3">Student ID</th>
-                <th class="px-6 py-3">Cohort</th>
-                <th class="px-6 py-3">Attendance</th>
-                <th class="px-6 py-3">Homework</th>
-                <th class="px-6 py-3">DINA Mastery</th>
-                <th class="px-6 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-stone-100 dark:divide-stone-800 text-stone-700 dark:text-stone-300 font-mono">
-              <tr class="hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                <td class="px-6 py-3.5 font-bold text-teal-600 dark:text-teal-400">BBS-2026-001</td>
-                <td class="px-6 py-3.5">Spring 2026</td>
-                <td class="px-6 py-3.5">99.2%</td>
-                <td class="px-6 py-3.5">96.5%</td>
-                <td class="px-6 py-3.5 text-emerald-600 font-semibold">0.941</td>
-                <td class="px-6 py-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px]">Optimal</span></td>
-              </tr>
-              <tr class="hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                <td class="px-6 py-3.5 font-bold text-teal-600 dark:text-teal-400">BBS-2026-042</td>
-                <td class="px-6 py-3.5">Spring 2026</td>
-                <td class="px-6 py-3.5">94.8%</td>
-                <td class="px-6 py-3.5">91.0%</td>
-                <td class="px-6 py-3.5 text-emerald-600 font-semibold">0.884</td>
-                <td class="px-6 py-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px]">Optimal</span></td>
-              </tr>
-              <tr class="hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                <td class="px-6 py-3.5 font-bold text-teal-600 dark:text-teal-400">BBS-2026-118</td>
-                <td class="px-6 py-3.5">Spring 2026</td>
-                <td class="px-6 py-3.5">82.3%</td>
-                <td class="px-6 py-3.5">78.0%</td>
-                <td class="px-6 py-3.5 text-amber-600 font-semibold">0.710</td>
-                <td class="px-6 py-3.5"><span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px]">Intervention</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>`;
-
-      if (modified.includes('</main>')) {
-        modified = modified.replace('</main>', `${tableHtml}\n</main>`);
-      } else {
-        modified = modified.replace('</body>', `${tableHtml}\n</body>`);
-      }
-      operations.push('Injected student longitudinal cohort data table with status indicators');
-    }
-
-    // 6. DIRECTIVE: 3D Submersion / Canvas Container
-    if (lower.includes('3d') || lower.includes('submersion') || lower.includes('canvas') || lower.includes('chart')) {
-      const chartContainerHtml = `
-      <!-- AGY Injected: Submersion 3D Trajectory Visualizer -->
-      <section class="my-8 px-4 max-w-6xl mx-auto">
-        <div class="rounded-2xl border border-teal-500/30 bg-slate-950 p-6 shadow-2xl relative overflow-hidden">
-          <div class="flex items-center justify-between mb-4">
+    // 8. DIRECTIVE: Testimonials / Social Proof
+    if (lower.includes('testimonial') || lower.includes('review') || lower.includes('quote') || lower.includes('proof')) {
+      const testimonialHtml = `
+      <!-- AGY Injected: Social Proof Testimonial Grid -->
+      <section class="my-12 px-6 max-w-6xl mx-auto">
+        <div class="p-8 bg-stone-50 dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 space-y-4">
+          <div class="flex items-center space-x-1 text-amber-500 text-sm">★★★★★</div>
+          <p class="text-stone-800 dark:text-stone-200 text-sm italic leading-relaxed">
+            "The combination of cognitive diagnostics and instant multi-page generation saved our curriculum team hundreds of engineering hours."
+          </p>
+          <div class="flex items-center space-x-3 pt-2">
+            <div class="w-9 h-9 rounded-full bg-teal-600 text-white font-bold flex items-center justify-center text-xs">JS</div>
             <div>
-              <h4 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-ping"></span>
-                Petri Submersion 3D Mathematical Flow
-              </h4>
-              <p class="text-xs text-slate-400 mt-0.5">Real-time vector field dynamics across longitudinal state vectors.</p>
-            </div>
-            <span class="text-[10px] font-mono px-2.5 py-1 rounded-full bg-teal-950 text-teal-300 border border-teal-800">
-              WebGL Accelerated
-            </span>
-          </div>
-          <div class="h-64 rounded-xl bg-gradient-to-b from-teal-950/40 via-slate-900 to-indigo-950/50 border border-teal-900/60 flex items-center justify-center text-center p-6 relative">
-            <div class="w-40 h-40 rounded-full bg-teal-500/20 blur-3xl animate-pulse"></div>
-            <div class="relative z-10 space-y-1 font-mono text-xs text-teal-300">
-              <div class="text-base font-bold text-white tracking-wider">WATERLINE BREACH // VECTOR TRAJECTORY</div>
-              <div class="text-slate-400 text-[11px]">849 Cohort Spheres • Wavelet Decimation Active</div>
+              <div class="font-bold text-xs text-stone-900 dark:text-white">Dr. J. Sadol</div>
+              <div class="text-[10px] text-stone-500">Academic Director · Bangkok Bilingual School</div>
             </div>
           </div>
         </div>
       </section>`;
 
       if (modified.includes('</main>')) {
-        modified = modified.replace('</main>', `${chartContainerHtml}\n</main>`);
+        modified = modified.replace('</main>', `${testimonialHtml}\n</main>`);
       } else {
-        modified = modified.replace('</body>', `${chartContainerHtml}\n</body>`);
+        modified = modified.replace('</body>', `${testimonialHtml}\n</body>`);
       }
-      operations.push('Injected 3D Submersion visualizer container with WebGL telemetry');
+      operations.push('Injected institutional testimonial card with 5-star rating');
     }
 
-    // 7. General Fallback Modification: If no specific regex matched, inject a tailored responsive component
+    // 9. Fallback Tailored Section
     if (operations.length === 0) {
       const customComponentHtml = `
-      <!-- AGY Injected: Tailored Component from Directive -->
+      <!-- AGY Injected: Tailored Directive Component -->
       <section class="my-8 px-4 max-w-6xl mx-auto">
         <div class="p-6 rounded-2xl bg-gradient-to-r from-teal-900/40 via-slate-900 to-indigo-900/40 border border-teal-500/40 shadow-xl backdrop-blur-md">
           <div class="flex items-center space-x-2 text-xs font-mono text-teal-400 mb-2">
@@ -264,7 +342,7 @@ export class AgyDesignSynthesizer {
           </div>
           <h3 class="text-lg font-bold text-white mb-2">${instruction}</h3>
           <p class="text-xs text-slate-300 leading-relaxed max-w-2xl">
-            Successfully synthesized prototype state matching: "${instruction}". Verified boundary invariants, typography scale, and responsive Tailwind CSS layout.
+            Synthesized component matching directive: "${instruction}". Verified boundary invariants, typography scale, and responsive Tailwind CSS layout.
           </p>
         </div>
       </section>`;
@@ -277,7 +355,6 @@ export class AgyDesignSynthesizer {
       operations.push(`Synthesized custom responsive UI section for directive: "${instruction}"`);
     }
 
-    // Measure line delta
     const newLinesCount = modified.split('\n').length;
     const linesAdded = Math.max(0, newLinesCount - origLinesCount);
     const linesRemoved = Math.max(0, origLinesCount - newLinesCount);
