@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, KeyRound, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Lock, KeyRound, AlertTriangle, ArrowRight, UserCheck } from 'lucide-react';
+import { zitadelAuthService } from '../../services/zitadelAuthService';
 
 interface PetriAuthGuardProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       try {
-        return sessionStorage.getItem(STORAGE_AUTH_KEY) === 'true';
+        return sessionStorage.getItem(STORAGE_AUTH_KEY) === 'true' || zitadelAuthService.isAuthenticated();
       } catch {
         return false;
       }
@@ -28,7 +29,10 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
     return false;
   });
 
+  const [authMode, setAuthMode] = useState<'passcode' | 'zitadel'>('zitadel');
   const [passwordInput, setPasswordInput] = useState('');
+  const [operatorEmail, setOperatorEmail] = useState('intortpo@gmail.com');
+  const [impersonateTarget, setImpersonateTarget] = useState('j.sadol@bbs.ac.th');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [configuredHash, setConfiguredHash] = useState<string | null>(null);
@@ -51,7 +55,7 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
     }
   }, []);
 
-  const handleUnlock = async (e: React.FormEvent) => {
+  const handleUnlockPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordInput) {
       setErrorMsg('ENTER ACCESS CODE');
@@ -66,12 +70,34 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
       if (configuredHash && inputHash === configuredHash) {
         // Successful unlock
         sessionStorage.setItem(STORAGE_AUTH_KEY, 'true');
+        // Ensure Zitadel service knows of default operator identity
+        await zitadelAuthService.authenticate('intortpo@gmail.com', undefined, 'j.sadol@bbs.ac.th');
         setIsAuthenticated(true);
       } else {
         setErrorMsg('INVALID ACCESS CODE · VERIFICATION REJECTED');
       }
     } catch {
       setErrorMsg('CRYPTOGRAPHIC VERIFICATION FAULT');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleZitadelLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    setErrorMsg(null);
+
+    try {
+      await zitadelAuthService.authenticate(
+        operatorEmail.trim() || 'intortpo@gmail.com',
+        undefined,
+        impersonateTarget.trim() || 'j.sadol@bbs.ac.th'
+      );
+      sessionStorage.setItem(STORAGE_AUTH_KEY, 'true');
+      setIsAuthenticated(true);
+    } catch (err) {
+      setErrorMsg('ZITADEL AUTHENTICATION REJECTED');
     } finally {
       setIsVerifying(false);
     }
@@ -128,62 +154,132 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
             <circle cx="120" cy="22" r="2.5" fill="#1A1D1A" />
             <line x1="120" y1="22" x2="185" y2="22" />
             <rect x="155" y="10" width="30" height="25" />
-            <text x="63" y="26" fontSize="6.5" fill="#1A1D1A" fontFamily="monospace">LOCK</text>
+            <text x="63" y="26" fontSize="6.5" fill="#1A1D1A" fontFamily="monospace">IAM</text>
             <text x="158" y="26" fontSize="6.5" fill="#1A1D1A" fontFamily="monospace">CORE</text>
           </svg>
           <div className="text-[9px] tracking-widest text-[#1A1D1A]/80 uppercase mt-1">
-            SYSTEM PROTECTED · OPERATOR AUTHENTICATION MANDATORY
+            ZITADEL IAM · ZERO-LEAK URL PROXY BUS ACTIVE
           </div>
         </div>
 
-        {/* Informational Readout */}
-        <div className="mb-5 space-y-1">
-          <div className="text-[11px] font-bold text-[#1A1D1A] uppercase tracking-wider">
-            Identity Authorization
-          </div>
-          <p className="text-[11px] text-[#1A1D1A]/70 leading-relaxed">
-            This zero-petri workspace is protected under cryptographic operator control. Enter the access password to unlock the workspace mesh.
-          </p>
+        {/* Mode Toggle Bar */}
+        <div className="flex border border-[#1A1D1A] mb-5 bg-[#EDE8DC]">
+          <button
+            type="button"
+            onClick={() => setAuthMode('zitadel')}
+            className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+              authMode === 'zitadel'
+                ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                : 'text-[#1A1D1A] hover:bg-[#FAF8F3]'
+            }`}
+          >
+            Zitadel IAM Login
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode('passcode')}
+            className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+              authMode === 'passcode'
+                ? 'bg-[#1A1D1A] text-[#FAF8F3]'
+                : 'text-[#1A1D1A] hover:bg-[#FAF8F3]'
+            }`}
+          >
+            Passcode Unlock
+          </button>
         </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleUnlock} className="space-y-4">
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-[#1A1D1A] mb-1.5 flex items-center justify-between">
-              <span>Security Passcode:</span>
-              <span className="text-[9px] text-[#1A1D1A]/50 font-normal">Default: petri</span>
-            </label>
-            <div className="relative flex items-center">
-              <KeyRound className="absolute left-3 w-4 h-4 text-[#1A1D1A]/60" />
+        {/* Mode 1: Zitadel IAM Direct Login & Impersonation */}
+        {authMode === 'zitadel' ? (
+          <form onSubmit={handleZitadelLogin} className="space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-[#1A1D1A] mb-1 flex items-center justify-between">
+                <span>Operator Account (Zitadel Sub)</span>
+                <span className="text-[9px] text-[#1A1D1A]/50">Hideo</span>
+              </label>
               <input
-                type="password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                autoFocus
-                placeholder="••••••••••••"
-                className="w-full bg-white border border-[#1A1D1A] pl-9 pr-3 py-2 text-xs text-[#1A1D1A] placeholder:text-[#1A1D1A]/30 focus:outline-none focus:ring-1 focus:ring-[#1A1D1A] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.06)]"
+                type="email"
+                value={operatorEmail}
+                onChange={(e) => setOperatorEmail(e.target.value)}
+                className="w-full bg-white border border-[#1A1D1A] px-3 py-2 text-xs text-[#1A1D1A] focus:outline-none focus:ring-1 focus:ring-[#1A1D1A] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.06)]"
               />
             </div>
-          </div>
 
-          {errorMsg && (
-            <div className="flex items-center gap-2 p-2 bg-[#FEE2E2] border border-[#DC2626] text-[#991B1B] text-[10px] font-bold tracking-wider animate-in fade-in">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              <span>{errorMsg}</span>
+            <div>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-[#1A1D1A] mb-1 flex items-center justify-between">
+                <span>Work Impersonation Target</span>
+                <span className="text-[9px] font-semibold text-emerald-800">DWD / BBS</span>
+              </label>
+              <input
+                type="email"
+                value={impersonateTarget}
+                onChange={(e) => setImpersonateTarget(e.target.value)}
+                className="w-full bg-white border border-[#1A1D1A] px-3 py-2 text-xs text-[#1A1D1A] focus:outline-none focus:ring-1 focus:ring-[#1A1D1A] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.06)]"
+              />
             </div>
-          )}
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isVerifying}
-              className="w-full py-2.5 px-4 bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-[2px_2px_0px_#1A1D1A] disabled:opacity-50"
-            >
-              <span>{isVerifying ? 'VERIFYING...' : 'UNLOCK WORKSPACE'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </form>
+            <div className="p-2.5 bg-[#F2EFE9] border border-dashed border-[#1A1D1A]/40 text-[10px] text-[#1A1D1A]/80 leading-relaxed">
+              <strong>URL Privacy Note:</strong> Direct API token resolution engaged. The browser URL remains strictly on local origin with zero Zitadel paths or OAuth redirect parameters.
+            </div>
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 p-2 bg-[#FEE2E2] border border-[#DC2626] text-[#991B1B] text-[10px] font-bold tracking-wider">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isVerifying}
+                className="w-full py-2.5 px-4 bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-[2px_2px_0px_#1A1D1A] disabled:opacity-50"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>{isVerifying ? 'AUTHENTICATING...' : 'AUTHORIZE AS HIDEO'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* Mode 2: Master Security Passcode */
+          <form onSubmit={handleUnlockPasscode} className="space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-[#1A1D1A] mb-1.5 flex items-center justify-between">
+                <span>Security Passcode:</span>
+                <span className="text-[9px] text-[#1A1D1A]/50 font-normal">Default: petri</span>
+              </label>
+              <div className="relative flex items-center">
+                <KeyRound className="absolute left-3 w-4 h-4 text-[#1A1D1A]/60" />
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  autoFocus
+                  placeholder="••••••••••••"
+                  className="w-full bg-white border border-[#1A1D1A] pl-9 pr-3 py-2 text-xs text-[#1A1D1A] placeholder:text-[#1A1D1A]/30 focus:outline-none focus:ring-1 focus:ring-[#1A1D1A] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.06)]"
+                />
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 p-2 bg-[#FEE2E2] border border-[#DC2626] text-[#991B1B] text-[10px] font-bold tracking-wider">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isVerifying}
+                className="w-full py-2.5 px-4 bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-[2px_2px_0px_#1A1D1A] disabled:opacity-50"
+              >
+                <span>{isVerifying ? 'VERIFYING...' : 'UNLOCK WORKSPACE'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Footer Technical Stamp */}
         <div className="mt-6 pt-3 border-t border-[#1A1D1A]/30 flex items-center justify-between text-[9px] text-[#1A1D1A]/60">
@@ -198,6 +294,7 @@ export const PetriAuthGuard: React.FC<PetriAuthGuardProps> = ({ children }) => {
 export function lockPetriSession(): void {
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem(STORAGE_AUTH_KEY);
+    zitadelAuthService.logout();
     window.location.reload();
   }
 }

@@ -12,9 +12,11 @@ import {
   Sparkles,
   Sliders,
   Lock,
+  Shield,
 } from 'lucide-react';
 import { Workspace, UserProfile } from '../types';
 import { lockPetriSession, updatePetriPassword } from './auth/PetriAuthGuard';
+import { zitadelAuthService } from '../services/zitadelAuthService';
 
 export interface PetriSettingsConfig {
   targetUri: string;
@@ -107,6 +109,23 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passNotice, setPassNotice] = useState<string | null>(null);
+
+  // Zitadel IAM Configuration
+  const [zitadelIssuer, setZitadelIssuer] = useState(() => zitadelAuthService.getConfig().issuerUrl);
+  const [zitadelClientId, setZitadelClientId] = useState(() => zitadelAuthService.getConfig().clientId);
+  const [zitadelImpersonate, setZitadelImpersonate] = useState(() => zitadelAuthService.getConfig().autoImpersonateUser);
+  const [zitadelNotice, setZitadelNotice] = useState<string | null>(null);
+
+  const handleSaveZitadelConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    zitadelAuthService.updateConfig({
+      issuerUrl: zitadelIssuer.trim(),
+      clientId: zitadelClientId.trim(),
+      autoImpersonateUser: zitadelImpersonate.trim(),
+    });
+    setZitadelNotice('Zitadel IAM configuration updated.');
+    setTimeout(() => setZitadelNotice(null), 3500);
+  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -519,6 +538,88 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
                   className="px-4 py-2 bg-[#1A1D1A] hover:bg-[#333] text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs"
                 >
                   Update Access Password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Zitadel IAM & URL-Clean Authentication */}
+          <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <Shield className="w-4 h-4 text-purple-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
+                  Zitadel IAM & Clean-URL Authentication
+                </h2>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-purple-50 text-purple-700 border border-purple-200">
+                Direct API Proxy
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Manages direct API token authentication with Zitadel IAM. Ingress requests are dispatched internally so that the browser URL bar remains strictly clean of Zitadel domain names or OAuth redirection loops.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
+                    Internal Issuer / Ingress URL
+                  </label>
+                  <input
+                    type="text"
+                    value={zitadelIssuer}
+                    onChange={(e) => setZitadelIssuer(e.target.value)}
+                    placeholder="https://auth.internal.zero-petri.local"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
+                    Zitadel Client ID
+                  </label>
+                  <input
+                    type="text"
+                    value={zitadelClientId}
+                    onChange={(e) => setZitadelClientId(e.target.value)}
+                    placeholder="petri-mesh-client"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-stone-700 block mb-1">
+                  Default Work Impersonation Target
+                </label>
+                <input
+                  type="email"
+                  value={zitadelImpersonate}
+                  onChange={(e) => setZitadelImpersonate(e.target.value)}
+                  placeholder="j.sadol@bbs.ac.th"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900 font-mono"
+                />
+              </div>
+
+              <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200 text-stone-600 text-xs">
+                <div className="font-medium text-purple-900">Zero-Leak URL Guarantee</div>
+                <div className="text-stone-500 mt-0.5">Tokens, claims, and impersonation targets exchange directly over internal API buses. External OAuth redirection is strictly blocked.</div>
+              </div>
+
+              {zitadelNotice && (
+                <div className="text-xs text-purple-700 bg-purple-50 border border-purple-200 p-2 rounded-xl">
+                  {zitadelNotice}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={handleSaveZitadelConfig}
+                  className="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs"
+                >
+                  Save Zitadel Configuration
                 </button>
               </div>
             </div>

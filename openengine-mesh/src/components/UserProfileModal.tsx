@@ -294,6 +294,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 po.taildf505d.ts.net (100.81.151.110)
               </span>
             </div>
+            <div className="flex items-center justify-between text-[11px] font-medium text-stone-700 pt-1 border-t border-stone-100">
+              <span className="flex items-center space-x-1.5">
+                <Shield className="w-3.5 h-3.5 text-purple-600" />
+                <span>Zitadel IAM Identity:</span>
+              </span>
+              <span className="font-mono text-[10px] bg-purple-50 border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full">
+                {activeUser.zitadelSub || activeUser.email} ➔ {activeUser.impersonateUser || 'j.sadol@bbs.ac.th'}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-4 gap-2 pt-2 border-t border-stone-200/60 text-center text-xs">
