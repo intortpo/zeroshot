@@ -12,9 +12,12 @@
  */
 
 import { UserProfile } from '../types';
+import type { CosmosUserSession } from './cosmosAuthService';
 
 export interface PySpurUserCreate {
-  external_id: string; // Zitadel user ID or unique sub
+  external_id?: string; // Zitadel user ID or unique sub
+  externalId?: string;
+  firstName?: string;
   user_metadata?: Record<string, any>;
 }
 
@@ -145,6 +148,49 @@ class PySpurUserService {
     this.usersCache.set(externalId, created);
     this.saveCache();
     return created;
+  }
+
+  /**
+   * Links or provisions a PySpur user from a Cosmos identity session
+   */
+  public async linkCosmosUserToPySpur(
+    cosmosUser: CosmosUserSession
+  ): Promise<PySpurUserResponse> {
+    const email = cosmosUser?.email || '';
+    const username = cosmosUser?.username || '';
+    const externalId = email || username || 'cosmos_user';
+
+    const payload: PySpurUserCreate = {
+      externalId,
+      external_id: externalId,
+      firstName: username,
+      user_metadata: {
+        name: username,
+        firstName: username,
+        email: email,
+        role: cosmosUser?.role || 'operator',
+        source: cosmosUser?.source || 'cosmos_proxy',
+        mfaVerified: cosmosUser?.mfaVerified,
+        cosmosVersion: cosmosUser?.cosmosVersion,
+      },
+    };
+
+    const isOwner = cosmosUser?.role === 'admin';
+    const profile: UserProfile = {
+      id: payload.externalId || externalId,
+      name: payload.firstName || username,
+      email: email,
+      role: isOwner ? 'owner' : (cosmosUser?.role === 'viewer' ? 'viewer' : 'senior_dev'),
+      tier: isOwner ? 'superadmin' : 'control',
+      organization: 'Cosmos Cloud',
+      canApproveGates: isOwner,
+      canDeploy: cosmosUser?.role !== 'viewer',
+      canEditRules: isOwner,
+      zitadelSub: payload.externalId || externalId,
+      pyspurExternalId: payload.externalId || externalId,
+    };
+
+    return this.linkZitadelUserToPySpur(profile);
   }
 
   /**

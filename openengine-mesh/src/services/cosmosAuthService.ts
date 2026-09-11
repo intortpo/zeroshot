@@ -5,6 +5,8 @@
  * and providing single sign-on (SSO), Passkeys, and MFA verification.
  */
 
+import { pyspurUserService } from './pyspurUserService';
+
 export interface CosmosUserSession {
   isAuthenticated: boolean;
   username: string;
@@ -44,6 +46,7 @@ class CosmosAuthService {
           mfaVerified: !!data.mfaVerified,
           cosmosVersion: data.version,
         };
+        pyspurUserService.linkCosmosUserToPySpur(this.currentSession).catch(console.warn);
         return this.currentSession;
       }
     } catch {
@@ -62,6 +65,7 @@ class CosmosAuthService {
         role: 'operator',
         source: 'local_dev_bypass',
       };
+      pyspurUserService.linkCosmosUserToPySpur(this.currentSession).catch(console.warn);
       return this.currentSession;
     }
 

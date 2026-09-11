@@ -260,6 +260,8 @@ export interface EnterpriseStats {
 
 export type PetriViewMode =
   | 'antigravity'
+  | 'pyspur'
+  | 'cosmos'
   | 'projects'
   | 'chat'
   | 'plan'

@@ -108,6 +108,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
   const isDevActive =
     currentView === 'chat' ||
+    currentView === 'pyspur' ||
     currentView === 'plan' ||
     currentView === 'board' ||
     currentView === 'projects' ||
@@ -141,14 +142,15 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
 
   const isSystemActive =
     currentView === 'settings' ||
+    currentView === 'cosmos' ||
     currentView === 'server' ||
     currentView === 'tui';
 
   return (
-    <div className="px-3 sm:px-6 pt-3 pb-1.5 shrink-0 z-30">
+    <div className="px-3 sm:px-6 pt-3 pb-1.5 shrink-0 z-30 font-sans">
       <header
         data-tauri-drag-region
-        className="border border-[#1A1D1A]/20 bg-[#F6F3EC]/95 backdrop-blur-md rounded-xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-sm font-mono"
+        className="border border-slate-200 bg-white/95 backdrop-blur-md shadow-sm rounded-xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-sm"
       >
       {/* Left: Brand, Breadcrumbs, User, Tier & Workspace */}
       <div className="flex items-center space-x-3.5">
@@ -382,9 +384,23 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                       <div className="text-[10px] text-stone-400 font-normal">Kanban Delivery & Merged Items</div>
                     </div>
                   </button>
-
-
-
+                  <button
+                    onClick={() => {
+                      onSelectView('pyspur');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'pyspur'
+                        ? 'bg-stone-100 text-stone-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <Network className="w-4 h-4 text-orange-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold">PySpur Studio</div>
+                      <div className="text-[10px] text-stone-400 font-normal">Visual DAG Orchestration</div>
+                    </div>
+                  </button>
                   <button
                     onClick={() => {
                       onSelectView('projects');
@@ -896,6 +912,27 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                       </div>
                     </button>
                   )}
+
+                  <button
+                    onClick={() => {
+                      onSelectView('cosmos');
+                      setOpenDropdown(null);
+                    }}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      currentView === 'cosmos'
+                        ? 'bg-emerald-50 text-emerald-900 font-medium'
+                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold flex items-center space-x-1.5">
+                        <span>Cosmos Server</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-emerald-100 text-emerald-800">Auth</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-normal">SSO & Identity Management</div>
+                    </div>
+                  </button>
 
                   <button
                     onClick={() => {

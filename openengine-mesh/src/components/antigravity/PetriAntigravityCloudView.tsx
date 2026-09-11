@@ -7,11 +7,10 @@ import {
   Play,
   Square,
   Trash2,
-  ExternalLink,
-  RefreshCw,
   GitPullRequest,
   Shield,
-  ArrowUpRight
+  Send,
+  RefreshCw
 } from 'lucide-react';
 import {
   antigravityCloudService,
@@ -33,7 +32,7 @@ interface PetriAntigravityCloudViewProps {
 export const PetriAntigravityCloudView: React.FC<PetriAntigravityCloudViewProps> = ({
   activeUser: _activeUser,
   activeWorkspace: _activeWorkspace,
-  onNavigateToProjects,
+  onNavigateToProjects: _onNavigateToProjects,
 }) => {
   const [sessions, setSessions] = useState<AntigravitySession[]>(() =>
     antigravityCloudService.getSessions()
@@ -51,6 +50,10 @@ export const PetriAntigravityCloudView: React.FC<PetriAntigravityCloudViewProps>
   const [newSessionName, setNewSessionName] = useState('');
   const [newSessionEnv, setNewSessionEnv] = useState<'local_docker' | 'cloud_run'>('local_docker');
   const [selectedIssueNumber, setSelectedIssueNumber] = useState<number | undefined>(undefined);
+
+  // Chat State
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'agy'; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState('');
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
 
@@ -83,437 +86,311 @@ export const PetriAntigravityCloudView: React.FC<PetriAntigravityCloudViewProps>
     setNewSessionName('');
   };
 
-  const handleLaunchSessionForIssue = (item: GitHubProjectItem) => {
-    const name = `issue-${item.issueNumber || Math.floor(Math.random() * 1000)}`;
-    const created = antigravityCloudService.createSession({
-      name,
-      envType: 'local_docker',
-      taskTitle: item.title,
-      githubIssueNumber: item.issueNumber,
-      githubIssueUrl: item.issueUrl,
-    });
-    githubProjectService.linkSessionToItem(item.id, created.id);
-    refreshSessions();
-    setActiveSessionId(created.id);
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMessage = chatInput.trim();
+    setChatHistory((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setChatInput('');
+
+    setTimeout(() => {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'agy', content: `Executing agy command for: "${userMessage}"...` }
+      ]);
+    }, 1000);
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative">
-      {/* Drafting parchment grid backdrop */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0 opacity-40"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, rgba(26,29,26,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,29,26,0.06) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
-
-      {/* Top Ribbon: Antigravity Cloud Run & Cosmos Gateway Status */}
-      <header className="relative z-10 border-b border-[#1A1D1A] bg-[#FAF8F3] px-4 py-2.5 flex items-center justify-between shadow-xs">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 text-slate-900 font-sans">
+      <header className="relative z-10 border-b border-slate-200 bg-white px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded border border-[#1A1D1A] bg-[#1A1D1A] text-[#FAF8F3] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-sm">
             <Terminal className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-xs font-bold uppercase tracking-wider">
-                ANTIGRAVITY // CLOUD RUN ENGINE
+              <h1 className="text-sm font-semibold text-slate-900">
+                Antigravity Cloud Run
               </h1>
-              <span className="text-[9px] px-1.5 py-0.5 border border-[#1A1D1A] bg-[#EDE8DC] font-bold">
-                v2.4 DOCKER + CLOUD RUN
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium">
+                v2.4
               </span>
             </div>
-            <p className="text-[10px] text-[#1A1D1A]/60">
-              Isolated Antigravity CLI (<code className="font-bold">agy</code>) sessions with live ttyd web terminals
+            <p className="text-xs text-slate-500">
+              Isolated Antigravity CLI sessions
             </p>
           </div>
         </div>
 
-        {/* Status Indicators & Action CTA */}
-        <div className="flex items-center space-x-3 text-xs">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 border border-[#1A1D1A]/30 bg-white text-[10px]">
-            <Shield className="w-3.5 h-3.5 text-emerald-700" />
-            <span className="font-bold">COSMOS GATEWAY:</span>
-            <span className="text-emerald-700 font-bold uppercase">
-              {cosmosAuthService.isBehindCosmos() ? 'PROXY PROTECTED' : 'DEV SECURE'}
+        <div className="flex items-center space-x-3 text-sm">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-xs">
+            <Shield className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="font-medium text-slate-600">Gateway:</span>
+            <span className="text-emerald-700 font-medium">
+              {cosmosAuthService.isBehindCosmos() ? 'Protected' : 'Secure'}
             </span>
-          </div>
-
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 border border-[#1A1D1A]/30 bg-white text-[10px]">
-            <Cloud className="w-3.5 h-3.5 text-sky-700" />
-            <span className="font-bold">PROJECT:</span>
-            <span className="font-bold">foxlight-489607</span>
           </div>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-3 py-1.5 bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 shadow-[2px_2px_0px_#1A1D1A] cursor-pointer"
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md flex items-center space-x-1.5 shadow-sm transition-colors cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New agy Session</span>
+            <Plus className="w-4 h-4" />
+            <span>New Session</span>
           </button>
         </div>
       </header>
 
-      {/* Main Grid: Sessions Shelf (Left) + Live Terminal (Center) + GitHub Project Tasks (Right) */}
       <div className="flex-1 flex overflow-hidden relative z-10">
-        {/* Left Panel: Active Antigravity Sessions List */}
-        <aside className="w-72 border-r border-[#1A1D1A] bg-[#FAF8F3] flex flex-col">
-          <div className="p-3 border-b border-[#1A1D1A]/20 flex items-center justify-between bg-[#EDE8DC]/50">
-            <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Container Sessions ({sessions.length})</span>
+        <aside className="w-72 border-r border-slate-200 bg-white flex flex-col">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Cpu className="w-4 h-4" />
+              <span>Sessions ({sessions.length})</span>
             </span>
             <button
               onClick={refreshSessions}
-              className="p-1 text-[#1A1D1A]/60 hover:text-[#1A1D1A] cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md transition-colors cursor-pointer"
               title="Refresh sessions"
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {sessions.map((sess) => {
               const isSelected = sess.id === activeSession?.id;
               return (
                 <div
                   key={sess.id}
                   onClick={() => setActiveSessionId(sess.id)}
-                  className={`p-3 border transition-all cursor-pointer ${
+                  className={`p-3 rounded-lg border transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-[#1A1D1A] bg-white shadow-[3px_3px_0px_#1A1D1A]'
-                      : 'border-[#1A1D1A]/40 bg-[#FAF8F3] hover:bg-white'
+                      ? 'border-blue-200 bg-blue-50 shadow-sm'
+                      : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
                       <span
                         className={`w-2 h-2 rounded-full ${
                           sess.status === 'running'
-                            ? 'bg-emerald-600 animate-pulse'
+                            ? 'bg-emerald-500'
                             : sess.status === 'starting'
-                            ? 'bg-amber-500 animate-spin'
-                            : 'bg-stone-400'
+                            ? 'bg-amber-400'
+                            : 'bg-slate-300'
                         }`}
                       />
-                      <span className="text-xs font-bold truncate max-w-[130px]">
+                      <span className="text-sm font-medium text-slate-900 truncate max-w-[130px]">
                         {sess.name}
                       </span>
                     </div>
-
-                    <span className="text-[9px] px-1.5 py-0.2 border border-[#1A1D1A]/50 uppercase font-bold bg-[#F2EFE9]">
-                      {sess.envType === 'cloud_run' ? 'Cloud Run' : 'Local Docker'}
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-slate-200 bg-white text-slate-500 font-medium">
+                      {sess.envType === 'cloud_run' ? 'Cloud' : 'Local'}
                     </span>
                   </div>
 
                   {sess.taskTitle && (
-                    <p className="text-[10px] text-[#1A1D1A]/80 line-clamp-2 mb-1.5 font-sans">
+                    <p className="text-xs text-slate-600 line-clamp-2 mb-2">
                       {sess.taskTitle}
                     </p>
                   )}
-
-                  <div className="flex items-center justify-between text-[9px] text-[#1A1D1A]/60 font-mono pt-1 border-t border-[#1A1D1A]/10">
-                    <span>Port :{sess.port}</span>
-                    <span>{sess.tmuxSessionName}</span>
-                  </div>
                 </div>
               );
             })}
           </div>
         </aside>
 
-        {/* Center Panel: Live Embedded Web Terminal (ttyd + tmux) */}
-        <main className="flex-1 flex flex-col bg-[#111311] text-[#E0E2DE] overflow-hidden">
+        <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
           {activeSession ? (
             <>
-              {/* Terminal Title Bar & Session Controller */}
-              <div className="border-b border-[#333] bg-[#1A1D1A] px-4 py-2 flex items-center justify-between text-xs">
+              <div className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-bold text-white tracking-wider uppercase">
-                      {activeSession.name}
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.5 border border-white/20 bg-black/40 text-stone-300">
-                      {activeSession.envType === 'cloud_run' ? 'Cloud Run Gen2' : 'Docker Engine'}
-                    </span>
-                  </div>
-
+                  <span className="font-semibold text-slate-900">
+                    {activeSession.name}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium border border-slate-200">
+                    {activeSession.envType === 'cloud_run' ? 'Cloud Run' : 'Docker Engine'}
+                  </span>
                   {activeSession.githubIssueNumber && (
                     <a
                       href={activeSession.githubIssueUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[10px] text-sky-400 hover:underline flex items-center gap-1 font-sans"
+                      className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                     >
-                      <GitPullRequest className="w-3 h-3" />
+                      <GitPullRequest className="w-3.5 h-3.5" />
                       <span>Issue #{activeSession.githubIssueNumber}</span>
                     </a>
                   )}
                 </div>
 
-                {/* Session Actions */}
-                <div className="flex items-center space-x-2 text-[10px]">
-                  {activeSession.envType === 'local_docker' && (
-                    <button
-                      onClick={() => antigravityCloudService.deployToCloudRun(activeSession.id).then(refreshSessions)}
-                      className="px-2.5 py-1 bg-sky-900/60 hover:bg-sky-800 text-sky-200 border border-sky-600/50 flex items-center space-x-1 cursor-pointer transition-colors"
-                    >
-                      <Cloud className="w-3 h-3" />
-                      <span>Deploy to Cloud Run</span>
-                    </button>
-                  )}
-
+                <div className="flex items-center space-x-2 text-sm">
                   {activeSession.status === 'running' ? (
                     <button
                       onClick={() => antigravityCloudService.stopSession(activeSession.id).then(refreshSessions)}
-                      className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 flex items-center space-x-1 cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer"
                     >
-                      <Square className="w-3 h-3" />
+                      <Square className="w-3.5 h-3.5" />
                       <span>Stop</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => antigravityCloudService.startSession(activeSession.id).then(refreshSessions)}
-                      className="px-2 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-600 flex items-center space-x-1 cursor-pointer"
+                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer border border-emerald-200"
                     >
-                      <Play className="w-3 h-3" />
+                      <Play className="w-3.5 h-3.5" />
                       <span>Start</span>
                     </button>
                   )}
-
-                  <a
-                    href={activeSession.ttydUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 flex items-center space-x-1 cursor-pointer"
-                    title="Pop out in separate browser tab"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>Popout</span>
-                  </a>
 
                   <button
                     onClick={() => {
                       antigravityCloudService.deleteSession(activeSession.id);
                       refreshSessions();
                     }}
-                    className="p-1 hover:text-red-400 text-stone-500 cursor-pointer"
-                    title="Destroy container"
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                    title="Delete session"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Embedded Web Terminal Canvas */}
-              <div className="flex-1 relative bg-black flex flex-col">
-                {/* Fallback Simulation Terminal Console when local port is not bound yet */}
-                <div className="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-1.5 selection:bg-white selection:text-black">
-                  <div className="text-stone-500 mb-2">
-                    # Antigravity CLI (agy) container interactive terminal ready.
-                    <br /># Connected to session {activeSession.name} [{activeSession.tmuxSessionName}]
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {chatHistory.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-slate-400 flex-col">
+                    <Terminal className="w-12 h-12 mb-4 opacity-20" />
+                    <p className="text-sm">Start a conversation with Agy in {activeSession.name}</p>
                   </div>
-
-                  {activeSession.logTail?.map((line, idx) => (
-                    <div key={idx} className="text-emerald-400/90 leading-relaxed">
-                      {line}
+                ) : (
+                  chatHistory.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                        msg.role === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-none'
+                          : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'
+                      }`}>
+                        {msg.content}
+                      </div>
                     </div>
-                  ))}
+                  ))
+                )}
+              </div>
 
-                  <div className="pt-3 border-t border-stone-800/80 mt-4 text-[11px] text-stone-400">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-1.5 py-0.5 bg-stone-800 text-white rounded text-[10px] font-bold">
-                        ttyd web terminal active
-                      </span>
-                      <span>URL: <a href={activeSession.ttydUrl} target="_blank" rel="noreferrer" className="text-sky-400 underline">{activeSession.ttydUrl}</a></span>
-                    </div>
-                    <p className="text-stone-500 font-sans text-xs">
-                      Runs the native <strong>Antigravity CLI (agy)</strong> inside this isolated container with complete access to git, workspace files, Playwright MCP, and Google Gemini models.
-                    </p>
+              <div className="p-4 bg-white border-t border-slate-200">
+                <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-end gap-2">
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder="Message Agy..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none max-h-32"
+                      rows={1}
+                    />
                   </div>
-                </div>
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim()}
+                    className="p-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-xl shadow-sm transition-colors mb-[2px] cursor-pointer"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </form>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8 text-center text-stone-500">
+            <div className="flex-1 flex items-center justify-center p-8 text-center text-slate-400">
               <div>
-                <Terminal className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <p className="text-sm uppercase tracking-wider font-bold">No Active agy Session</p>
-                <p className="text-xs mt-1">Create a new container session or launch one from the GitHub Project tasks on the right.</p>
+                <Terminal className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p className="text-base font-medium text-slate-600">No Active Session</p>
+                <p className="text-sm mt-1">Create a new session to start chatting with Agy.</p>
               </div>
             </div>
           )}
         </main>
-
-        {/* Right Panel: Connected GitHub Project #1 Tasks Tracker */}
-        <aside className="w-80 border-l border-[#1A1D1A] bg-[#FAF8F3] flex flex-col">
-          <div className="p-3 border-b border-[#1A1D1A]/20 bg-[#EDE8DC]/50 flex items-center justify-between">
-            <div className="flex items-center space-x-1.5">
-              <GitPullRequest className="w-3.5 h-3.5 text-[#1A1D1A]" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
-                GitHub Project #1 Roadmap
-              </span>
-            </div>
-            {onNavigateToProjects && (
-              <button
-                onClick={onNavigateToProjects}
-                className="text-[9px] text-[#1A1D1A] hover:underline flex items-center gap-0.5 font-bold cursor-pointer"
-              >
-                <span>Full Hub</span>
-                <ArrowUpRight className="w-2.5 h-2.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Project Items List with 1-Click agy Launch */}
-          <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5">
-            {projectItems.map((item) => {
-              const isAssigned = !!item.assignedSessionId;
-              return (
-                <div
-                  key={item.id}
-                  className="p-3 border border-[#1A1D1A]/40 bg-white shadow-[2px_2px_0px_#1A1D1A] flex flex-col gap-1.5"
-                >
-                  <div className="flex items-center justify-between text-[9px]">
-                    <span
-                      className={`px-1.5 py-0.5 font-bold uppercase border ${
-                        item.status === 'Done'
-                          ? 'bg-emerald-100 border-emerald-700 text-emerald-800'
-                          : item.status === 'In Progress'
-                          ? 'bg-amber-100 border-amber-700 text-amber-800'
-                          : 'bg-stone-100 border-stone-400 text-stone-700'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-
-                    {item.milestoneTitle && (
-                      <span className="text-stone-500 truncate max-w-[120px]">
-                        {item.milestoneTitle}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-xs font-bold leading-tight line-clamp-2">
-                    {item.title}
-                  </h3>
-
-                  {item.body && (
-                    <p className="text-[10px] text-[#1A1D1A]/70 line-clamp-2 font-sans">
-                      {item.body}
-                    </p>
-                  )}
-
-                  <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-[9px]">
-                    {item.labels.length > 0 && (
-                      <div className="flex gap-1">
-                        {item.labels.slice(0, 2).map((lbl) => (
-                          <span key={lbl} className="px-1 py-0.5 bg-stone-100 border border-stone-300 text-stone-600">
-                            {lbl}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Launch Session Action */}
-                    <button
-                      onClick={() => handleLaunchSessionForIssue(item)}
-                      className="px-2 py-1 bg-[#1A1D1A] hover:bg-[#333] text-[#FAF8F3] font-bold text-[9px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-[1px_1px_0px_#1A1D1A]"
-                    >
-                      <Play className="w-2.5 h-2.5" />
-                      <span>{isAssigned ? 'Attach agy' : 'Launch agy'}</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
       </div>
 
-      {/* Modal: Create New Antigravity Container Session */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md border-2 border-[#1A1D1A] bg-[#FAF8F3] p-6 shadow-[6px_6px_0px_#1A1D1A]">
-            <h2 className="text-sm font-bold uppercase tracking-wider border-b-2 border-[#1A1D1A] pb-2 mb-4 flex items-center justify-between">
-              <span>Launch Isolated agy Session</span>
-              <span className="text-[10px] bg-[#EDE8DC] border border-[#1A1D1A] px-2 py-0.5">
-                CONTAINERIZED
-              </span>
-            </h2>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                New Session
+              </h2>
+            </div>
 
-            <form onSubmit={handleCreateSession} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateSession} className="p-6 space-y-5">
               <div>
-                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1">
-                  Session Identifier / Worktree Name
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Session Name
                 </label>
                 <input
                   type="text"
                   value={newSessionName}
                   onChange={(e) => setNewSessionName(e.target.value)}
-                  placeholder="e.g. issue-98-cve or research-nebula"
+                  placeholder="e.g. issue-98-cve"
                   autoFocus
                   required
-                  className="w-full bg-white border border-[#1A1D1A] px-3 py-2 text-xs focus:outline-none shadow-[inset_1px_1px_2px_rgba(0,0,0,0.06)]"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1">
-                  Target Execution Environment
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Environment
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setNewSessionEnv('local_docker')}
-                    className={`p-2.5 border text-left cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
                       newSessionEnv === 'local_docker'
-                        ? 'bg-[#1A1D1A] text-white border-[#1A1D1A] font-bold shadow-[2px_2px_0px_#1A1D1A]'
-                        : 'bg-white border-[#1A1D1A]/50 hover:border-[#1A1D1A]'
+                        ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-500/20'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Cpu className="w-3.5 h-3.5" />
-                      <span className="text-xs uppercase">Local Docker</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Cpu className={`w-4 h-4 ${newSessionEnv === 'local_docker' ? 'text-blue-600' : 'text-slate-500'}`} />
+                      <span className={`text-sm font-medium ${newSessionEnv === 'local_docker' ? 'text-blue-900' : 'text-slate-700'}`}>Local Docker</span>
                     </div>
-                    <span className="text-[9px] opacity-80 block font-normal">
-                      Runs locally on host via Docker with fast volume bind mounts.
-                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setNewSessionEnv('cloud_run')}
-                    className={`p-2.5 border text-left cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
                       newSessionEnv === 'cloud_run'
-                        ? 'bg-[#1A1D1A] text-white border-[#1A1D1A] font-bold shadow-[2px_2px_0px_#1A1D1A]'
-                        : 'bg-white border-[#1A1D1A]/50 hover:border-[#1A1D1A]'
+                        ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-500/20'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Cloud className="w-3.5 h-3.5" />
-                      <span className="text-xs uppercase">Cloud Run</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Cloud className={`w-4 h-4 ${newSessionEnv === 'cloud_run' ? 'text-blue-600' : 'text-slate-500'}`} />
+                      <span className={`text-sm font-medium ${newSessionEnv === 'cloud_run' ? 'text-blue-900' : 'text-slate-700'}`}>Cloud Run</span>
                     </div>
-                    <span className="text-[9px] opacity-80 block font-normal">
-                      Serverless container in GCP asia-southeast1 with GCS persistence.
-                    </span>
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1">
-                  Bind to GitHub Project Task (Optional)
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Link Issue (Optional)
                 </label>
                 <select
                   value={selectedIssueNumber || ''}
                   onChange={(e) => setSelectedIssueNumber(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full bg-white border border-[#1A1D1A] px-2.5 py-1.5 text-xs focus:outline-none"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
-                  <option value="">-- No explicit task binding --</option>
+                  <option value="">-- No issue --</option>
                   {projectItems.map((item) => (
                     <option key={item.id} value={item.issueNumber}>
                       #{item.issueNumber}: {item.title}
@@ -522,19 +399,19 @@ export const PetriAntigravityCloudView: React.FC<PetriAntigravityCloudViewProps>
                 </select>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#1A1D1A]/20">
+              <div className="flex items-center justify-end space-x-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3 py-1.5 border border-[#1A1D1A] bg-white text-xs font-bold uppercase hover:bg-stone-100 cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#1A1D1A] hover:bg-[#333] text-white text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1A1D1A] cursor-pointer"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer"
                 >
-                  Launch Session
+                  Launch
                 </button>
               </div>
             </form>

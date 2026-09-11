@@ -9,7 +9,10 @@ import { TuiView } from './components/TuiView';
 import { UserProfileModal } from './components/UserProfileModal';
 import { ApprovalModal } from './components/ApprovalModal';
 import { GoogleWorkspaceDwdModal } from './components/GoogleWorkspaceDwdModal';
-import { WorkspaceModal } from './components/WorkspaceModal';
+import { WorkspaceSelectionModal } from './components/workspace/WorkspaceSelectionModal';
+import { PySpurSettingsModal } from './components/pyspur/PySpurSettingsModal';
+import { PetriPySpurStudioView } from './components/pyspur/PetriPySpurStudioView';
+import { CosmosServerView } from './components/CosmosServerView';
 import { PetriSettings } from './components/PetriSettings';
 import { ZeroView } from './components/ZeroView';
 import { ChatPlanCanvasView } from './components/ChatPlanCanvasView';
@@ -116,6 +119,7 @@ export function App() {
   const [isDwdModalOpen, setIsDwdModalOpen] = useState(false);
   void isDwdModalOpen;
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [isPySpurSettingsModalOpen, setIsPySpurSettingsModalOpen] = useState(false);
   const [isAiProviderModalOpen, setIsAiProviderModalOpen] = useState(false);
   const [activeAiModelId, setActiveAiModelId] = useState('gemini-3.8-flash-high');
   const [selectedItem, setSelectedItem] = useState<PetriItem | null>(null);
@@ -138,7 +142,7 @@ export function App() {
     return DEFAULT_WORKSPACES;
   });
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
+  const [activeWorkspaceId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(STORAGE_ACTIVE_WS_KEY);
@@ -576,65 +580,6 @@ function inferPetriKind(text: string): PetriItemKind {
     );
   };
 
-  // Create new workspace
-  const handleCreateWorkspace = (
-    dataOrName: string | Omit<Workspace, 'id' | 'itemCount'>,
-    maybeRepo?: string,
-    maybePath?: string
-  ) => {
-    const newWsId = `ws-${Math.random().toString(36).substring(2, 7)}`;
-    let newWs: Workspace;
-
-    if (typeof dataOrName === 'string') {
-      const name = dataOrName;
-      const repo = maybeRepo || 'local/repo';
-      const path = maybePath || `/workspaces/${name.toLowerCase().replace(/\s+/g, '-')}`;
-      newWs = {
-        id: newWsId,
-        name,
-        repo,
-        branch: 'main',
-        repoUrl: repo.includes('://') ? repo : `https://github.com/${repo}`,
-        path,
-        itemCount: 0,
-        lastSyncedAt: Date.now(),
-      };
-    } else {
-      newWs = {
-        id: newWsId,
-        name: dataOrName.name,
-        repo: dataOrName.repo,
-        branch: dataOrName.branch || 'main',
-        repoUrl:
-          dataOrName.repoUrl ||
-          (dataOrName.repo.includes('://') ? dataOrName.repo : `https://github.com/${dataOrName.repo}`),
-        path: dataOrName.path,
-        isPrivate: dataOrName.isPrivate,
-        accountId: dataOrName.accountId,
-        defaultBranch: dataOrName.defaultBranch || 'main',
-        itemCount: 0,
-        lastSyncedAt: Date.now(),
-      };
-    }
-
-    setWorkspaces((prev) => [...prev, newWs]);
-    setActiveWorkspaceId(newWsId);
-  };
-
-  const handleUpdateWorkspace = (updated: Workspace) => {
-    setWorkspaces((prev) => prev.map((ws) => (ws.id === updated.id ? updated : ws)));
-  };
-
-  const handleDeleteWorkspace = (id: string) => {
-    setWorkspaces((prev) => {
-      const filtered = prev.filter((ws) => ws.id !== id);
-      if (filtered.length === 0) return prev;
-      if (activeWorkspaceId === id) {
-        setActiveWorkspaceId(filtered[0].id);
-      }
-      return filtered;
-    });
-  };
 
   const handleOpenApproval = (item: PetriItem) => {
     setSelectedItem(item);
@@ -694,15 +639,9 @@ function inferPetriKind(text: string): PetriItemKind {
   ).length;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative">
-      {/* Background: Inked Drafting Vellum Paper with 24mm Grid */}
-      <div 
-        className="absolute inset-0 bg-[#F6F3EC] pointer-events-none z-0" 
-        style={{
-          backgroundImage: 'linear-gradient(to right, rgba(26,29,26,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,29,26,0.07) 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }} 
-      />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white text-slate-900 font-sans relative">
+      {/* Background: Clean White Canvas */}
+      <div className="absolute inset-0 bg-white pointer-events-none z-0" />
 
       {/* Interactive UI Container */}
       <div className="relative z-20 flex flex-col h-full w-full overflow-hidden">
@@ -821,6 +760,13 @@ function inferPetriKind(text: string): PetriItemKind {
                   </div>
                 )}
 
+                {/* View: PySpur Studio (DAG Builder) */}
+                {currentView === 'pyspur' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <PetriPySpurStudioView onOpenSettings={() => setIsPySpurSettingsModalOpen(true)} />
+                  </div>
+                )}
+
                 {/* View: Zero (Zeroshot v8 Engine & Invariants) */}
                 {currentView === 'zero' && (
                   <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
@@ -828,6 +774,13 @@ function inferPetriKind(text: string): PetriItemKind {
                       activeWorkspace={activeWorkspace}
                       activeUser={activeUser}
                     />
+                  </div>
+                )}
+
+                {/* View: Cosmos Server UI */}
+                {currentView === 'cosmos' && (
+                  <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+                    <CosmosServerView />
                   </div>
                 )}
 
@@ -1055,16 +1008,20 @@ function inferPetriKind(text: string): PetriItemKind {
         }
       />
 
-      {/* Workspace Switcher Modal */}
-      <WorkspaceModal
+      {/* Workspace Environment & Target Target Modal */}
+      <WorkspaceSelectionModal
         isOpen={isWorkspaceModalOpen}
         onClose={() => setIsWorkspaceModalOpen(false)}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onSelectWorkspace={(id) => setActiveWorkspaceId(id)}
-        onCreateWorkspace={handleCreateWorkspace}
-        onUpdateWorkspace={handleUpdateWorkspace}
-        onDeleteWorkspace={handleDeleteWorkspace}
+        onConnect={(config) => {
+          console.log('Connected Workspace:', config);
+          setIsWorkspaceModalOpen(false);
+        }}
+      />
+
+      {/* PySpur Settings Modal */}
+      <PySpurSettingsModal
+        isOpen={isPySpurSettingsModalOpen}
+        onClose={() => setIsPySpurSettingsModalOpen(false)}
       />
 
       {/* Gated PR / Signoff Modal */}

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  cosmos-server:
+    image: azukaar/cosmos-server:latest
+    container_name: cosmos-server
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    privileged: false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/cosmos-data:/config
+      - /opt/cosmos-data/certs:/certs
+    environment:
+      - COSMOS_HTTP_PORT=80
+      - COSMOS_HTTPS_PORT=443
+      - COSMOS_DATA_DIR=/config
+    networks:
+      - petri-network
+
+networks:
+  petri-network:
+    name: petri-network
+    external: true
