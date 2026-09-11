@@ -111,8 +111,7 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
     currentView === 'plan' ||
     currentView === 'board' ||
     currentView === 'projects' ||
-    currentView === 'git' ||
-    currentView === 'companion';
+    currentView === 'git';
 
   const isGenActive =
     currentView === 'generative_video' ||
@@ -425,27 +424,6 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
                         <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-50 text-teal-700">Trunk</span>
                       </div>
                       <div className="text-[10px] text-stone-400 font-normal">Petri Funnel & Releases</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onSelectView('companion');
-                      setOpenDropdown(null);
-                    }}
-                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      currentView === 'companion'
-                        ? 'bg-teal-50 text-teal-900 font-medium'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                    }`}
-                  >
-                    <Brain className="w-4 h-4 text-teal-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold flex items-center space-x-1.5">
-                        <span>Thought Companion</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Gemini</span>
-                      </div>
-                      <div className="text-[10px] text-stone-400 font-normal">Open Chat & Infinite Forking</div>
                     </div>
                   </button>
                 </div>

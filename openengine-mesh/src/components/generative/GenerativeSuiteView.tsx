@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Video,
   Mic,
@@ -6,14 +6,17 @@ import {
   Sparkles,
   Layers,
   Palette,
-  Upload,
-  RefreshCw,
-  CheckCircle2,
   Volume2,
+  RefreshCw,
   Clapperboard,
+  Film,
+  Zap,
 } from 'lucide-react';
 import { PetriDesignStudioView } from './PetriDesignStudioView';
 import { HyperframeVideoSuite } from './HyperframeVideoSuite';
+import { AiVideoGenerator } from './video/AiVideoGenerator';
+import { AiImageGenerator } from './image/AiImageGenerator';
+import { AiMultimodalStudio } from './multimodal/AiMultimodalStudio';
 import { PetriViewMode } from '../../types';
 
 export type GenerativeSubTab = 'video' | 'audio' | 'image' | 'multimodal' | 'design';
@@ -39,6 +42,8 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
   };
 
   const [activeTab, setActiveTab] = useState<GenerativeSubTab>(() => tabFromView(currentView));
+  const [videoSubMode, setVideoSubMode] = useState<'generator' | 'hyperframe'>('generator');
+  const [videoInitialImage, setVideoInitialImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentView) {
@@ -60,9 +65,7 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
     }
   };
 
-
-
-  // Audio State
+  // Audio State (Speech Synthesis)
   const [audioPrompt, setAudioPrompt] = useState(
     'Welcome back to Zero Petri. All eight hundred forty-nine student records are synced with zero latency.'
   );
@@ -70,75 +73,6 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
   const [audioSpeed, setAudioSpeed] = useState(1.0);
   const [isSynthesizingAudio, setIsSynthesizingAudio] = useState(false);
   const [audioPlayed, setAudioPlayed] = useState(false);
-
-  // Image State
-  const [imagePrompt, setImagePrompt] = useState(
-    'Minimalist architectural educational campus with glass atrium, tiffany teal accents, isometric render'
-  );
-  const [aspectRatio, setAspectRatio] = useState<'1:1' | '16:9' | '9:16' | '4:3'>('16:9');
-  const [stylePreset, setStylePreset] = useState('enterprise_minimal');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-  // Multi-Modal State
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [multimodalFile, setMultimodalFile] = useState<string>('Midterms_1-2026_Analysis.png');
-  const [multimodalFileSize, setMultimodalFileSize] = useState<string>('852 KB');
-  const [multimodalPreview, setMultimodalPreview] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [multimodalAnalysis, setMultimodalAnalysis] = useState<string>(
-    'Vision Analysis Result: Detected 16 columns corresponding to curriculum skills. Student #402 demonstrates a 32% deviation on cloze test items while maintaining a 92% vocabulary benchmark.'
-  );
-
-  const processFile = (file: File) => {
-    setMultimodalFile(file.name);
-    setMultimodalFileSize(`${(file.size / 1024).toFixed(1)} KB`);
-    setIsAnalyzing(true);
-
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setMultimodalPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setMultimodalPreview(null);
-    }
-
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setMultimodalAnalysis(
-        `Multi-Modal Inspection Complete: Analyzed "${file.name}" (${file.type || 'binary/stream'}). Detected structured entities and tabular metrics. FERPA sanitized and stored with AES-256-GCM encryption.`
-      );
-    }, 850);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingFile(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingFile(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingFile(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFile(e.target.files[0]);
-    }
-  };
 
   const handleSynthesizeAudio = () => {
     setIsSynthesizingAudio(true);
@@ -149,14 +83,7 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
       const utterance = new SpeechSynthesisUtterance(audioPrompt);
       utterance.rate = audioSpeed;
       window.speechSynthesis?.speak(utterance);
-    }, 600);
-  };
-
-  const handleGenerateImage = () => {
-    setIsGeneratingImage(true);
-    setTimeout(() => {
-      setIsGeneratingImage(false);
-    }, 1000);
+    }, 400);
   };
 
   return (
@@ -239,35 +166,65 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
 
       {/* View Content Body */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 1. Full Hyperframe Video Design Suite & Video Flow NLE */}
+        {/* 1. Video Suite (AI Video Generator + Hyperframe Cinematic Studio) */}
         {activeTab === 'video' && (
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            {onSelectView && (
-              <div className="m-4 mb-0 p-4 bg-gradient-to-r from-slate-900 via-teal-950/80 to-slate-900 border border-teal-500/40 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-100">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">
-                      NEW: FLOW IN PETRI
-                    </span>
-                    <span className="text-xs text-teal-400 font-mono">FULL AI VIDEO EDITOR</span>
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-100">
-                    Petri Video Flow Studio (Scene Graph & Multi-Track NLE)
-                  </h3>
-                  <p className="text-xs text-slate-400 max-w-2xl">
-                    Generate interconnected scenes, connect optical transitions, trim clips on a synchronized multi-track timeline, and export master movies.
-                  </p>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Sub-Mode Switcher Bar */}
+            <div className="px-6 py-2 bg-stone-50/90 border-b border-stone-200/70 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-semibold text-stone-600">Video Studio Mode:</span>
+                <div className="flex items-center space-x-1 bg-white p-0.5 rounded-lg border border-stone-200 text-xs shadow-xs">
+                  <button
+                    onClick={() => setVideoSubMode('generator')}
+                    className={`px-3 py-1 rounded-md font-medium cursor-pointer transition-all flex items-center space-x-1.5 ${
+                      videoSubMode === 'generator'
+                        ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <Zap className="w-3 h-3 text-indigo-600" />
+                    <span>AI Video Generator (T2V & I2V)</span>
+                  </button>
+
+                  <button
+                    onClick={() => setVideoSubMode('hyperframe')}
+                    className={`px-3 py-1 rounded-md font-medium cursor-pointer transition-all flex items-center space-x-1.5 ${
+                      videoSubMode === 'hyperframe'
+                        ? 'bg-teal-50 text-teal-700 font-bold border border-teal-200 shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <Film className="w-3 h-3 text-teal-600" />
+                    <span>Hyperframe Cinematic Studio & NLE</span>
+                  </button>
                 </div>
+              </div>
+
+              {onSelectView && (
                 <button
                   onClick={() => onSelectView('video_flow')}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-lg shadow-teal-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-3 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-medium flex items-center space-x-1.5 transition-all cursor-pointer"
                 >
-                  <Clapperboard className="w-4 h-4" />
-                  <span>Launch Video Flow Studio →</span>
+                  <Clapperboard className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Open Video Flow NLE →</span>
                 </button>
-              </div>
-            )}
-            <HyperframeVideoSuite />
+              )}
+            </div>
+
+            {/* Video Sub-Mode Contents */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {videoSubMode === 'generator' ? (
+                <AiVideoGenerator
+                  initialImage={videoInitialImage}
+                  onClearInitialImage={() => setVideoInitialImage(null)}
+                  onSwitchToHyperframe={() => setVideoSubMode('hyperframe')}
+                />
+              ) : (
+                <div className="flex-1 flex flex-col overflow-y-auto">
+                  <HyperframeVideoSuite />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -346,7 +303,7 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
                 </div>
                 <button
                   onClick={() => window.speechSynthesis?.cancel()}
-                  className="px-2.5 py-1 bg-white border border-rose-200 text-rose-800 rounded-lg font-medium hover:bg-rose-100"
+                  className="px-2.5 py-1 bg-white border border-rose-200 text-rose-800 rounded-lg font-medium hover:bg-rose-100 cursor-pointer"
                 >
                   Stop Audio
                 </button>
@@ -355,162 +312,29 @@ export const GenerativeSuiteView: React.FC<GenerativeSuiteViewProps> = ({
           </div>
         )}
 
-        {/* 3. Image Studio */}
+        {/* 3. Image Studio (AI Image Generator) */}
         {activeTab === 'image' && (
-          <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
-            <div>
-              <h2 className="text-xl font-bold text-stone-900">Text-to-Image & Asset Generator</h2>
-              <p className="text-xs text-stone-500 mt-1">
-                Generate production design mockups, illustration vectors, and UI component textures.
-              </p>
-            </div>
-
-            <div className="p-6 bg-white rounded-2xl border border-stone-200 shadow-sm space-y-4">
-              <label className="text-xs font-semibold text-stone-700 block">Visual Prompt</label>
-              <textarea
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                className="w-full p-3 text-xs border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none h-24"
-              />
-
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="font-semibold text-stone-600 block mb-1">Aspect Ratio</label>
-                  <select
-                    value={aspectRatio}
-                    onChange={(e) => setAspectRatio(e.target.value as any)}
-                    className="w-full p-2 border border-stone-200 rounded-xl bg-stone-50 cursor-pointer"
-                  >
-                    <option value="16:9">16:9 Landscape (Presentation / Banner)</option>
-                    <option value="1:1">1:1 Square (Avatar / Icon / Texture)</option>
-                    <option value="9:16">9:16 Portrait (Mobile Screen)</option>
-                    <option value="4:3">4:3 Standard (Slide / Document)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="font-semibold text-stone-600 block mb-1">Style Preset</label>
-                  <select
-                    value={stylePreset}
-                    onChange={(e) => setStylePreset(e.target.value)}
-                    className="w-full p-2 border border-stone-200 rounded-xl bg-stone-50 cursor-pointer"
-                  >
-                    <option value="enterprise_minimal">Enterprise Minimalist (Clean Teal)</option>
-                    <option value="3d_glassmorphic">3D Frosted Glassmorphism</option>
-                    <option value="vector_flat">Flat Vector Illustration</option>
-                    <option value="isometric_blueprint">Isometric Blueprint Tech</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                onClick={handleGenerateImage}
-                disabled={isGeneratingImage}
-                className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
-              >
-                {isGeneratingImage ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Rendering Image with Latent Diffusion...</span>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Generate Image Asset</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          <AiImageGenerator
+            onSendToVideo={(imgUrl) => {
+              setVideoInitialImage(imgUrl);
+              setActiveTab('video');
+              setVideoSubMode('generator');
+            }}
+            onSendToMultimodal={() => {
+              setActiveTab('multimodal');
+            }}
+          />
         )}
 
-        {/* 4. Multi-Modal Vision Analysis */}
+        {/* 4. Multi-Modal Studio (Actual Multimodal Generation) */}
         {activeTab === 'multimodal' && (
-          <div className="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
-            <div>
-              <h2 className="text-xl font-bold text-stone-900">Multi-Modal Vision & Document Analysis</h2>
-              <p className="text-xs text-stone-500 mt-1">
-                Inspect scanned student tests, whiteboard diagrams, UI wireframes, and video frames.
-              </p>
-            </div>
-
-            {/* Interactive File Dropzone */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileInputChange}
-              className="hidden"
-              accept=".png,.jpg,.jpeg,.webp,.pdf,.mp4,.xlsx,.csv,.txt"
-            />
-
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`p-8 border-2 border-dashed rounded-2xl text-center space-y-3 cursor-pointer transition-all duration-200 ${
-                isDraggingFile
-                  ? 'border-indigo-500 bg-indigo-50/80 scale-[1.01]'
-                  : 'border-stone-300 bg-white hover:border-stone-400 hover:bg-stone-50/50'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
-                {isDraggingFile ? (
-                  <Sparkles className="w-6 h-6 text-indigo-600 animate-bounce" />
-                ) : (
-                  <Upload className="w-6 h-6 text-indigo-500" />
-                )}
-              </div>
-              <div className="text-sm font-semibold text-stone-800">
-                {isDraggingFile ? 'Drop files here to analyze' : 'Drag and drop test sheets, diagrams, or wireframes'}
-              </div>
-              <p className="text-xs text-stone-400">
-                or <span className="text-indigo-600 font-medium underline">browse from your device</span> · Supports PNG, JPG, PDF, XLSX, MP4 (AES-256-GCM encrypted)
-              </p>
-            </div>
-
-            {/* Ingestion & Inspection Status */}
-            {isAnalyzing ? (
-              <div className="p-6 bg-white rounded-2xl border border-stone-200 shadow-sm flex items-center space-x-3 text-xs text-stone-600">
-                <RefreshCw className="w-5 h-5 text-indigo-600 animate-spin" />
-                <div>
-                  <div className="font-semibold text-stone-900">Inspecting document entities & visual elements...</div>
-                  <div className="text-[11px] text-stone-400">Running multimodal OCR and curriculum mapping</div>
-                </div>
-              </div>
-            ) : (
-              multimodalAnalysis && (
-                <div className="p-5 bg-white rounded-2xl border border-stone-200 shadow-sm space-y-3 text-xs animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
-                    <div className="font-bold text-stone-900 flex items-center space-x-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Inspected: {multimodalFile}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-100 text-stone-600">
-                        {multimodalFileSize}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      Encrypted at rest
-                    </span>
-                  </div>
-
-                  {multimodalPreview && (
-                    <div className="rounded-xl overflow-hidden border border-stone-200 max-h-60 flex items-center justify-center bg-stone-900">
-                      <img
-                        src={multimodalPreview}
-                        alt="Uploaded preview"
-                        className="max-h-60 object-contain"
-                      />
-                    </div>
-                  )}
-
-                  <p className="text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-xl font-mono text-[11px] border border-stone-100">
-                    {multimodalAnalysis}
-                  </p>
-                </div>
-              )
-            )}
-          </div>
+          <AiMultimodalStudio
+            onSendToVideo={(imgUrl) => {
+              setVideoInitialImage(imgUrl);
+              setActiveTab('video');
+              setVideoSubMode('generator');
+            }}
+          />
         )}
 
         {/* 5. Complete Petri Design Studio */}

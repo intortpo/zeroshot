@@ -156,7 +156,7 @@ const INITIAL_MESSAGES: Record<string, ZenChatMessage[]> = {
       id: 'msg-g-2',
       channelId: 'ch-general',
       senderId: 'bot-gemini',
-      senderName: 'Gemini Thought Companion',
+      senderName: 'Gemini Assistant',
       isAi: true,
       modelId: 'gemini-3.8-flash-high',
       content: 'I am ready to reflect on any system questions or channel topics. Every reflection maintains bounded context and can be turned directly into a shareable Zen Note or Kanban goal.',

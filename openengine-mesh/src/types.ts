@@ -283,7 +283,6 @@ export type PetriViewMode =
   | 'federated'
   | 'generative_video'
   | 'video_flow'
-  | 'companion'
   | 'generative_audio'
   | 'generative_image'
   | 'generative_multimodal'
@@ -336,45 +335,6 @@ export interface TimelineClip {
   duration: number;
   color: string;
   waveform?: number[];
-}
-
-export interface ThoughtTrace {
-  reasoningTokens: number;
-  thinkingDurationMs: number;
-  internalHypotheses: string[];
-  reflectionSummary: string;
-  confidenceScore: number;
-}
-
-export interface CompanionMessage {
-  id: string;
-  branchId: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  thoughtTrace?: ThoughtTrace;
-  injectedScenePrompt?: string;
-  forkedFromMessageId?: string;
-}
-
-export interface ConversationBranch {
-  id: string;
-  name: string;
-  parentBranchId: string | null;
-  divergedAtMessageId: string | null;
-  createdAt: string;
-  messages: CompanionMessage[];
-  color: string;
-}
-
-export interface SteerableConceptWord {
-  id: string;
-  word: string;
-  category: 'architecture' | 'security' | 'runtime' | 'eval' | 'networking';
-  relevance: number;
-  selected: boolean;
-  fadedIn: boolean;
-  children?: string[];
 }
 
 // Petri Server & SmartShield Types (Rebranded Architecture)

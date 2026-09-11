@@ -11,7 +11,6 @@ import {
   Sliders,
   FolderGit2,
   User,
-  Key,
   Cpu,
   BarChart3,
   ChevronRight,
@@ -40,7 +39,7 @@ interface MobileMoreDrawerProps {
   activeWorkspace?: Workspace;
   onOpenUserModal: () => void;
   onOpenWorkspaceModal: () => void;
-  onOpenDwdModal: () => void;
+  onOpenDwdModal?: () => void;
   onOpenAiProviderModal: () => void;
 }
 
@@ -53,7 +52,6 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
   activeWorkspace,
   onOpenUserModal,
   onOpenWorkspaceModal,
-  onOpenDwdModal,
   onOpenAiProviderModal,
 }) => {
   if (!isOpen) return null;
@@ -126,23 +124,23 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
 
             <button
               type="button"
-              onClick={() => handleNavigate('focus')}
+              onClick={() => handleNavigate('antigravity')}
               className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
-                currentView === 'focus'
+                currentView === 'antigravity'
                   ? 'bg-indigo-50 border border-indigo-200 text-indigo-950 font-semibold'
                   : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
               }`}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
+                  <Terminal className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <span>Focus Chat</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-indigo-100 text-indigo-800">Zen</span>
+                    <span>Antigravity</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-indigo-100 text-indigo-800">Cloud</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">Steerable Thinking & Prompt Cloud</div>
+                  <div className="text-[11px] text-stone-500">Isolated agy Containers & ttyd Terminals</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />
@@ -233,30 +231,6 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
                     <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Trunk</span>
                   </div>
                   <div className="text-[11px] text-stone-500">Horizontal Funnel & Release Fanout</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-stone-400" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNavigate('companion')}
-              className={`w-full p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
-                currentView === 'companion'
-                  ? 'bg-teal-50 border border-teal-200 text-teal-950 font-semibold'
-                  : 'bg-[#FAFBFB] hover:bg-stone-100 border border-stone-200/70 text-stone-800'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                  <Brain className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <span>Thought Companion</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-teal-100 text-teal-800">Gemini</span>
-                  </div>
-                  <div className="text-[11px] text-stone-500">Open Chat & Infinite Forking</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />
@@ -719,29 +693,17 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({
         </div>
 
         {/* Quick Config Triggers */}
-        <div className="pt-2 border-t border-stone-100 grid grid-cols-2 gap-2 text-xs">
+        <div className="pt-2 border-t border-stone-100 text-xs">
           <button
             type="button"
             onClick={() => {
               onClose();
               onOpenAiProviderModal();
             }}
-            className="p-2.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 font-semibold flex items-center justify-center space-x-2 cursor-pointer"
+            className="w-full p-2.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 font-semibold flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Cpu className="w-3.5 h-3.5 text-indigo-600" />
             <span>AI Providers</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              onOpenDwdModal();
-            }}
-            className="p-2.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 font-semibold flex items-center justify-center space-x-2 cursor-pointer"
-          >
-            <Key className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Google DWD</span>
           </button>
         </div>
       </div>

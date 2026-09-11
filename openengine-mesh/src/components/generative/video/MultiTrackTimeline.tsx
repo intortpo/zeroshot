@@ -64,7 +64,7 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
 
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#FAF8F3';
     ctx.fillRect(0, 0, width, height);
 
     // Render procedural soundwave bars
@@ -80,7 +80,7 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
       const barH = Math.max(4, Math.abs(waveVal) * (height * 0.8));
       const y = (height - barH) / 2;
 
-      ctx.fillStyle = progress < currentTime / totalDuration ? '#14b8a6' : '#334155';
+      ctx.fillStyle = progress < currentTime / totalDuration ? '#0D9488' : '#D1CABE';
       ctx.fillRect(x + 1, y, barWidth - 2, barH);
     }
   }, [currentTime, totalDuration]);
@@ -94,36 +94,40 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+    <div className="bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl p-5 shadow-xs font-mono text-[#1A1D1A]">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-[#1A1D1A]/10">
         {/* Playback buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentTime(0)}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+            className="p-2 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/15 shadow-xs transition-colors"
             title="Beginning"
           >
             <SkipBack className="w-4 h-4" />
           </button>
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20"
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-xs ${
+              isPlaying
+                ? 'bg-amber-600 text-white'
+                : 'bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3]'
+            }`}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             {isPlaying ? 'Pause' : 'Play'}
           </button>
           <button
             onClick={() => setCurrentTime(totalDuration)}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+            className="p-2 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/15 shadow-xs transition-colors"
             title="End"
           >
             <SkipForward className="w-4 h-4" />
           </button>
 
           {/* Timecode Readout */}
-          <div className="ml-3 font-mono text-sm font-semibold text-teal-300 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-700">
-            {formatTimecode(currentTime)} <span className="text-slate-500">/</span> {formatTimecode(totalDuration)}
+          <div className="ml-3 font-mono text-sm font-semibold text-[#1A1D1A] bg-[#F6F3EC] px-3 py-1.5 rounded-lg border border-[#1A1D1A]/20">
+            <span className="text-teal-800 font-bold">{formatTimecode(currentTime)}</span> <span className="text-[#1A1D1A]/30">/</span> <span className="text-[#1A1D1A]/70">{formatTimecode(totalDuration)}</span>
           </div>
         </div>
 
@@ -131,31 +135,31 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+            className="p-2 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/15 shadow-xs transition-colors"
             title="Audio Mute"
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-teal-400" />}
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4 text-teal-800" />}
           </button>
-          <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1 border border-slate-700">
+          <div className="flex items-center gap-1 bg-[#F0ECE1] rounded-lg p-1 border border-[#1A1D1A]/15">
             <button
               onClick={() => setZoomLevel(prev => Math.max(0.6, prev - 0.2))}
-              className="p-1 text-slate-400 hover:text-slate-200"
+              className="p-1 text-[#1A1D1A]/60 hover:text-[#1A1D1A]"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-mono text-slate-300 px-1">{(zoomLevel * 100).toFixed(0)}%</span>
+            <span className="text-[11px] font-mono text-[#1A1D1A] font-bold px-1">{(zoomLevel * 100).toFixed(0)}%</span>
             <button
               onClick={() => setZoomLevel(prev => Math.min(2.0, prev + 0.2))}
-              className="p-1 text-slate-400 hover:text-slate-200"
+              className="p-1 text-[#1A1D1A]/60 hover:text-[#1A1D1A]"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
           <button
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] text-xs border border-[#1A1D1A]/15 shadow-xs transition-colors"
             title="Split Clip at Playhead"
           >
-            <Scissors className="w-3.5 h-3.5 text-teal-400" />
+            <Scissors className="w-3.5 h-3.5 text-teal-800" />
             <span>Split</span>
           </button>
         </div>
@@ -167,16 +171,16 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
         <div className="min-w-[680px] space-y-2">
           {/* TRACK V1: Primary Scenes */}
           <div className="flex items-center gap-2">
-            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
+            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-semibold text-[#1A1D1A]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-teal-400" />
+                <span className="w-2 h-2 rounded-full bg-teal-700" />
                 V1 Main
               </span>
-              <Lock className="w-3 h-3 text-slate-500" />
+              <Lock className="w-3 h-3 text-[#1A1D1A]/40" />
             </div>
 
             {/* Clips Container */}
-            <div className="flex-1 flex gap-1 h-12 bg-slate-950/60 rounded-lg p-1 border border-slate-800 relative">
+            <div className="flex-1 flex gap-1 h-12 bg-[#F6F3EC] rounded-lg p-1 border border-[#1A1D1A]/15 relative">
               {scenes.map(scene => {
                 const widthPercent = (scene.durationSeconds / totalDuration) * 100;
                 const isSelected = scene.id === activeSceneId;
@@ -187,15 +191,15 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
                     style={{ width: `${widthPercent}%` }}
                     className={`h-full rounded px-2 py-1 text-xs font-medium cursor-pointer transition-all flex flex-col justify-between overflow-hidden border ${
                       isSelected
-                        ? 'bg-teal-900/60 border-teal-400 text-teal-200 shadow-md ring-1 ring-teal-400/40'
-                        : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700'
+                        ? 'bg-teal-100 border-teal-700 text-teal-950 shadow-xs ring-1 ring-teal-700/40 font-bold'
+                        : 'bg-[#FAF8F3] border-[#1A1D1A]/15 text-[#1A1D1A] hover:bg-[#F0ECE1]'
                     }`}
                   >
                     <div className="flex items-center justify-between text-[11px] font-semibold truncate">
                       <span>#{scene.order} {scene.title}</span>
-                      <span className="font-mono text-[10px] text-teal-300">{scene.durationSeconds.toFixed(1)}s</span>
+                      <span className="font-mono text-[10px] text-teal-800">{scene.durationSeconds.toFixed(1)}s</span>
                     </div>
-                    <div className="text-[9px] font-mono text-slate-400 truncate">
+                    <div className="text-[9px] font-mono text-[#1A1D1A]/60 truncate">
                       {scene.transitionToNext} • {scene.cameraFlight}
                     </div>
                   </div>
@@ -206,23 +210,23 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
 
           {/* TRACK V2: B-Roll & Waterline Overlays */}
           <div className="flex items-center gap-2">
-            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
+            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-semibold text-[#1A1D1A]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                <span className="w-2 h-2 rounded-full bg-cyan-700" />
                 V2 Overlays
               </span>
-              <button onClick={() => setV2Visible(!v2Visible)} className="text-slate-400 hover:text-slate-200">
-                {v2Visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-red-400" />}
+              <button onClick={() => setV2Visible(!v2Visible)} className="text-[#1A1D1A]/60 hover:text-[#1A1D1A]">
+                {v2Visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-rose-600" />}
               </button>
             </div>
 
-            <div className="flex-1 h-10 bg-slate-950/60 rounded-lg p-1 border border-slate-800 relative flex items-center">
+            <div className="flex-1 h-10 bg-[#F6F3EC] rounded-lg p-1 border border-[#1A1D1A]/15 relative flex items-center">
               <div
                 style={{ width: '45%', marginLeft: '25%' }}
                 className={`h-full rounded px-2 py-1 text-[11px] flex items-center justify-between border ${
                   v2Visible
-                    ? 'bg-cyan-950/50 border-cyan-500/40 text-cyan-300'
-                    : 'opacity-30 bg-slate-900 border-slate-800 text-slate-500'
+                    ? 'bg-cyan-100/60 border-cyan-400 text-cyan-950 font-medium'
+                    : 'opacity-30 bg-[#F0ECE1] border-[#1A1D1A]/15 text-[#1A1D1A]/50'
                 }`}
               >
                 <span>Waterline Particle Spray Alpha</span>
@@ -233,32 +237,32 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
 
           {/* TRACK A1: Audio Score & Procedural Waveform */}
           <div className="flex items-center gap-2">
-            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
+            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-semibold text-[#1A1D1A]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="w-2 h-2 rounded-full bg-emerald-700" />
                 A1 Master
               </span>
-              <Volume2 className="w-3 h-3 text-emerald-400" />
+              <Volume2 className="w-3 h-3 text-emerald-800" />
             </div>
 
-            <div className="flex-1 h-12 bg-slate-950/60 rounded-lg border border-slate-800 relative overflow-hidden">
+            <div className="flex-1 h-12 bg-[#FAF8F3] rounded-lg border border-[#1A1D1A]/15 relative overflow-hidden">
               <canvas ref={waveformCanvasRef} width={800} height={48} className="w-full h-full" />
             </div>
           </div>
 
           {/* TRACK FX: LUT & Optical Shaders */}
           <div className="flex items-center gap-2">
-            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
+            <div className="w-28 flex items-center justify-between px-2.5 py-2 rounded-lg bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-semibold text-[#1A1D1A]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="w-2 h-2 rounded-full bg-purple-700" />
                 FX Master
               </span>
-              <span className="text-[10px] font-mono text-purple-300">3D LUT</span>
+              <span className="text-[10px] font-mono text-purple-900 font-bold">3D LUT</span>
             </div>
 
-            <div className="flex-1 h-8 bg-purple-950/30 rounded-lg px-3 border border-purple-500/40 flex items-center justify-between text-xs text-purple-300 font-mono">
+            <div className="flex-1 h-8 bg-purple-100/50 rounded-lg px-3 border border-purple-300 flex items-center justify-between text-xs text-purple-950 font-mono">
               <span>LUT: {lutName} + Anamorphic Streak Shader</span>
-              <span className="text-[10px] text-purple-400">Global Continuous Pass</span>
+              <span className="text-[10px] text-purple-800 font-semibold">Global Continuous Pass</span>
             </div>
           </div>
         </div>
@@ -268,9 +272,9 @@ export const MultiTrackTimeline: React.FC<MultiTrackTimelineProps> = ({
           style={{
             left: `calc(120px + ${(currentTime / totalDuration) * 100 * 0.82}%)`,
           }}
-          className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none z-20 flex flex-col items-center"
+          className="absolute top-0 bottom-0 w-0.5 bg-rose-600 pointer-events-none z-20 flex flex-col items-center"
         >
-          <div className="w-3 h-3 bg-red-500 rotate-45 -mt-1 shadow-md shadow-red-500/50" />
+          <div className="w-3 h-3 bg-rose-600 rotate-45 -mt-1 shadow-xs" />
         </div>
       </div>
     </div>

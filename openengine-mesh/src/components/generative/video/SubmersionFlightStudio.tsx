@@ -185,21 +185,21 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
   }, [currentFlight, motionScale, isPlaying, cameraFov]);
 
   return (
-    <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+    <div className="bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl p-5 shadow-xs font-mono text-[#1A1D1A]">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-[#1A1D1A]/10 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/30">
+          <div className="p-2 rounded-xl bg-[#F0ECE1] text-teal-800 border border-[#1A1D1A]/15">
             <Compass className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#1A1D1A] tracking-wide flex items-center gap-2">
               Petri Submersion 3D Camera Trajectory Studio
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/20">
                 Vector Physics
               </span>
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#1A1D1A]/60">
               Interactive 3D mathematical spline modeling for sub-aquatic camera dives, breaches, and hourglass zooms.
             </p>
           </div>
@@ -209,14 +209,14 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-medium text-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/20 text-xs font-medium text-[#1A1D1A] transition-colors shadow-xs"
           >
-            {isPlaying ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-teal-400" />}
+            {isPlaying ? <Pause className="w-3.5 h-3.5 text-amber-700" /> : <Play className="w-3.5 h-3.5 text-teal-800" />}
             {isPlaying ? 'Pause Flight' : 'Resume Flight'}
           </button>
           <button
             onClick={() => setSplineProgress(0)}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/20 text-[#1A1D1A]/60 hover:text-[#1A1D1A] transition-colors shadow-xs"
             title="Reset Spline Origin"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -240,50 +240,50 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
               onClick={() => onSelectFlight(flight.id as CameraFlightType)}
               className={`text-left p-3 rounded-xl border transition-all ${
                 isSelected
-                  ? 'bg-teal-950/40 border-teal-500/60 shadow-lg shadow-teal-950/30'
-                  : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600'
+                  ? 'bg-[#F6F3EC] border-[#1A1D1A] ring-2 ring-[#1A1D1A]/15 shadow-xs'
+                  : 'bg-[#FAF8F3] border-[#1A1D1A]/15 hover:border-[#1A1D1A]/35'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-300' : 'text-slate-400'}`} />
-                <span className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-800' : 'text-[#1A1D1A]/50'}`} />
+                <span className={`text-xs font-semibold ${isSelected ? 'text-[#1A1D1A]' : 'text-[#1A1D1A]/70'}`}>
                   {flight.name}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-tight">{flight.desc}</p>
+              <p className="text-[11px] text-[#1A1D1A]/60 leading-tight">{flight.desc}</p>
             </button>
           );
         })}
       </div>
 
       {/* Three.js 3D Viewport */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950 shadow-inner">
+      <div className="relative rounded-xl overflow-hidden border border-[#1A1D1A]/20 bg-black shadow-inner">
         <div ref={mountRef} className="w-full h-[340px]" />
 
         {/* Telemetry Overlays */}
-        <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/80 text-[11px] font-mono text-teal-300 flex items-center gap-3 shadow-md">
+        <div className="absolute top-3 left-3 bg-[#FAF8F3]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1A1D1A]/20 text-[11px] font-mono text-[#1A1D1A] flex items-center gap-3 shadow-xs">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-teal-600 animate-ping" />
             SPLINE POS: {(splineProgress * 100).toFixed(1)}%
           </span>
-          <span className="text-slate-500">|</span>
+          <span className="text-[#1A1D1A]/30">|</span>
           <span>FOV: {cameraFov}mm</span>
-          <span className="text-slate-500">|</span>
+          <span className="text-[#1A1D1A]/30">|</span>
           <span>ROLL: {rollAngle}°</span>
         </div>
 
-        <div className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/80 text-[11px] font-mono text-slate-300 flex items-center gap-2 shadow-md">
-          <Eye className="w-3.5 h-3.5 text-cyan-400" />
+        <div className="absolute bottom-3 right-3 bg-[#FAF8F3]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1A1D1A]/20 text-[11px] font-mono text-[#1A1D1A] flex items-center gap-2 shadow-xs">
+          <Eye className="w-3.5 h-3.5 text-teal-800" />
           <span>SUBMERSION WATERLINE GRID (Y=0.0)</span>
         </div>
       </div>
 
       {/* Lens Optics & Focal Controls */}
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-800">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#1A1D1A]/10">
         <div>
-          <div className="flex justify-between text-xs font-medium text-slate-300 mb-1.5">
+          <div className="flex justify-between text-xs font-medium text-[#1A1D1A]/80 mb-1.5">
             <span>Virtual Cinema Lens Focal Length (FOV)</span>
-            <span className="font-mono text-teal-400">{cameraFov}mm</span>
+            <span className="font-mono text-teal-800 font-bold">{cameraFov}mm</span>
           </div>
           <input
             type="range"
@@ -291,9 +291,9 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
             max={85}
             value={cameraFov}
             onChange={e => setCameraFov(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
+            className="w-full h-1.5 bg-[#F0ECE1] rounded-lg appearance-none cursor-pointer accent-[#1A1D1A]"
           />
-          <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+          <div className="flex justify-between text-[10px] text-[#1A1D1A]/50 mt-1 font-mono">
             <span>18mm Ultra-Wide</span>
             <span>35mm Anamorphic</span>
             <span>85mm Portrait Tele</span>
@@ -301,9 +301,9 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
         </div>
 
         <div>
-          <div className="flex justify-between text-xs font-medium text-slate-300 mb-1.5">
+          <div className="flex justify-between text-xs font-medium text-[#1A1D1A]/80 mb-1.5">
             <span>Dutch Roll & Banking Horizon</span>
-            <span className="font-mono text-teal-400">{rollAngle}°</span>
+            <span className="font-mono text-teal-800 font-bold">{rollAngle}°</span>
           </div>
           <input
             type="range"
@@ -311,9 +311,9 @@ export const SubmersionFlightStudio: React.FC<SubmersionFlightStudioProps> = ({
             max={45}
             value={rollAngle}
             onChange={e => setRollAngle(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
+            className="w-full h-1.5 bg-[#F0ECE1] rounded-lg appearance-none cursor-pointer accent-[#1A1D1A]"
           />
-          <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+          <div className="flex justify-between text-[10px] text-[#1A1D1A]/50 mt-1 font-mono">
             <span>-45° Counter-Clockwise</span>
             <span>0° Level</span>
             <span>+45° Clockwise</span>

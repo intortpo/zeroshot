@@ -57,7 +57,7 @@ export const PetriGitDevelopmentView: React.FC<PetriGitDevelopmentViewProps> = (
       hash: 'e927c3a',
       type: 'feat',
       scope: 'video',
-      message: 'expand hyperframe video editor and add gemini thought companion forking',
+      message: 'expand real video flow editor and multi-scene assembly',
       author: 'hideo',
       age: '1h ago',
       status: 'passed',

@@ -23,9 +23,9 @@ const REPO_TARGET_MODULES: Record<string, { file: string; astNode: string; testN
     testName: 'tests::test_controller_backpressure_queue_invariants',
   },
   mile: {
-    file: 'openengine-mesh/src/components/studio/PetriTesseractStudioView.tsx',
-    astNode: 'PetriTesseractEngine::render_4d_projection_hypercube',
-    testName: 'vitest::test_studio_telemetry_live_mesh_updates',
+    file: 'openengine-mesh/src/components/antigravity/PetriAntigravityCloudView.tsx',
+    astNode: 'PetriAntigravityEngine::spawn_isolated_agy_session',
+    testName: 'vitest::test_antigravity_cloud_run_session_lifecycle',
   },
 };
 

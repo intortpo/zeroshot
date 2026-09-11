@@ -50,7 +50,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
   const [newAssetType, setNewAssetType] = useState<AssetItemType>('image');
   const [newAssetUrl, setNewAssetUrl] = useState('');
   const [newAssetSource, setNewAssetSource] = useState('Petri Studio Ingestion');
-  const [newAssetTags, setNewAssetTags] = useState('tiffany, synthetic');
+  const [newAssetTags, setNewAssetTags] = useState('vellum, synthetic');
 
   // Filtered and sorted assets
   const filteredAssets = useMemo(() => {
@@ -98,7 +98,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
   };
 
   const handleDeleteAsset = (id: string) => {
-    if (confirm('Delete this asset from the local vault?')) {
+    if (confirm('Are you sure you want to remove this asset from the library?')) {
       assetLibraryService.deleteAsset(id);
       setAssets(assetLibraryService.getAssets());
       if (previewAsset?.id === id) setPreviewAsset(null);
@@ -106,7 +106,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
   };
 
   const handleResetDefaults = () => {
-    if (confirm('Reset gallery to default media & dataset catalog?')) {
+    if (confirm('Reset asset library to default seed artifacts?')) {
       assetLibraryService.resetToDefaults();
       setAssets(assetLibraryService.getAssets());
     }
@@ -114,16 +114,19 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
 
   const handleCreateAsset = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAssetName.trim()) return;
+    if (!newAssetName.trim() || !newAssetUrl.trim()) return;
 
     assetLibraryService.addAsset({
       name: newAssetName.trim(),
       type: newAssetType,
-      url: newAssetUrl.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-      thumbnailUrl: newAssetUrl.trim() || undefined,
-      sizeBytes: Math.floor(Math.random() * 8000000) + 500000,
-      source: newAssetSource.trim() || 'Manual Import',
-      tags: newAssetTags.split(',').map((t) => t.trim()).filter(Boolean),
+      url: newAssetUrl.trim(),
+      thumbnailUrl: newAssetType === 'image' || newAssetType === 'video' ? newAssetUrl.trim() : undefined,
+      sizeBytes: Math.floor(Math.random() * 5000000) + 500000,
+      source: newAssetSource.trim() || 'Manual Registration',
+      tags: newAssetTags
+        .split(',')
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean),
     });
 
     setAssets(assetLibraryService.getAssets());
@@ -135,45 +138,54 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
   const renderCategoryIcon = (type: AssetItemType, className = 'w-4 h-4') => {
     switch (type) {
       case 'video':
-        return <Film className={`${className} text-teal-400`} />;
+        return <Film className={className} />;
       case 'image':
-        return <ImageIcon className={`${className} text-teal-300`} />;
+        return <ImageIcon className={className} />;
       case 'audio':
-        return <Music className={`${className} text-emerald-400`} />;
+        return <Music className={className} />;
       case '3d':
-        return <Box className={`${className} text-cyan-400`} />;
+        return <Box className={className} />;
       case 'dataset':
-        return <Database className={`${className} text-teal-400`} />;
+        return <Database className={className} />;
       case 'document':
-        return <FileText className={`${className} text-slate-300`} />;
+        return <FileText className={className} />;
     }
   };
 
   return (
-    <div className={`flex-1 flex flex-col h-full overflow-hidden bg-[#041017] text-slate-100 ${className}`}>
+    <div className={`flex-1 flex flex-col h-full overflow-hidden bg-[#F6F3EC] text-[#1A1D1A] font-mono relative select-none ${className}`}>
+      {/* Background: Inked Drafting Vellum Paper with 24mm Grid */}
+      <div 
+        className="absolute inset-0 bg-[#F6F3EC] pointer-events-none z-0" 
+        style={{
+          backgroundImage: 'linear-gradient(to right, rgba(26,29,26,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,29,26,0.07) 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }} 
+      />
+
       {/* Top Header */}
-      <div className="bg-[#071620] border-b border-teal-900/40 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-lg">
+      <div className="relative z-10 bg-[#FAF8F3]/95 border-b border-[#1A1D1A]/15 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-xs backdrop-blur-md">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-teal-400 mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#0D9488] mb-1">
             <span>PETRI STUDIO</span>
             <span>/</span>
             <span>MEDIA VAULT</span>
             <span>/</span>
-            <span className="text-slate-400">GALLERY & ASSETS</span>
+            <span className="text-[#1A1D1A]/60">GALLERY & ASSETS</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-[#0D9488]/10 border border-[#0D9488]/30 flex items-center justify-center text-[#0D9488] shadow-xs">
               <FolderArchive className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2.5">
-                Gallery & Asset Library
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1A1D1A] flex items-center gap-2.5">
+                Gallery & Asset Explorer
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold bg-[#1A1D1A]/5 text-[#1A1D1A] border border-[#1A1D1A]/15">
                   {assets.length} Active Artifacts
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Centralized vault for Hyperframe videos, Video Flow scenes, diffusion stills, 3D captures, and EDM datasets.
+              <p className="text-xs text-[#1A1D1A]/70 mt-0.5">
+                Centralized vault for real videos, flow scenes, diffusion stills, audio, 3D captures, and EDM datasets.
               </p>
             </div>
           </div>
@@ -181,15 +193,15 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
 
         {/* Global Vault Telemetry & Actions */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono text-slate-300">
-            <HardDrive className="w-3.5 h-3.5 text-teal-400" />
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#1A1D1A]/15 text-xs font-mono text-[#1A1D1A]/80 shadow-xs">
+            <HardDrive className="w-3.5 h-3.5 text-[#0D9488]" />
             <span>Vault Footprint:</span>
-            <strong className="text-teal-300">{totalStorageFormatted}</strong>
+            <strong className="text-[#0D9488]">{totalStorageFormatted}</strong>
           </div>
 
           <button
             onClick={() => setIsAddingModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] text-xs font-semibold shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Import Asset</span>
@@ -198,7 +210,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
           <button
             onClick={handleResetDefaults}
             title="Reset library to defaults"
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/15 text-[#1A1D1A]/70 hover:text-[#1A1D1A] transition-colors cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -206,7 +218,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#05131C] border-b border-teal-900/30 px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
+      <div className="relative z-10 bg-[#FAF8F3]/90 border-b border-[#1A1D1A]/15 px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0 backdrop-blur-sm">
         {/* Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           {(
@@ -228,15 +240,15 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                 onClick={() => setSelectedCategory(cat.id as AssetItemType | 'all')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-teal-500/20 text-teal-200 border border-teal-500/40 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3] font-bold shadow-xs'
+                    : 'bg-[#FAF8F3] text-[#1A1D1A]/70 hover:text-[#1A1D1A] hover:bg-[#F0ECE1] border border-[#1A1D1A]/15'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-teal-300' : 'text-slate-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FAF8F3]' : 'text-[#1A1D1A]/60'}`} />
                 <span>{cat.label}</span>
                 <span
                   className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                    isActive ? 'bg-teal-500/30 text-teal-100' : 'bg-slate-800 text-slate-500'
+                    isActive ? 'bg-white/20 text-white' : 'bg-[#1A1D1A]/5 text-[#1A1D1A]/70'
                   }`}
                 >
                   {cat.count}
@@ -249,29 +261,29 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
         {/* Search, Sort, View Controls */}
         <div className="flex items-center gap-2.5 self-end md:self-auto w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#1A1D1A]/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search assets, tags, sources..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors font-sans"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-[#1A1D1A]/20 text-xs text-[#1A1D1A] placeholder-[#1A1D1A]/40 focus:outline-none focus:border-[#0D9488] transition-colors font-mono"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1A1D1A]/40 hover:text-[#1A1D1A]"
               >
                 ✕
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-900/80 border border-slate-800 rounded-lg p-1 text-xs">
+          <div className="flex items-center gap-1 bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-lg p-1 text-xs">
             <button
               onClick={() => setSortBy('newest')}
               className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                sortBy === 'newest' ? 'bg-teal-500/20 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                sortBy === 'newest' ? 'bg-[#1A1D1A] text-[#FAF8F3] font-semibold' : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
               }`}
             >
               Newest
@@ -279,7 +291,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
             <button
               onClick={() => setSortBy('name')}
               className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                sortBy === 'name' ? 'bg-teal-500/20 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                sortBy === 'name' ? 'bg-[#1A1D1A] text-[#FAF8F3] font-semibold' : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
               }`}
             >
               Name
@@ -287,18 +299,18 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
             <button
               onClick={() => setSortBy('size')}
               className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                sortBy === 'size' ? 'bg-teal-500/20 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                sortBy === 'size' ? 'bg-[#1A1D1A] text-[#FAF8F3] font-semibold' : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
               }`}
             >
               Size
             </button>
           </div>
 
-          <div className="flex items-center bg-slate-900/80 border border-slate-800 rounded-lg p-1">
+          <div className="flex items-center bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-lg p-1">
             <button
               onClick={() => setViewLayout('grid')}
               className={`p-1 rounded transition-colors cursor-pointer ${
-                viewLayout === 'grid' ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-slate-200'
+                viewLayout === 'grid' ? 'bg-[#1A1D1A] text-[#FAF8F3]' : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
               }`}
               title="Grid View"
             >
@@ -307,7 +319,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
             <button
               onClick={() => setViewLayout('table')}
               className={`p-1 rounded transition-colors cursor-pointer ${
-                viewLayout === 'table' ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-slate-200'
+                viewLayout === 'table' ? 'bg-[#1A1D1A] text-[#FAF8F3]' : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
               }`}
               title="List View"
             >
@@ -318,12 +330,12 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="relative z-10 flex-1 overflow-y-auto p-6">
         {filteredAssets.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
-            <FolderArchive className="w-10 h-10 text-slate-600 mb-3" />
-            <h3 className="text-sm font-semibold text-slate-300">No assets match your filter</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+          <div className="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#1A1D1A]/20 rounded-2xl bg-[#FAF8F3]/60">
+            <FolderArchive className="w-10 h-10 text-[#1A1D1A]/40 mb-3" />
+            <h3 className="text-sm font-semibold text-[#1A1D1A]">No assets match your filter</h3>
+            <p className="text-xs text-[#1A1D1A]/60 mt-1 max-w-sm">
               Try adjusting your search keywords, clear category filter, or import new media into the vault.
             </p>
             <button
@@ -331,7 +343,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                 setSelectedCategory('all');
                 setSearchQuery('');
               }}
-              className="mt-4 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors"
+              className="mt-4 px-3.5 py-1.5 rounded-lg bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-xs font-medium text-[#FAF8F3] transition-colors"
             >
               Reset Filters
             </button>
@@ -342,12 +354,12 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
             {filteredAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="group relative bg-[#071620] border border-teal-900/30 hover:border-teal-500/50 rounded-2xl overflow-hidden transition-all duration-200 flex flex-col shadow-md hover:shadow-teal-950/40"
+                className="group relative bg-[#FAF8F3] border border-[#1A1D1A]/15 hover:border-[#1A1D1A]/40 rounded-2xl overflow-hidden transition-all duration-200 flex flex-col shadow-xs hover:shadow-md"
               >
                 {/* Media Thumbnail Container */}
                 <div
                   onClick={() => setPreviewAsset(asset)}
-                  className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer"
+                  className="relative aspect-video w-full bg-[#1A1D1A]/90 flex items-center justify-center overflow-hidden cursor-pointer"
                 >
                   {asset.thumbnailUrl ? (
                     <img
@@ -356,21 +368,21 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center p-4 text-slate-500">
+                    <div className="flex flex-col items-center justify-center p-4 text-[#FAF8F3]/70">
                       {renderCategoryIcon(asset.type, 'w-10 h-10 mb-2')}
                       <span className="text-[10px] font-mono uppercase">{asset.type}</span>
                     </div>
                   )}
 
                   {/* Type Badge */}
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-[#041017]/80 backdrop-blur-md border border-teal-900/60 flex items-center gap-1.5 text-[10px] font-mono text-teal-300">
-                    {renderCategoryIcon(asset.type, 'w-3 h-3')}
+                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-[#1A1D1A]/80 backdrop-blur-md border border-white/20 flex items-center gap-1.5 text-[10px] font-mono text-[#FAF8F3]">
+                    {renderCategoryIcon(asset.type, 'w-3 h-3 text-[#0D9488]')}
                     <span className="uppercase font-semibold">{asset.type}</span>
                   </div>
 
                   {/* Dimension or Duration Badge */}
                   {(asset.dimensions || asset.durationSeconds) && (
-                    <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#041017]/80 backdrop-blur-md border border-slate-800 text-[10px] font-mono text-slate-300">
+                    <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#1A1D1A]/80 backdrop-blur-md border border-white/20 text-[10px] font-mono text-[#FAF8F3]">
                       {asset.durationSeconds
                         ? formatDuration(asset.durationSeconds)
                         : asset.dimensions}
@@ -379,8 +391,8 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
 
                   {/* Play Overlay for Video & Audio */}
                   {(asset.type === 'video' || asset.type === 'audio') && (
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <div className="w-10 h-10 rounded-full bg-teal-500 text-slate-950 flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="w-10 h-10 rounded-full bg-[#0D9488] text-[#FAF8F3] flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                         <Play className="w-5 h-5 fill-current ml-0.5" />
                       </div>
                     </div>
@@ -392,14 +404,14 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                   <div>
                     <h3
                       onClick={() => setPreviewAsset(asset)}
-                      className="text-xs font-bold text-slate-200 group-hover:text-teal-300 transition-colors line-clamp-1 cursor-pointer"
+                      className="text-xs font-bold text-[#1A1D1A] group-hover:text-[#0D9488] transition-colors line-clamp-1 cursor-pointer"
                       title={asset.name}
                     >
                       {asset.name}
                     </h3>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                    <div className="flex items-center justify-between text-[11px] text-[#1A1D1A]/60 mt-1 font-mono">
                       <span className="truncate max-w-[140px]">{asset.source}</span>
-                      <span className="font-mono text-slate-500">{formatFileSize(asset.sizeBytes)}</span>
+                      <span>{formatFileSize(asset.sizeBytes)}</span>
                     </div>
 
                     {/* Tags */}
@@ -408,7 +420,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                         {asset.tags.slice(0, 3).map((tag, idx) => (
                           <span
                             key={idx}
-                            className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400"
+                            className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#1A1D1A]/5 border border-[#1A1D1A]/10 text-[#1A1D1A]/70"
                           >
                             #{tag}
                           </span>
@@ -418,8 +430,8 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                   </div>
 
                   {/* Card Bottom Actions */}
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-teal-900/20 text-xs">
-                    <div className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#1A1D1A]/10 text-xs">
+                    <div className="text-[10px] font-mono text-[#1A1D1A]/50 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       <span>{new Date(asset.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -428,15 +440,15 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                       <button
                         onClick={() => handleCopyUri(asset)}
                         title="Copy Petri Vault URI"
-                        className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-teal-300 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A]/60 hover:text-[#0D9488] border border-[#1A1D1A]/10 transition-colors cursor-pointer"
                       >
-                        {copiedId === asset.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedId === asset.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
 
                       <button
                         onClick={() => setPreviewAsset(asset)}
                         title="Open Full Preview"
-                        className="p-1.5 rounded-lg bg-teal-950 hover:bg-teal-900/80 text-teal-300 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg bg-[#0D9488]/10 hover:bg-[#0D9488]/20 text-[#0D9488] border border-[#0D9488]/30 transition-colors cursor-pointer"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
                       </button>
@@ -444,7 +456,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                       <button
                         onClick={() => handleDeleteAsset(asset.id)}
                         title="Delete asset"
-                        className="p-1.5 rounded-lg hover:bg-rose-950/40 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg hover:bg-rose-50 text-[#1A1D1A]/40 hover:text-rose-600 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -456,74 +468,66 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
           </div>
         ) : (
           /* Table View Layout */
-          <div className="bg-[#071620] border border-teal-900/30 rounded-2xl overflow-hidden shadow-md">
+          <div className="bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#05131C] text-slate-400 border-b border-teal-900/30 font-mono text-[11px] uppercase">
-                  <tr>
-                    <th className="py-3 px-4">Artifact</th>
-                    <th className="py-3 px-4">Type</th>
-                    <th className="py-3 px-4">Origin / Source</th>
-                    <th className="py-3 px-4">Specs / Dimensions</th>
-                    <th className="py-3 px-4">Size</th>
-                    <th className="py-3 px-4">Created</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#F0ECE1] border-b border-[#1A1D1A]/15 text-[#1A1D1A]/70 font-mono text-[11px]">
+                    <th className="py-3 px-4 font-semibold">Artifact Name</th>
+                    <th className="py-3 px-4 font-semibold">Type</th>
+                    <th className="py-3 px-4 font-semibold">Source</th>
+                    <th className="py-3 px-4 font-semibold">Specs</th>
+                    <th className="py-3 px-4 font-semibold">Size</th>
+                    <th className="py-3 px-4 font-semibold">Created</th>
+                    <th className="py-3 px-4 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-teal-900/20">
+                <tbody className="divide-y divide-[#1A1D1A]/10 text-[#1A1D1A]">
                   {filteredAssets.map((asset) => (
                     <tr
                       key={asset.id}
-                      className="hover:bg-teal-950/20 transition-colors group cursor-pointer"
+                      className="hover:bg-[#F0ECE1]/60 transition-colors cursor-pointer"
+                      onClick={() => setPreviewAsset(asset)}
                     >
-                      <td
-                        onClick={() => setPreviewAsset(asset)}
-                        className="py-3 px-4 flex items-center gap-3 font-medium text-slate-200 group-hover:text-teal-300"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center overflow-hidden shrink-0 border border-slate-800">
-                          {asset.thumbnailUrl ? (
-                            <img src={asset.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            renderCategoryIcon(asset.type, 'w-4 h-4')
-                          )}
-                        </div>
-                        <span className="font-semibold line-clamp-1">{asset.name}</span>
+                      <td className="py-3 px-4 font-semibold flex items-center gap-2.5">
+                        {renderCategoryIcon(asset.type, 'w-4 h-4 text-[#0D9488]')}
+                        <span className="line-clamp-1">{asset.name}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-300 border border-teal-500/30 uppercase">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#1A1D1A]/5 text-[#1A1D1A] border border-[#1A1D1A]/15 font-semibold">
                           {asset.type}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-400">{asset.source}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400 text-[11px]">
+                      <td className="py-3 px-4 text-[#1A1D1A]/60 font-mono">{asset.source}</td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-[#1A1D1A]/70">
                         {asset.durationSeconds
                           ? `${formatDuration(asset.durationSeconds)} (Video/Audio)`
                           : asset.dimensions || '—'}
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{formatFileSize(asset.sizeBytes)}</td>
-                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                      <td className="py-3 px-4 font-mono text-[#1A1D1A]/70">{formatFileSize(asset.sizeBytes)}</td>
+                      <td className="py-3 px-4 text-[#1A1D1A]/50 font-mono text-[11px]">
                         {new Date(asset.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-2">
                           <button
                             onClick={() => handleCopyUri(asset)}
                             title="Copy URI"
-                            className="p-1 rounded text-slate-400 hover:text-teal-300 hover:bg-slate-800"
+                            className="p-1 rounded text-[#1A1D1A]/60 hover:text-[#0D9488] hover:bg-[#F0ECE1]"
                           >
-                            {copiedId === asset.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedId === asset.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                           <button
                             onClick={() => setPreviewAsset(asset)}
                             title="Preview"
-                            className="p-1 rounded text-teal-400 hover:bg-teal-950"
+                            className="p-1 rounded text-[#0D9488] hover:bg-[#0D9488]/10"
                           >
                             <Maximize2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteAsset(asset.id)}
                             title="Delete"
-                            className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30"
+                            className="p-1 rounded text-[#1A1D1A]/40 hover:text-rose-600 hover:bg-rose-50"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -540,15 +544,15 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
 
       {/* Interactive Asset Preview Modal */}
       {previewAsset && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-[#071620] border border-teal-900/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-[#1A1D1A]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-teal-900/30 bg-[#05131C]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A1D1A]/15 bg-[#F0ECE1]">
               <div className="flex items-center gap-2.5">
-                {renderCategoryIcon(previewAsset.type, 'w-5 h-5')}
+                {renderCategoryIcon(previewAsset.type, 'w-5 h-5 text-[#0D9488]')}
                 <div>
-                  <h2 className="text-base font-bold text-slate-100 line-clamp-1">{previewAsset.name}</h2>
-                  <div className="flex items-center gap-2 text-[11px] font-mono text-teal-400 mt-0.5">
+                  <h2 className="text-base font-bold text-[#1A1D1A] line-clamp-1">{previewAsset.name}</h2>
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-[#0D9488] mt-0.5">
                     <span>{previewAsset.source}</span>
                     <span>·</span>
                     <span>{formatFileSize(previewAsset.sizeBytes)}</span>
@@ -557,7 +561,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
               </div>
               <button
                 onClick={() => setPreviewAsset(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-[#1A1D1A]/60 hover:text-[#1A1D1A] hover:bg-[#FAF8F3] transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -566,7 +570,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
             {/* Modal Body: Media Preview + Details */}
             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Media Player / Canvas Container */}
-              <div className="md:col-span-2 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center min-h-[320px]">
+              <div className="md:col-span-2 bg-[#1A1D1A] rounded-xl overflow-hidden border border-[#1A1D1A]/20 flex items-center justify-center min-h-[320px]">
                 {previewAsset.type === 'video' ? (
                   <video
                     src={previewAsset.url}
@@ -582,20 +586,20 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                   />
                 ) : previewAsset.type === 'audio' ? (
                   <div className="p-8 flex flex-col items-center justify-center text-center w-full">
-                    <div className="w-20 h-20 rounded-full bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 mb-6 animate-pulse">
+                    <div className="w-20 h-20 rounded-full bg-[#0D9488]/20 border border-[#0D9488]/40 flex items-center justify-center text-[#0D9488] mb-6 animate-pulse">
                       <Music className="w-10 h-10" />
                     </div>
                     <audio src={previewAsset.url} controls className="w-full max-w-md" />
-                    <div className="text-xs font-mono text-slate-400 mt-4">
+                    <div className="text-xs font-mono text-[#FAF8F3]/70 mt-4">
                       Bitrate: {previewAsset.metadata?.bitrate || '320kbps'} · Duration:{' '}
                       {formatDuration(previewAsset.durationSeconds)}
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 flex flex-col items-center justify-center text-center">
-                    {renderCategoryIcon(previewAsset.type, 'w-16 h-16 mb-4')}
-                    <h4 className="text-sm font-bold text-slate-200">{previewAsset.name}</h4>
-                    <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                  <div className="p-8 flex flex-col items-center justify-center text-center text-[#FAF8F3]">
+                    {renderCategoryIcon(previewAsset.type, 'w-16 h-16 mb-4 text-[#0D9488]')}
+                    <h4 className="text-sm font-bold">{previewAsset.name}</h4>
+                    <p className="text-xs text-[#FAF8F3]/70 mt-1 max-w-sm">
                       Interactive viewer active in native studio engine.
                     </p>
                   </div>
@@ -603,57 +607,57 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
               </div>
 
               {/* Inspector & Actions Drawer */}
-              <div className="space-y-4 text-xs font-sans">
-                <div className="bg-[#05131C] p-4 rounded-xl border border-teal-900/30 space-y-3">
-                  <h4 className="text-xs font-mono uppercase text-teal-400 font-semibold">Artifact Metadata</h4>
+              <div className="space-y-4 text-xs font-mono">
+                <div className="bg-[#F0ECE1] p-4 rounded-xl border border-[#1A1D1A]/15 space-y-3">
+                  <h4 className="text-xs font-mono uppercase text-[#0D9488] font-bold">Artifact Metadata</h4>
 
-                  <div className="space-y-2 text-slate-300">
+                  <div className="space-y-2 text-[#1A1D1A]/80">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Vault ID:</span>
-                      <span className="font-mono text-slate-400 text-[11px]">{previewAsset.id}</span>
+                      <span className="text-[#1A1D1A]/50">Vault ID:</span>
+                      <span className="font-mono text-[11px]">{previewAsset.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">File Size:</span>
+                      <span className="text-[#1A1D1A]/50">File Size:</span>
                       <span className="font-mono">{formatFileSize(previewAsset.sizeBytes)}</span>
                     </div>
                     {previewAsset.dimensions && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Dimensions:</span>
+                        <span className="text-[#1A1D1A]/50">Dimensions:</span>
                         <span className="font-mono">{previewAsset.dimensions}</span>
                       </div>
                     )}
                     {previewAsset.durationSeconds && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Duration:</span>
+                        <span className="text-[#1A1D1A]/50">Duration:</span>
                         <span className="font-mono">{formatDuration(previewAsset.durationSeconds)}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Ingested At:</span>
+                      <span className="text-[#1A1D1A]/50">Ingested At:</span>
                       <span className="font-mono">{new Date(previewAsset.createdAt).toLocaleString()}</span>
                     </div>
                   </div>
 
                   {previewAsset.metadata && (
-                    <div className="pt-3 border-t border-slate-800 space-y-1.5">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase">Engine Attributes:</span>
+                    <div className="pt-3 border-t border-[#1A1D1A]/10 space-y-1.5">
+                      <span className="text-[10px] font-mono text-[#1A1D1A]/50 uppercase">Engine Attributes:</span>
                       {Object.entries(previewAsset.metadata).map(([k, v]) => (
                         <div key={k} className="flex justify-between text-[11px]">
-                          <span className="text-slate-500 font-mono">{k}:</span>
-                          <span className="font-mono text-teal-300 max-w-[140px] truncate">{String(v)}</span>
+                          <span className="text-[#1A1D1A]/50 font-mono">{k}:</span>
+                          <span className="font-mono text-[#0D9488] max-w-[140px] truncate">{String(v)}</span>
                         </div>
                       ))}
                     </div>
                   )}
 
                   {/* Tags */}
-                  <div className="pt-3 border-t border-slate-800">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase mb-1.5 block">Tags:</span>
+                  <div className="pt-3 border-t border-[#1A1D1A]/10">
+                    <span className="text-[10px] font-mono text-[#1A1D1A]/50 uppercase mb-1.5 block">Tags:</span>
                     <div className="flex flex-wrap gap-1">
                       {previewAsset.tags.map((tag, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-teal-300"
+                          className="px-2 py-0.5 rounded bg-[#FAF8F3] border border-[#1A1D1A]/15 text-[10px] font-mono text-[#0D9488]"
                         >
                           #{tag}
                         </span>
@@ -666,16 +670,16 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                 <div className="space-y-2">
                   <button
                     onClick={() => handleCopyUri(previewAsset)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-semibold text-[#1A1D1A] transition-colors cursor-pointer"
                   >
                     {copiedId === previewAsset.id ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Copied to Clipboard!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5 text-teal-400" />
+                        <Copy className="w-3.5 h-3.5 text-[#0D9488]" />
                         <span>Copy Vault URI</span>
                       </>
                     )}
@@ -687,7 +691,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                         setPreviewAsset(null);
                         onNavigateToVideoFlow();
                       }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-xs transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                     >
                       <Film className="w-3.5 h-3.5" />
                       <span>Send to Video Flow NLE</span>
@@ -700,7 +704,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                         setPreviewAsset(null);
                         onNavigateToEdmStudio();
                       }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-xs transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                     >
                       <Database className="w-3.5 h-3.5" />
                       <span>Explore in EDM Studio</span>
@@ -712,7 +716,7 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
                     download={previewAsset.name}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-800 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/15 text-xs font-medium text-[#1A1D1A]/70 hover:text-[#1A1D1A] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download File</span>
@@ -726,98 +730,97 @@ export const AssetLibraryView: React.FC<AssetLibraryViewProps> = ({
 
       {/* Manual Asset Import Modal */}
       {isAddingModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-[#071620] border border-teal-900/50 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-teal-900/30">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-teal-400" />
+        <div className="fixed inset-0 z-50 bg-[#1A1D1A]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[#1A1D1A]/15">
+              <h3 className="text-base font-bold text-[#1A1D1A] flex items-center gap-2">
+                <Plus className="w-4 h-4 text-[#0D9488]" />
                 Import Media or Dataset
               </h3>
               <button
                 onClick={() => setIsAddingModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200 p-1"
+                className="text-[#1A1D1A]/50 hover:text-[#1A1D1A] p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateAsset} className="mt-4 space-y-3.5 text-xs">
+            <form onSubmit={handleCreateAsset} className="mt-4 space-y-3.5 text-xs font-mono">
               <div>
-                <label className="block text-slate-400 mb-1 font-medium">Asset Name</label>
+                <label className="block text-[#1A1D1A]/70 mb-1 font-medium">Asset Name</label>
                 <input
                   type="text"
                   required
                   value={newAssetName}
                   onChange={(e) => setNewAssetName(e.target.value)}
-                  placeholder="e.g. Kelvin-Helmholtz Video Render #04"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-teal-500"
+                  placeholder="e.g. Master Video Scene 01"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#1A1D1A]/20 text-[#1A1D1A] placeholder-[#1A1D1A]/40 focus:outline-none focus:border-[#0D9488]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Type</label>
-                  <select
-                    value={newAssetType}
-                    onChange={(e) => setNewAssetType(e.target.value as AssetItemType)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="video">Video</option>
-                    <option value="image">Image</option>
-                    <option value="audio">Audio</option>
-                    <option value="3d">3D Capture</option>
-                    <option value="dataset">EDM Dataset</option>
-                    <option value="document">Document</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Origin Source</label>
-                  <input
-                    type="text"
-                    value={newAssetSource}
-                    onChange={(e) => setNewAssetSource(e.target.value)}
-                    placeholder="e.g. Hyperframe Video"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-teal-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-[#1A1D1A]/70 mb-1 font-medium">Asset Type</label>
+                <select
+                  value={newAssetType}
+                  onChange={(e) => setNewAssetType(e.target.value as AssetItemType)}
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#1A1D1A]/20 text-[#1A1D1A] focus:outline-none focus:border-[#0D9488] cursor-pointer"
+                >
+                  <option value="video">Video (.mp4, .webm, .mov)</option>
+                  <option value="image">Image (.png, .jpg, .webp)</option>
+                  <option value="audio">Audio (.mp3, .wav, .aac)</option>
+                  <option value="3d">3D Model / NeRF (.glb, .obj, .splat)</option>
+                  <option value="dataset">EDM Dataset (.json, .csv, .parquet)</option>
+                  <option value="document">Document (.pdf, .md, .txt)</option>
+                </select>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-medium">URL / Local Blob Path</label>
+                <label className="block text-[#1A1D1A]/70 mb-1 font-medium">Direct File URL / Data URI</label>
                 <input
                   type="text"
+                  required
                   value={newAssetUrl}
                   onChange={(e) => setNewAssetUrl(e.target.value)}
-                  placeholder="https://... or /data/vault/..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-teal-500 font-mono text-[11px]"
+                  placeholder="https://... or data:image/png..."
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#1A1D1A]/20 text-[#1A1D1A] placeholder-[#1A1D1A]/40 focus:outline-none focus:border-[#0D9488]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-medium">Tags (comma-separated)</label>
+                <label className="block text-[#1A1D1A]/70 mb-1 font-medium">Source / Generator</label>
+                <input
+                  type="text"
+                  value={newAssetSource}
+                  onChange={(e) => setNewAssetSource(e.target.value)}
+                  placeholder="e.g. Video Flow Studio, Camera Import"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#1A1D1A]/20 text-[#1A1D1A] placeholder-[#1A1D1A]/40 focus:outline-none focus:border-[#0D9488]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#1A1D1A]/70 mb-1 font-medium">Tags (comma-separated)</label>
                 <input
                   type="text"
                   value={newAssetTags}
                   onChange={(e) => setNewAssetTags(e.target.value)}
-                  placeholder="simulation, 4k, fluid"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-teal-500"
+                  placeholder="vellum, scene-01, master"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#1A1D1A]/20 text-[#1A1D1A] placeholder-[#1A1D1A]/40 focus:outline-none focus:border-[#0D9488]"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-2 flex justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsAddingModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium"
+                  className="px-4 py-2 rounded-xl bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A]/70 border border-[#1A1D1A]/15 font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] font-bold shadow-xs cursor-pointer"
                 >
-                  Register in Vault
+                  Save Asset
                 </button>
               </div>
             </form>

@@ -78,22 +78,25 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
   };
 
   return (
-    <div className={`relative flex flex-col bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl ${className}`}>
+    <div className={`relative flex flex-col bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl overflow-hidden shadow-xs font-mono ${className}`}>
       {/* Canvas Toolbar */}
-      <div className="bg-slate-900/90 border-b border-slate-800 p-3.5 flex items-center justify-between backdrop-blur-md z-10">
+      <div className="bg-[#FAF8F3] border-b border-[#1A1D1A]/10 p-3.5 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-teal-500/10 border border-teal-500/30 rounded-lg text-teal-400">
+          <div className="p-2 bg-[#F0ECE1] border border-[#1A1D1A]/15 rounded-lg text-teal-800">
             <Film className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-100">Nodal Scene Flow Canvas</h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
+              <h3 className="text-sm font-bold text-[#1A1D1A]">Nodal Scene Flow Canvas</h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/20 font-semibold">
                 {scenes.length} Scenes Connected
               </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                REAL VIDEO
+              </span>
             </div>
-            <p className="text-[11px] text-slate-400">
-              Interactive generative graph: connect scenes, branch alternate takes, and configure optical transitions.
+            <p className="text-[11px] text-[#1A1D1A]/60">
+              Interactive generative graph: connect scenes, branch alternate takes, configure optical transitions, and attach real footage.
             </p>
           </div>
         </div>
@@ -101,7 +104,7 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={handleAddScene}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 shadow-md shadow-teal-500/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ Add Scene Node</span>
@@ -109,8 +112,14 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
         </div>
       </div>
 
-      {/* Main Flow Canvas Graph Area */}
-      <div className="relative flex-1 min-h-[520px] overflow-x-auto p-8 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]">
+      {/* Main Flow Canvas Graph Area with Vellum 24mm Drafting Grid */}
+      <div
+        className="relative flex-1 min-h-[520px] overflow-x-auto p-8 bg-[#F6F3EC]"
+        style={{
+          backgroundImage: 'linear-gradient(to right, rgba(26, 29, 26, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(26, 29, 26, 0.08) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      >
         {/* Nodes & Connecting Transitions */}
         <div className="flex items-center gap-6 min-w-max pb-8 pt-4">
           {scenes.map((scene, idx) => {
@@ -123,16 +132,16 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                 {/* SCENE NODE CARD */}
                 <div
                   onClick={() => onSelectScene(scene.id)}
-                  className={`w-[340px] bg-slate-900/90 border rounded-2xl shadow-xl transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between ${
+                  className={`w-[340px] bg-[#FAF8F3] border rounded-2xl shadow-xs transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between ${
                     isActive
-                      ? 'border-teal-400 ring-2 ring-teal-500/30 shadow-teal-500/10 scale-[1.01]'
-                      : 'border-slate-800 hover:border-slate-700'
+                      ? 'border-[#1A1D1A] ring-2 ring-[#1A1D1A]/20 shadow-md scale-[1.01]'
+                      : 'border-[#1A1D1A]/15 hover:border-[#1A1D1A]/35'
                   }`}
                 >
                   {/* Card Header */}
-                  <div className="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+                  <div className="p-3.5 border-b border-[#1A1D1A]/10 flex items-center justify-between bg-[#F0ECE1]/50">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="w-2.5 h-2.5 rounded-full bg-teal-400 flex-shrink-0" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-teal-700 flex-shrink-0" />
                       <input
                         type="text"
                         value={scene.title}
@@ -140,18 +149,18 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                           videoFlowService.updateSceneNode(scene.id, { title: e.target.value })
                         }
                         onClick={(e) => e.stopPropagation()}
-                        className="text-xs font-bold text-slate-200 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-teal-500/50 rounded px-1 w-44 truncate"
+                        className="text-xs font-bold text-[#1A1D1A] bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-[#1A1D1A]/30 rounded px-1 w-44 truncate font-mono"
                       />
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-teal-300 border border-slate-700">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#FAF8F3] text-[#1A1D1A] border border-[#1A1D1A]/20">
                         {scene.durationSeconds}s
                       </span>
                       {scenes.length > 1 && (
                         <button
                           onClick={(e) => handleDeleteScene(scene.id, e)}
-                          className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                          className="p-1 text-[#1A1D1A]/40 hover:text-rose-600 hover:bg-[#F0ECE1] rounded transition-colors"
                           title="Delete Scene Node"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -161,7 +170,7 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                   </div>
 
                   {/* Video Thumbnail / Canvas Simulation */}
-                  <div className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden group">
+                  <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
                     {scene.videoBlobUrl ? (
                       <video
                         src={scene.videoBlobUrl}
@@ -172,9 +181,9 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                         autoPlay
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-slate-950 via-teal-950/40 to-slate-900 flex flex-col items-center justify-center p-4 text-center">
-                        <Video className="w-8 h-8 text-teal-500/60 mb-2 animate-pulse" />
-                        <span className="text-[11px] font-mono text-slate-400">
+                      <div className="w-full h-full bg-[#1A1D1A] flex flex-col items-center justify-center p-4 text-center">
+                        <Video className="w-8 h-8 text-teal-400/80 mb-2 animate-pulse" />
+                        <span className="text-[11px] font-mono text-slate-300">
                           {scene.modelId.toUpperCase()} • {scene.cameraFlight}
                         </span>
                       </div>
@@ -182,10 +191,10 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
 
                     {/* Camera flight & LUT Overlay Badges */}
                     <div className="absolute top-2 left-2 flex items-center gap-1">
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950/80 text-teal-300 border border-slate-700">
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF8F3]/90 text-[#1A1D1A] border border-[#1A1D1A]/20 shadow-xs">
                         {scene.cameraFlight.toUpperCase()}
                       </span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950/80 text-amber-300 border border-slate-700">
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF8F3]/90 text-amber-900 border border-[#1A1D1A]/20 shadow-xs">
                         {scene.colorLut}
                       </span>
                     </div>
@@ -194,10 +203,10 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                     <button
                       onClick={(e) => handleSynthesize(scene.id, e)}
                       disabled={isSynthesizing}
-                      className={`absolute bottom-2 right-2 px-3 py-1 rounded-lg text-xs font-bold shadow-lg transition-all flex items-center gap-1.5 ${
+                      className={`absolute bottom-2 right-2 px-3 py-1 rounded-lg text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 ${
                         isSynthesizing
-                          ? 'bg-teal-500 text-slate-950 animate-pulse'
-                          : 'bg-slate-900/90 text-teal-300 border border-teal-500/40 hover:bg-teal-500 hover:text-slate-950'
+                          ? 'bg-teal-700 text-white animate-pulse'
+                          : 'bg-[#FAF8F3]/95 text-[#1A1D1A] border border-[#1A1D1A]/20 hover:bg-[#1A1D1A] hover:text-[#FAF8F3]'
                       }`}
                     >
                       {isSynthesizing ? (
@@ -207,7 +216,7 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-3 h-3" />
+                          <Sparkles className="w-3 h-3 text-teal-600" />
                           <span>{scene.videoBlobUrl ? 'Regenerate' : 'Synthesize Video'}</span>
                         </>
                       )}
@@ -215,13 +224,13 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                   </div>
 
                   {/* Prompt Textarea */}
-                  <div className="p-3.5 space-y-3 bg-slate-900/60 flex-1 flex flex-col justify-between">
+                  <div className="p-3.5 space-y-3 bg-[#FAF8F3] flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] uppercase font-mono text-slate-500">
+                        <span className="text-[10px] uppercase font-mono text-[#1A1D1A]/60">
                           Prompt Directive
                         </span>
-                        <span className="text-[10px] text-teal-400 font-mono">
+                        <span className="text-[10px] text-teal-800 font-mono font-bold">
                           Motion: {scene.motionStrength}/10
                         </span>
                       </div>
@@ -232,28 +241,28 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                         }
                         onClick={(e) => e.stopPropagation()}
                         rows={3}
-                        className="w-full text-xs text-slate-200 bg-slate-950 border border-slate-800 rounded-lg p-2.5 focus:outline-none focus:border-teal-500 resize-none font-sans leading-relaxed"
+                        className="w-full text-xs text-[#1A1D1A] bg-[#F6F3EC] border border-[#1A1D1A]/20 rounded-lg p-2.5 focus:outline-none focus:border-[#1A1D1A] resize-none font-mono leading-relaxed"
                         placeholder="Describe camera movement, lighting, subjects..."
                       />
                     </div>
 
                     {/* Action Buttons: Branch, Extend, Settings */}
-                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                    <div className="pt-2 border-t border-[#1A1D1A]/10 flex items-center justify-between gap-2">
                       <button
                         onClick={(e) => handleBranchScene(scene.id, e)}
-                        className="flex-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-[11px] font-medium text-slate-300 hover:text-teal-300 flex items-center justify-center gap-1 border border-slate-700 transition-colors"
+                        className="flex-1 py-1.5 px-2 rounded-lg bg-[#F6F3EC] hover:bg-[#F0ECE1] text-[11px] font-medium text-[#1A1D1A] flex items-center justify-center gap-1 border border-[#1A1D1A]/20 transition-colors"
                         title="Create alternate A/B branch"
                       >
-                        <GitBranch className="w-3 h-3 text-teal-400" />
+                        <GitBranch className="w-3 h-3 text-teal-700" />
                         <span>Branch A/B</span>
                       </button>
 
                       <button
                         onClick={(e) => handleExtendScene(scene.id, e)}
-                        className="flex-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-[11px] font-medium text-slate-300 hover:text-teal-300 flex items-center justify-center gap-1 border border-slate-700 transition-colors"
+                        className="flex-1 py-1.5 px-2 rounded-lg bg-[#F6F3EC] hover:bg-[#F0ECE1] text-[11px] font-medium text-[#1A1D1A] flex items-center justify-center gap-1 border border-[#1A1D1A]/20 transition-colors"
                         title="Extend continuous shot"
                       >
-                        <FastForward className="w-3 h-3 text-emerald-400" />
+                        <FastForward className="w-3 h-3 text-emerald-700" />
                         <span>Extend</span>
                       </button>
                     </div>
@@ -263,17 +272,17 @@ export const SceneFlowCanvas: React.FC<SceneFlowCanvasProps> = ({
                 {/* TRANSITION CONNECTOR PILL */}
                 {transFromThis && idx < scenes.length - 1 && (
                   <div className="flex flex-col items-center justify-center px-1">
-                    <div className="h-0.5 w-6 bg-teal-500/40" />
+                    <div className="h-0.5 w-6 bg-[#1A1D1A]/20" />
                     <button
                       onClick={() => handleChangeTransition(transFromThis.id, transFromThis.type)}
-                      className="my-1 px-2.5 py-1.5 rounded-full bg-slate-900 border border-teal-500/40 hover:border-teal-400 text-teal-300 text-[10px] font-mono font-bold shadow-lg flex items-center gap-1 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
+                      className="my-1 px-2.5 py-1.5 rounded-full bg-[#FAF8F3] border border-[#1A1D1A]/20 hover:border-[#1A1D1A]/40 text-[#1A1D1A] text-[10px] font-mono font-bold shadow-xs flex items-center gap-1 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
                       title="Click to cycle optical transition"
                     >
-                      <ArrowRight className="w-3 h-3 text-teal-400" />
+                      <ArrowRight className="w-3 h-3 text-teal-700" />
                       <span>{transFromThis.type.replace(/_/g, ' ').toUpperCase()}</span>
-                      <span className="text-[9px] text-slate-500">({transFromThis.durationMs}ms)</span>
+                      <span className="text-[9px] text-[#1A1D1A]/50">({transFromThis.durationMs}ms)</span>
                     </button>
-                    <div className="h-0.5 w-6 bg-teal-500/40" />
+                    <div className="h-0.5 w-6 bg-[#1A1D1A]/20" />
                   </div>
                 )}
               </React.Fragment>

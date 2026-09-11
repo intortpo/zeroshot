@@ -10,7 +10,6 @@ import {
   FileText,
   RotateCw,
   MessageSquare,
-  Network,
   Eye,
   Database,
 } from 'lucide-react';
@@ -358,11 +357,11 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
 
           <button
             type="button"
-            onClick={() => handleQuickNavigate('node')}
+            onClick={() => handleQuickNavigate('antigravity')}
             className="w-full flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-left hover:bg-stone-100 text-stone-700 transition-colors"
           >
-            <Network className="w-3 h-3 text-indigo-600" />
-            <span className="text-[11px] font-medium">Node Studio (Pipelines)</span>
+            <Terminal className="w-3 h-3 text-indigo-600" />
+            <span className="text-[11px] font-medium">Antigravity Sessions</span>
           </button>
 
           <button

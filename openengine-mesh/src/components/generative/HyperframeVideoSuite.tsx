@@ -149,21 +149,27 @@ export const HyperframeVideoSuite: React.FC = () => {
   }[aspectRatio];
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0B0F19] text-slate-200 overflow-hidden select-none font-sans">
+    <div
+      className="flex-1 flex flex-col h-full bg-[#F6F3EC] text-[#1A1D1A] overflow-hidden select-none font-mono relative"
+      style={{
+        backgroundImage: 'linear-gradient(to right, rgba(26, 29, 26, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(26, 29, 26, 0.05) 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
+      }}
+    >
       {/* Top Header Bar */}
-      <header className="px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-md">
+      <header className="px-6 py-3 bg-[#FAF8F3] border-b border-[#1A1D1A]/10 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/30">
+          <div className="p-2 rounded-xl bg-[#F0ECE1] text-teal-800 border border-[#1A1D1A]/15">
             <Film className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold text-white tracking-wide">Hyperframe Cinematic Video Studio</h1>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40">
+              <h1 className="text-sm font-bold text-[#1A1D1A] tracking-wide font-mono">Hyperframe Cinematic Video Studio</h1>
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/20">
                 Pro v8.2
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-[#1A1D1A]/60 font-mono">
               Multi-Scene Storyboards • Petri Submersion 3D Camera Dives • Real-Time Shader LUTs
             </p>
           </div>
@@ -172,15 +178,15 @@ export const HyperframeVideoSuite: React.FC = () => {
         {/* Aspect Ratio & Render Queue Action */}
         <div className="flex items-center gap-3">
           {/* Aspect Ratio Selector */}
-          <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-xs">
+          <div className="flex items-center bg-[#F0ECE1] rounded-lg p-0.5 border border-[#1A1D1A]/15 text-xs">
             {(['16:9', '9:16', '1:1', '2.39:1'] as const).map(ratio => (
               <button
                 key={ratio}
                 onClick={() => setAspectRatio(ratio)}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   aspectRatio === ratio
-                    ? 'bg-teal-500 text-slate-950 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#1A1D1A] text-[#FAF8F3] font-bold shadow-xs'
+                    : 'text-[#1A1D1A]/70 hover:text-[#1A1D1A]'
                 }`}
               >
                 {ratio}
@@ -192,13 +198,13 @@ export const HyperframeVideoSuite: React.FC = () => {
           <button
             onClick={handleQuickExport}
             disabled={isExportingQuick}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20 disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] font-bold text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer"
             title="Immediately generate and download WebM video"
           >
             {isExportingQuick ? (
-              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+              <Loader2 className="w-4 h-4 animate-spin text-[#FAF8F3]" />
             ) : (
-              <Download className="w-4 h-4 text-slate-950" />
+              <Download className="w-4 h-4 text-[#FAF8F3]" />
             )}
             <span>{isExportingQuick ? 'Exporting...' : 'Direct Download Video'}</span>
           </button>
@@ -206,9 +212,9 @@ export const HyperframeVideoSuite: React.FC = () => {
           {/* Render Queue Button */}
           <button
             onClick={() => setIsRenderModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-200 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#FAF8F3] hover:bg-[#F0ECE1] border border-[#1A1D1A]/20 text-xs font-semibold text-[#1A1D1A] transition-colors shadow-xs cursor-pointer"
           >
-            <Clapperboard className="w-4 h-4 text-teal-400" />
+            <Clapperboard className="w-4 h-4 text-teal-700" />
             <span>Render Queue ({renderJobs.length})</span>
           </button>
         </div>
@@ -216,19 +222,19 @@ export const HyperframeVideoSuite: React.FC = () => {
 
       {/* Notification Banner */}
       {notification && (
-        <div className="px-6 py-2 bg-teal-950/80 border-b border-teal-700/60 text-teal-300 text-xs flex items-center justify-between animate-in fade-in shrink-0">
+        <div className="px-6 py-2 bg-emerald-100 border-b border-emerald-300 text-emerald-950 text-xs flex items-center justify-between animate-in fade-in shrink-0 font-mono">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
             <span>{notification}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-teal-400 hover:text-teal-200 font-bold">
+          <button onClick={() => setNotification(null)} className="text-emerald-800 hover:text-emerald-950 font-bold">
             ✕
           </button>
         </div>
       )}
 
       {/* Navigation Studio Tabs */}
-      <div className="px-6 py-2.5 bg-slate-900/60 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto shrink-0">
+      <div className="px-6 py-2.5 bg-[#FAF8F3] border-b border-[#1A1D1A]/10 flex items-center gap-2 overflow-x-auto shrink-0 font-mono">
         {[
           { id: 'preview', label: 'Director Canvas & Conditioning', icon: Tv },
           { id: 'storyboard', label: `Storyboard & Scenes (${scenes.length})`, icon: Layers },
@@ -243,11 +249,11 @@ export const HyperframeVideoSuite: React.FC = () => {
               onClick={() => setActiveTab(tab.id as StudioTab)}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
                 isSelected
-                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm'
-                  : 'bg-slate-800/40 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-[#1A1D1A] text-[#FAF8F3] border border-[#1A1D1A] shadow-xs'
+                  : 'bg-[#F6F3EC] text-[#1A1D1A]/70 border border-[#1A1D1A]/15 hover:bg-[#F0ECE1] hover:text-[#1A1D1A]'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-300' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-300' : 'text-[#1A1D1A]/60'}`} />
               <span>{tab.label}</span>
             </button>
           );
@@ -260,9 +266,9 @@ export const HyperframeVideoSuite: React.FC = () => {
         {activeTab === 'preview' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Canvas Viewport (7 Cols) */}
-            <div className="lg:col-span-7 flex flex-col items-center justify-center p-4 bg-slate-950/60 rounded-2xl border border-slate-800">
+            <div className="lg:col-span-7 flex flex-col items-center justify-center p-4 bg-[#FAF8F3] rounded-2xl border border-[#1A1D1A]/15 shadow-xs">
               <div
-                className={`relative rounded-xl border border-slate-700/80 bg-black overflow-hidden shadow-2xl flex items-center justify-center transition-all ${aspectClass}`}
+                className={`relative rounded-xl border border-[#1A1D1A]/20 bg-black overflow-hidden shadow-md flex items-center justify-center transition-all ${aspectClass}`}
                 style={{
                   filter: activeLut.filterCss,
                 }}
@@ -293,10 +299,10 @@ export const HyperframeVideoSuite: React.FC = () => {
                     <span className="text-[11px] font-mono tracking-widest uppercase text-teal-300 px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-teal-500/40">
                       SCENE #{activeScene?.order}: {activeScene?.model.toUpperCase()} • 60 FPS
                     </span>
-                    <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-md">
+                    <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-md font-mono">
                       {activeScene?.title}
                     </h3>
-                    <p className="text-xs text-slate-300/90 max-w-md line-clamp-2 italic px-2">
+                    <p className="text-xs text-slate-300/90 max-w-md line-clamp-2 italic px-2 font-mono">
                       "{activeScene?.prompt}"
                     </p>
                   </div>
@@ -307,7 +313,7 @@ export const HyperframeVideoSuite: React.FC = () => {
                       <Compass className="w-3 h-3" />
                       FLIGHT: {activeScene?.cameraFlight.toUpperCase()}
                     </div>
-                    <div className="text-xs font-semibold text-white">
+                    <div className="text-xs font-semibold text-white font-mono">
                       Motion Scale: {activeScene?.motionScale}/10 • {activeScene?.durationSeconds.toFixed(1)}s
                     </div>
                   </div>
@@ -322,29 +328,29 @@ export const HyperframeVideoSuite: React.FC = () => {
               </div>
 
               {/* Viewport Meta Bar */}
-              <div className="w-full mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 px-2 font-mono">
+              <div className="w-full mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#1A1D1A]/70 px-2 font-mono">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 text-teal-300">
-                    <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+                  <span className="flex items-center gap-1.5 text-teal-800 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-teal-600 animate-ping" />
                     Footage Stream: {isFootageLoaded ? 'Active 60fps' : 'Idle'}
                   </span>
-                  <span className="text-slate-600">|</span>
+                  <span className="text-[#1A1D1A]/30">|</span>
                   <span>LUT: {activeLut.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsFootageLoaded(!isFootageLoaded)}
-                    className="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1 transition-colors cursor-pointer"
+                    className="text-[11px] px-2.5 py-1 rounded-md bg-[#F0ECE1] hover:bg-[#E8E2D5] text-[#1A1D1A] border border-[#1A1D1A]/20 flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    <RotateCcw className="w-3 h-3 text-teal-400" />
+                    <RotateCcw className="w-3 h-3 text-teal-700" />
                     <span>{isFootageLoaded ? 'Reload Footage' : 'Load Footage'}</span>
                   </button>
                   <button
                     onClick={handleQuickExport}
                     disabled={isExportingQuick}
-                    className="text-[11px] px-2.5 py-1 rounded-md bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                    className="text-[11px] px-2.5 py-1 rounded-md bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/20 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Download className="w-3 h-3" />
+                    <Download className="w-3 h-3 text-teal-700" />
                     <span>Download Clip (.webm)</span>
                   </button>
                 </div>
@@ -352,45 +358,45 @@ export const HyperframeVideoSuite: React.FC = () => {
             </div>
 
             {/* Right Director Conditioning Controls (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <div className="lg:col-span-5 space-y-4 font-mono">
+              <div className="bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-3">
-                  <Sliders className="w-4 h-4 text-teal-400" />
-                  <h3 className="text-sm font-semibold text-white">Shot Conditioning & Latent Dynamics</h3>
+                  <Sliders className="w-4 h-4 text-teal-700" />
+                  <h3 className="text-sm font-semibold text-[#1A1D1A]">Shot Conditioning & Latent Dynamics</h3>
                 </div>
 
                 {/* Prompt editing */}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Cinematic Prompt</label>
+                    <label className="block text-xs font-medium text-[#1A1D1A]/70 mb-1">Cinematic Prompt</label>
                     <textarea
                       rows={3}
                       value={activeScene?.prompt || ''}
                       onChange={e => handleUpdateScene(activeScene.id, { prompt: e.target.value })}
-                      className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-teal-400 font-mono resize-none"
+                      className="w-full text-xs bg-[#F6F3EC] border border-[#1A1D1A]/20 rounded-lg p-2.5 text-[#1A1D1A] focus:outline-none focus:border-[#1A1D1A] font-mono resize-none"
                     />
                   </div>
 
                   {/* Negative Prompt */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Negative Conditioning</label>
+                    <label className="block text-xs font-medium text-[#1A1D1A]/70 mb-1">Negative Conditioning</label>
                     <input
                       type="text"
                       value={activeScene?.negativePrompt || ''}
                       onChange={e => handleUpdateScene(activeScene.id, { negativePrompt: e.target.value })}
                       placeholder="blurry, jitter, low resolution, artifacts"
-                      className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-teal-400 font-mono"
+                      className="w-full text-xs bg-[#F6F3EC] border border-[#1A1D1A]/20 rounded-lg px-3 py-2 text-[#1A1D1A] focus:outline-none focus:border-[#1A1D1A] font-mono"
                     />
                   </div>
 
                   {/* Model & Camera Flight Quick Select */}
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Video Engine</label>
+                      <label className="block text-xs text-[#1A1D1A]/70 mb-1">Video Engine</label>
                       <select
                         value={activeScene?.model}
                         onChange={e => handleUpdateScene(activeScene.id, { model: e.target.value as VideoModelId })}
-                        className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-teal-300 font-mono focus:outline-none"
+                        className="w-full text-xs bg-[#F6F3EC] border border-[#1A1D1A]/20 rounded-lg px-2.5 py-1.5 text-[#1A1D1A] font-mono focus:outline-none focus:border-[#1A1D1A]"
                       >
                         <option value="veo-2">Veo-2 (DeepMind)</option>
                         <option value="sora-2">Sora-2 (OpenAI)</option>
@@ -400,13 +406,13 @@ export const HyperframeVideoSuite: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Camera Flight</label>
+                      <label className="block text-xs text-[#1A1D1A]/70 mb-1">Camera Flight</label>
                       <select
                         value={activeScene?.cameraFlight}
                         onChange={e =>
                           handleUpdateScene(activeScene.id, { cameraFlight: e.target.value as CameraFlightType })
                         }
-                        className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-teal-300 font-mono focus:outline-none"
+                        className="w-full text-xs bg-[#F6F3EC] border border-[#1A1D1A]/20 rounded-lg px-2.5 py-1.5 text-[#1A1D1A] font-mono focus:outline-none focus:border-[#1A1D1A]"
                       >
                         <option value="orbital-descent">Orbital Descent</option>
                         <option value="waterline-breach">Waterline Breach</option>
@@ -418,9 +424,9 @@ export const HyperframeVideoSuite: React.FC = () => {
 
                   {/* Motion Strength & Pacing */}
                   <div className="pt-2">
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-[#1A1D1A]/80 mb-1">
                       <span>Motion Energy Scale</span>
-                      <span className="font-mono text-teal-400">{activeScene?.motionScale}/10</span>
+                      <span className="font-mono text-teal-800 font-bold">{activeScene?.motionScale}/10</span>
                     </div>
                     <input
                       type="range"
@@ -428,7 +434,7 @@ export const HyperframeVideoSuite: React.FC = () => {
                       max={10}
                       value={activeScene?.motionScale || 6}
                       onChange={e => handleUpdateScene(activeScene.id, { motionScale: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-slate-700 rounded-lg accent-teal-400 cursor-pointer"
+                      className="w-full h-1.5 bg-[#F0ECE1] rounded-lg accent-[#1A1D1A] cursor-pointer"
                     />
                   </div>
 
@@ -436,9 +442,9 @@ export const HyperframeVideoSuite: React.FC = () => {
                   <div className="pt-3">
                     <button
                       onClick={() => setIsRenderModalOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] font-bold text-xs transition-all shadow-xs cursor-pointer"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 text-teal-300" />
                       Configure & Batch Render Storyboard
                     </button>
                   </div>

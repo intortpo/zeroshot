@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-  Sparkles,
+  Terminal,
   Kanban,
-  Network,
+  FolderGit2,
   Server,
   MoreHorizontal,
 } from 'lucide-react';
@@ -22,12 +22,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenMore,
   isCognitionActive = false,
 }) => {
-  const isFocusActive = currentView === 'focus' || currentView === 'chat';
+  const isAntigravityActive = currentView === 'antigravity';
   const isBoardActive = currentView === 'board';
-  const isStudioActive = currentView === 'node';
+  const isProjectsActive = currentView === 'projects';
   const isServerActive = currentView === 'server';
   const isSecondaryActive =
-    !isFocusActive && !isBoardActive && !isStudioActive && !isServerActive;
+    !isAntigravityActive && !isBoardActive && !isProjectsActive && !isServerActive;
 
   const handleSelect = (view: PetriViewMode) => {
     triggerLightHaptic();
@@ -41,21 +41,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-stone-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] flex items-center justify-around select-none">
-      {/* 1. Focus / Chat */}
+      {/* 1. Antigravity Sessions */}
       <button
         type="button"
-        onClick={() => handleSelect('focus')}
+        onClick={() => handleSelect('antigravity')}
         className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition-all cursor-pointer ${
-          isFocusActive ? 'text-indigo-600 font-semibold' : 'text-stone-500 hover:text-stone-800'
+          isAntigravityActive ? 'text-indigo-600 font-semibold' : 'text-stone-500 hover:text-stone-800'
         }`}
       >
         <div className="relative">
-          <Sparkles className={`w-5 h-5 ${isFocusActive ? 'text-indigo-600' : 'text-stone-400'}`} />
+          <Terminal className={`w-5 h-5 ${isAntigravityActive ? 'text-indigo-600' : 'text-stone-400'}`} />
           {isCognitionActive && (
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
           )}
         </div>
-        <span className="text-[10px] mt-0.5 tracking-tight">Focus</span>
+        <span className="text-[10px] mt-0.5 tracking-tight">Antigravity</span>
       </button>
 
       {/* 2. Kanban Board */}
@@ -70,16 +70,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <span className="text-[10px] mt-0.5 tracking-tight">Board</span>
       </button>
 
-      {/* 3. Node Studio */}
+      {/* 3. Projects Roadmap */}
       <button
         type="button"
-        onClick={() => handleSelect('node')}
+        onClick={() => handleSelect('projects')}
         className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition-all cursor-pointer ${
-          isStudioActive ? 'text-indigo-600 font-semibold' : 'text-stone-500 hover:text-stone-800'
+          isProjectsActive ? 'text-indigo-600 font-semibold' : 'text-stone-500 hover:text-stone-800'
         }`}
       >
-        <Network className={`w-5 h-5 ${isStudioActive ? 'text-indigo-600' : 'text-stone-400'}`} />
-        <span className="text-[10px] mt-0.5 tracking-tight">Studio</span>
+        <FolderGit2 className={`w-5 h-5 ${isProjectsActive ? 'text-teal-600' : 'text-stone-400'}`} />
+        <span className="text-[10px] mt-0.5 tracking-tight">Projects</span>
       </button>
 
       {/* 4. Petri Server & Tailscale */}

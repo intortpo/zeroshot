@@ -20,7 +20,12 @@ export interface EncryptedEnvelope {
 }
 
 class EncryptedStorageService {
-  private currentPassphrase = 'bbs-momentum-secure-vault-key-2026';
+  private get currentPassphrase(): string {
+    const operator = (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined')
+      ? (sessionStorage.getItem('petri_current_operator') || 'default')
+      : 'default';
+    return 'petri-vault-' + operator + '-2026';
+  }
 
   /**
    * Derives an AES-256-GCM CryptoKey from the workspace passphrase and salt using PBKDF2

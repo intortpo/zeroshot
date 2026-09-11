@@ -8,7 +8,8 @@
 import {
   FlowSceneNode,
   FlowTransitionNode,
-  TimelineClip
+  TimelineClip,
+  AssetItem
 } from '../types';
 
 export interface VideoFlowState {
@@ -41,7 +42,7 @@ class VideoFlowService {
         id: 'scene-01',
         title: 'Scene 1: Coral Reef Abyss',
         prompt: 'Cinematic 4k underwater wide shot, deep turquoise ocean trench, glowing azure caustics illuminating ancient coral structures, smooth forward glide',
-        durationSeconds: 4,
+        durationSeconds: 15,
         aspectRatio: '16:9',
         cameraFlight: 'push_in',
         modelId: 'petri-veo-2',
@@ -50,12 +51,14 @@ class VideoFlowService {
         x: 60,
         y: 120,
         motionStrength: 7,
+        videoBlobUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=60',
       },
       {
         id: 'scene-02',
         title: 'Scene 2: Bioluminescent Submersion',
         prompt: 'Macro lens sinking below thermocline, iridescent bioluminescent plankton swirling in helical vortex around camera lens, deep midnight indigo tones',
-        durationSeconds: 5,
+        durationSeconds: 15,
         aspectRatio: '16:9',
         cameraFlight: 'submersion_dive',
         modelId: 'sora-2-turbo',
@@ -64,12 +67,14 @@ class VideoFlowService {
         x: 420,
         y: 120,
         motionStrength: 8,
+        videoBlobUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=60',
       },
       {
         id: 'scene-03',
         title: 'Scene 3: Crystalline Emergence',
         prompt: 'High speed upward breach through water surface, crystalline droplets scattering into golden hour prism flares, anamorphic horizontal lens flare',
-        durationSeconds: 4,
+        durationSeconds: 20,
         aspectRatio: '16:9',
         cameraFlight: 'crane',
         modelId: 'petri-veo-2',
@@ -78,6 +83,8 @@ class VideoFlowService {
         x: 780,
         y: 120,
         motionStrength: 9,
+        videoBlobUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=60',
       },
     ];
 
@@ -312,6 +319,32 @@ class VideoFlowService {
     if (scene) {
       scene.x = x;
       scene.y = y;
+      this.notify();
+    }
+  }
+
+  // Attach a real video file (uploaded or remote URL) to a scene node
+  public attachVideoFile(sceneId: string, videoUrl: string, durationSeconds: number = 8, title?: string) {
+    const scene = this.scenes.find((s) => s.id === sceneId);
+    if (scene) {
+      scene.videoBlobUrl = videoUrl;
+      scene.thumbnailUrl = videoUrl;
+      scene.durationSeconds = durationSeconds;
+      if (title) scene.title = title;
+      this.recalculateTimeline();
+      this.notify();
+    }
+  }
+
+  // Import a real video asset directly from the Asset Library
+  public importFromAssetLibrary(sceneId: string, asset: AssetItem) {
+    const scene = this.scenes.find((s) => s.id === sceneId);
+    if (scene) {
+      scene.videoBlobUrl = asset.url;
+      scene.thumbnailUrl = asset.thumbnailUrl || asset.url;
+      scene.title = asset.name;
+      if (asset.durationSeconds) scene.durationSeconds = asset.durationSeconds;
+      this.recalculateTimeline();
       this.notify();
     }
   }

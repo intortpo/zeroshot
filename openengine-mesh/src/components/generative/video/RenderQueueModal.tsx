@@ -58,26 +58,26 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A1D1A]/40 backdrop-blur-xs font-mono">
+      <div className="relative w-full max-w-4xl bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] text-[#1A1D1A]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A1D1A]/10 bg-[#FAF8F3]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/30">
+            <div className="p-2 rounded-xl bg-[#F0ECE1] text-teal-800 border border-[#1A1D1A]/15">
               <Clapperboard className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-[#1A1D1A] flex items-center gap-2">
                 Cloud Batch Render Queue & Multi-Resolution Exporter
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#1A1D1A]/60">
                 Dispatch background cinematic rendering jobs across distributed GPU worker nodes.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A]/60 hover:text-[#1A1D1A] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,10 +86,10 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {/* Dispatch New Render Form */}
-          <form onSubmit={handleStartRender} className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-4">
+          <form onSubmit={handleStartRender} className="bg-[#F6F3EC] border border-[#1A1D1A]/15 rounded-xl p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-teal-400" />
+              <span className="text-xs font-semibold text-[#1A1D1A] uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-teal-700" />
                 Configure New Render Job ({scenesCount} Scenes • {totalDuration.toFixed(1)}s)
               </span>
             </div>
@@ -97,23 +97,23 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {/* Job Title */}
               <div className="lg:col-span-2">
-                <label className="block text-xs text-slate-400 mb-1">Job Title</label>
+                <label className="block text-xs text-[#1A1D1A]/70 mb-1">Job Title</label>
                 <input
                   type="text"
                   placeholder="e.g. Submersion Cinematic Trailer (Final Cut)"
                   value={jobTitle}
                   onChange={e => setJobTitle(e.target.value)}
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-teal-400"
+                  className="w-full text-xs bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-lg px-3 py-2 text-[#1A1D1A] focus:outline-none focus:border-[#1A1D1A]"
                 />
               </div>
 
               {/* Resolution Preset */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Resolution Preset</label>
+                <label className="block text-xs text-[#1A1D1A]/70 mb-1">Resolution Preset</label>
                 <select
                   value={resolution}
                   onChange={e => setResolution(e.target.value as RenderJob['resolution'])}
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-teal-300 font-mono focus:outline-none"
+                  className="w-full text-xs bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-lg px-2.5 py-2 text-[#1A1D1A] font-mono focus:outline-none focus:border-[#1A1D1A]"
                 >
                   <option value="4K Cinema">4K UHD (3840x2160)</option>
                   <option value="1080p 60fps">Full HD (1920x1080 60p)</option>
@@ -124,11 +124,11 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
 
               {/* Aspect Ratio */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Aspect Ratio</label>
+                <label className="block text-xs text-[#1A1D1A]/70 mb-1">Aspect Ratio</label>
                 <select
                   value={aspectRatio}
                   onChange={e => setAspectRatio(e.target.value as AspectRatio)}
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-teal-300 font-mono focus:outline-none"
+                  className="w-full text-xs bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-lg px-2.5 py-2 text-[#1A1D1A] font-mono focus:outline-none focus:border-[#1A1D1A]"
                 >
                   <option value="16:9">16:9 Widescreen</option>
                   <option value="9:16">9:16 Vertical</option>
@@ -139,11 +139,11 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
 
               {/* Format / Codec */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Export Format</label>
+                <label className="block text-xs text-[#1A1D1A]/70 mb-1">Export Format</label>
                 <select
                   value={format}
                   onChange={e => setFormat(e.target.value as ExportFormat)}
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-teal-300 font-mono focus:outline-none"
+                  className="w-full text-xs bg-[#FAF8F3] border border-[#1A1D1A]/20 rounded-lg px-2.5 py-2 text-[#1A1D1A] font-mono focus:outline-none focus:border-[#1A1D1A]"
                 >
                   <option value="prores-422">Apple ProRes 422 HQ</option>
                   <option value="mp4-h264">MP4 (H.264 Universal)</option>
@@ -157,9 +157,9 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
             <div className="flex justify-end pt-1">
               <button
                 type="submit"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-teal-500/20"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] font-bold text-xs transition-all shadow-xs cursor-pointer"
               >
-                <Film className="w-4 h-4" />
+                <Film className="w-4 h-4 text-teal-300" />
                 Dispatch Cloud Batch Render
               </button>
             </div>
@@ -168,7 +168,7 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
           {/* Job Queue Table */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-[#1A1D1A]/70 uppercase tracking-wider">
                 Active & Completed Render Jobs ({jobs.length})
               </h4>
             </div>
@@ -179,15 +179,15 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
                 return (
                   <div
                     key={job.id}
-                    className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 flex flex-wrap items-center justify-between gap-4"
+                    className="p-4 rounded-xl bg-[#FAF8F3] border border-[#1A1D1A]/15 hover:border-[#1A1D1A]/35 flex flex-wrap items-center justify-between gap-4 shadow-xs"
                   >
                     <div className="flex items-center gap-3 min-w-[240px]">
-                      <div className="w-16 h-10 rounded-lg overflow-hidden bg-slate-800 border border-slate-700 shrink-0">
+                      <div className="w-16 h-10 rounded-lg overflow-hidden bg-black border border-[#1A1D1A]/20 shrink-0">
                         <img src={job.thumbnailUrl} alt={job.title} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h5 className="text-sm font-semibold text-white">{job.title}</h5>
-                        <p className="text-xs text-slate-400 font-mono">
+                        <h5 className="text-sm font-semibold text-[#1A1D1A]">{job.title}</h5>
+                        <p className="text-xs text-[#1A1D1A]/60 font-mono">
                           {job.resolution} • {job.format} • {job.durationTotal.toFixed(1)}s • {job.createdAt}
                         </p>
                       </div>
@@ -196,21 +196,21 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
                     {/* Progress Bar & Stage Status */}
                     <div className="flex-1 min-w-[220px]">
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-slate-300 flex items-center gap-1.5 font-medium">
+                        <span className="text-[#1A1D1A]/80 flex items-center gap-1.5 font-medium">
                           {isDone ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                           ) : (
-                            <Loader2 className="w-3.5 h-3.5 text-teal-400 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 text-teal-700 animate-spin" />
                           )}
                           {job.currentStageText}
                         </span>
-                        <span className="font-mono text-teal-300">{job.progress}%</span>
+                        <span className="font-mono text-teal-800 font-bold">{job.progress}%</span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[#F0ECE1] rounded-full overflow-hidden">
                         <div
                           style={{ width: `${job.progress}%` }}
                           className={`h-full rounded-full transition-all duration-300 ${
-                            isDone ? 'bg-teal-400' : 'bg-gradient-to-r from-teal-500 to-cyan-400'
+                            isDone ? 'bg-emerald-600' : 'bg-teal-700'
                           }`}
                         />
                       </div>
@@ -227,18 +227,18 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
                             });
                           }}
                           disabled={downloadingJobId === job.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/40 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A1D1A] text-[#FAF8F3] hover:bg-[#1A1D1A]/85 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
                         >
                           {downloadingJobId === job.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-400" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FAF8F3]" />
                           ) : (
-                            <Download className="w-3.5 h-3.5" />
+                            <Download className="w-3.5 h-3.5 text-teal-300" />
                           )}
                           <span>{downloadingJobId === job.id ? 'Exporting...' : 'Download Video'}</span>
                         </button>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs text-slate-400 font-mono">
-                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="flex items-center gap-1 text-xs text-[#1A1D1A]/60 font-mono">
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
                           Rendering
                         </span>
                       )}
@@ -251,11 +251,11 @@ export const RenderQueueModal: React.FC<RenderQueueModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/90 flex justify-between items-center text-xs text-slate-400">
+        <div className="px-6 py-3 border-t border-[#1A1D1A]/10 bg-[#FAF8F3] flex justify-between items-center text-xs text-[#1A1D1A]/60">
           <span>Worker Protocol: openengine-cluster-v1 (Accelerated GPU Node)</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-[#F0ECE1] hover:bg-[#E8E2D5] text-[#1A1D1A] text-xs transition-colors border border-[#1A1D1A]/15 font-bold"
           >
             Close
           </button>

@@ -69,17 +69,20 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between aspect-video ${className}`}
+      className={`relative bg-[#FAF8F3] border border-[#1A1D1A]/15 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between aspect-video font-mono ${className}`}
     >
       {/* Top Header Overlay */}
-      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-slate-950/90 to-transparent flex items-center justify-between z-20 pointer-events-auto">
+      <div className="absolute top-0 left-0 right-0 p-3.5 bg-gradient-to-b from-[#FAF8F3]/95 via-[#FAF8F3]/85 to-transparent flex items-center justify-between z-20 pointer-events-auto border-b border-[#1A1D1A]/10">
         <div className="flex items-center gap-2">
-          <Clapperboard className="w-4 h-4 text-teal-400" />
-          <span className="text-xs font-bold text-slate-100 font-mono tracking-tight">
+          <Clapperboard className="w-4 h-4 text-teal-700" />
+          <span className="text-xs font-bold text-[#1A1D1A] font-mono tracking-tight">
             {currentScene?.title || 'Sequence Master'}
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/20">
             {currentScene?.aspectRatio || '16:9'}
+          </span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 font-semibold">
+            REAL VIDEO NLE
           </span>
         </div>
 
@@ -87,10 +90,10 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
           <button
             onClick={handleExportMaster}
             disabled={isExporting}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-md ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-xs ${
               isExporting
-                ? 'bg-teal-500 text-slate-950 animate-pulse'
-                : 'bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-950 shadow-teal-500/20'
+                ? 'bg-teal-700 text-white animate-pulse'
+                : 'bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3]'
             }`}
           >
             <Download className="w-3.5 h-3.5" />
@@ -100,7 +103,7 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
       </div>
 
       {/* Main Video Viewport / Composite Stage */}
-      <div className="relative w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden">
+      <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
         {currentScene?.videoBlobUrl ? (
           <video
             src={currentScene.videoBlobUrl}
@@ -111,15 +114,15 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
             playsInline
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-950/30 via-slate-950 to-slate-950">
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#1A1D1A] text-slate-200">
             <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-400 mb-3 animate-pulse">
               <Clapperboard className="w-8 h-8" />
             </div>
-            <h4 className="text-sm font-bold text-slate-200">
+            <h4 className="text-sm font-bold text-slate-100">
               {currentScene?.title || 'Ready to Synthesize Flow'}
             </h4>
             <p className="text-xs text-slate-400 max-w-md mt-1 line-clamp-2">
-              &quot;{currentScene?.prompt || 'Connect scenes in the flow canvas and generate real video blobs.'}&quot;
+              &quot;{currentScene?.prompt || 'Connect scenes in the flow canvas and generate or upload real video.'}&quot;
             </p>
             <button
               onClick={() => {
@@ -134,26 +137,28 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
         )}
 
         {/* HUD Telemetry Overlay */}
-        <div className="absolute bottom-16 left-4 bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1 text-[10px] font-mono text-slate-300 pointer-events-none flex items-center gap-3 backdrop-blur-sm">
-          <span>TIME: <strong className="text-teal-400">{currentTime.toFixed(2)}s</strong></span>
-          <span>SCENE: <strong className="text-teal-300">{sceneRelativeTime.toFixed(2)}s / {currentScene?.durationSeconds}s</strong></span>
-          <span>LUT: <strong className="text-amber-300">{currentScene?.colorLut}</strong></span>
+        <div className="absolute bottom-16 left-4 bg-[#FAF8F3]/90 border border-[#1A1D1A]/20 rounded-lg px-2.5 py-1 text-[10px] font-mono text-[#1A1D1A] pointer-events-none flex items-center gap-3 backdrop-blur-sm shadow-xs">
+          <span>TIME: <strong className="text-teal-700">{currentTime.toFixed(2)}s</strong></span>
+          <span>SCENE: <strong className="text-emerald-700">{sceneRelativeTime.toFixed(2)}s / {currentScene?.durationSeconds}s</strong></span>
+          <span>LUT: <strong className="text-amber-800">{currentScene?.colorLut}</strong></span>
         </div>
       </div>
 
       {/* Bottom Transport Controls Bar */}
-      <div className="p-3 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent flex items-center justify-between z-20">
+      <div className="p-3 bg-[#FAF8F3] border-t border-[#1A1D1A]/10 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => videoFlowService.setIsPlaying(!isPlaying)}
-            className="p-2 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-all shadow-md shadow-teal-500/20"
+            className="p-2 rounded-lg bg-[#1A1D1A] hover:bg-[#1A1D1A]/85 text-[#FAF8F3] font-bold transition-all shadow-xs"
+            title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
           </button>
 
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/15 transition-colors"
+            title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
@@ -162,7 +167,7 @@ export const VideoFlowPlayer: React.FC<VideoFlowPlayerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={handleToggleFullscreen}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-[#FAF8F3] hover:bg-[#F0ECE1] text-[#1A1D1A] border border-[#1A1D1A]/15 transition-colors"
             title="Toggle Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
