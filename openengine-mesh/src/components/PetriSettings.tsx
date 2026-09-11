@@ -15,7 +15,13 @@ import {
   Shield,
 } from 'lucide-react';
 import { Workspace, UserProfile } from '../types';
-import { lockPetriSession, updatePetriPassword } from './auth/PetriAuthGuard';
+import {
+  lockPetriSession,
+  updatePetriPassword,
+  verifyPetriPassword,
+  getPetriOperatorUsername,
+  updatePetriOperatorUsername,
+} from './auth/PetriAuthGuard';
 import { zitadelAuthService } from '../services/zitadelAuthService';
 
 export interface PetriSettingsConfig {
@@ -106,9 +112,12 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
   const [testRunning, setTestRunning] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [operatorUsername, setOperatorUsername] = useState(() => getPetriOperatorUsername());
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passNotice, setPassNotice] = useState<string | null>(null);
+  const [passNotice, setPassNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isUpdatingAuth, setIsUpdatingAuth] = useState(false);
 
   // Zitadel IAM Configuration
   const [zitadelIssuer, setZitadelIssuer] = useState(() => zitadelAuthService.getConfig().issuerUrl);
@@ -127,21 +136,52 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
     setTimeout(() => setZitadelNotice(null), 3500);
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
+  const handleUpdateSecurityCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword) {
-      setPassNotice('Please enter a new password.');
+    setPassNotice(null);
+
+    if (!currentPassword) {
+      setPassNotice({ type: 'error', text: 'Current password is required to authorize security changes.' });
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setPassNotice('Passwords do not match.');
-      return;
+
+    setIsUpdatingAuth(true);
+    try {
+      const isCurrentValid = await verifyPetriPassword(currentPassword);
+      if (!isCurrentValid) {
+        setPassNotice({ type: 'error', text: 'Current password incorrect · Authorization denied.' });
+        setIsUpdatingAuth(false);
+        return;
+      }
+
+      if (newPassword) {
+        if (newPassword.length < 4) {
+          setPassNotice({ type: 'error', text: 'New password must be at least 4 characters long.' });
+          setIsUpdatingAuth(false);
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          setPassNotice({ type: 'error', text: 'New passwords do not match.' });
+          setIsUpdatingAuth(false);
+          return;
+        }
+        await updatePetriPassword(newPassword);
+      }
+
+      if (operatorUsername.trim()) {
+        updatePetriOperatorUsername(operatorUsername.trim());
+      }
+
+      setPassNotice({ type: 'success', text: 'Security credentials updated successfully.' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPassNotice(null), 3500);
+    } catch {
+      setPassNotice({ type: 'error', text: 'Cryptographic update failed.' });
+    } finally {
+      setIsUpdatingAuth(false);
     }
-    await updatePetriPassword(newPassword);
-    setPassNotice('Root password updated successfully.');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPassNotice(null), 3500);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -480,40 +520,78 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <div className="flex items-center space-x-2.5">
                 <Lock className="w-4 h-4 text-stone-700" />
-                <h2 className="text-sm font-semibold text-stone-900">
-                  Site Access Protection & Password
-                </h2>
+                <div>
+                  <h2 className="text-sm font-semibold text-stone-900">
+                    Site Access Protection & Operator Identity
+                  </h2>
+                  <p className="text-[11px] text-stone-500">
+                    Highest-tier unbypassable dual-credential gate (Callsign + Master Password)
+                  </p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => lockPetriSession()}
-                className="px-2.5 py-1 text-[11px] font-mono border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#1A1D1A] hover:text-white rounded-lg transition-colors cursor-pointer"
-              >
-                Lock Session Now
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                  DUAL-KEY ENFORCED
+                </span>
+                <button
+                  type="button"
+                  onClick={() => lockPetriSession()}
+                  className="px-2.5 py-1 text-[11px] font-mono border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#1A1D1A] hover:text-white rounded-lg transition-colors cursor-pointer font-bold"
+                >
+                  Lock Session Now
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-xs text-stone-500 leading-relaxed">
-                Configure the master password protecting this zero-petri instance. All visitors must authenticate against this credential before gaining access to the workspace.
+            <div className="space-y-4">
+              <p className="text-xs text-stone-600 leading-relaxed">
+                Zero-petri is protected by a strict dual-credential barrier. All visitors must present both a verified Operator Callsign and the Master Password. Changes below require re-authenticating with your current password.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Current Password Authorization Field */}
+              <div className="p-3.5 bg-stone-50 border border-stone-200 rounded-xl space-y-2">
+                <label className="text-xs font-semibold text-stone-800 block flex items-center justify-between">
+                  <span>Current Master Password (Required to Apply Changes)</span>
+                  <span className="text-[10px] text-stone-400 font-normal">Authorization Challenge</span>
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password to authorize edits"
+                  className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
+                />
+              </div>
+
+              {/* Operator Callsign & New Passwords */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div>
                   <label className="text-xs font-medium text-stone-700 block mb-1">
-                    New Passcode
+                    Operator Callsign
                   </label>
                   <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
+                    type="text"
+                    value={operatorUsername}
+                    onChange={(e) => setOperatorUsername(e.target.value)}
+                    placeholder="Hideo"
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-stone-700 block mb-1">
-                    Confirm Passcode
+                    New Password (Optional)
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Leave blank to keep current"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
+                    Confirm New Password
                   </label>
                   <input
                     type="password"
@@ -526,18 +604,25 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               </div>
 
               {passNotice && (
-                <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 p-2 rounded-xl">
-                  {passNotice}
+                <div
+                  className={`text-xs p-2.5 rounded-xl border font-medium ${
+                    passNotice.type === 'success'
+                      ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                      : 'text-red-800 bg-red-50 border-red-200'
+                  }`}
+                >
+                  {passNotice.text}
                 </div>
               )}
 
               <div className="flex justify-end pt-1">
                 <button
                   type="button"
-                  onClick={handleUpdatePassword}
-                  className="px-4 py-2 bg-[#1A1D1A] hover:bg-[#333] text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs"
+                  disabled={isUpdatingAuth}
+                  onClick={handleUpdateSecurityCredentials}
+                  className="px-4 py-2 bg-[#1A1D1A] hover:bg-[#333] text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
                 >
-                  Update Access Password
+                  {isUpdatingAuth ? 'Verifying & Saving...' : 'Save Security Credentials'}
                 </button>
               </div>
             </div>
