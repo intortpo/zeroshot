@@ -18,6 +18,7 @@ Commands:
   connection  Inspect and manage named runtime connections
   profile     Manage reusable graph/runtime profiles
   template    Inspect built-in graph templates
+  plan        Validate, submit, and observe hosted merge plans
   run         Submit a graph run locally or to a named target
   list        List runs as JSON
   status      Read a run's current status as JSON
@@ -46,7 +47,6 @@ Usage: zeroshot target <COMMAND>
 Commands:
   add    Register a named target
   login  Authenticate with a hosted named target
-  setup  Configure the local profile for a named target
   serve  Serve an unauthenticated direct target
   help   Print this message or the help of the given subcommand(s)
 
@@ -95,30 +95,6 @@ Options:
           Print help (see a summary with '-h')
 ```
 
-#### `zeroshot target setup`
-
-```text
-Configure the local profile for a named target.
-
-This changes only the local named-target registry; it does not configure the remote target.
-
-Usage: zeroshot target setup [OPTIONS] --repository <OWNER/NAME> <NAME>
-
-Arguments:
-  <NAME>
-          Local target name
-
-Options:
-      --repository <OWNER/NAME>
-          GitHub repository in owner/name form
-
-      --branch <BRANCH>
-          Default source branch used when a run does not specify --branch
-
-  -h, --help
-          Print help (see a summary with '-h')
-```
-
 #### `zeroshot target serve`
 
 ```text
@@ -152,7 +128,6 @@ Usage: zeroshot target help [COMMAND]
 Commands:
   add    Register a named target
   login  Authenticate with a hosted named target
-  setup  Configure the local profile for a named target
   serve  Serve an unauthenticated direct target
   help   Print this message or the help of the given subcommand(s)
 ```
@@ -551,6 +526,164 @@ Commands:
   help  Print this message or the help of the given subcommand(s)
 ```
 
+### `zeroshot plan`
+
+```text
+Validate, submit, and observe hosted merge plans
+
+Usage: zeroshot plan <COMMAND>
+
+Commands:
+  validate    Validate a merge-plan manifest without contacting a target
+  submit      Atomically submit every node in a merge-plan manifest
+  status      Read a merge plan's aggregate status as JSON
+  watch       Poll a merge plan and stream changed snapshots as NDJSON
+  force-stop  Force every nonterminal run in a merge plan to stop
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+MANIFEST
+The JSON manifest is strict and self-contained:
+
+  {
+    "schema": "zeroshot.merge-plan/v1",
+    "title": "Release checkout update",
+    "source": {"repository": "owner/repo", "branch": "main"},
+    "profile": "org:software-change",
+    "expiresAt": "<RFC3339 timestamp within 7 days>",
+    "runs": {
+      "backend": {"input": {"task": "Update the API."}},
+      "integrate": {"needs": ["backend"], "input": {"task": "Run release tests."}}
+    }
+  }
+
+Every run uses the same source and profile. The profile must contain exactly one `builtin.git-delivery.merge@2` node;
+pull-request delivery is rejected. Agent bindings must not declare `GH_TOKEN`; only the Git delivery
+binding may declare it. `needs` gates readiness but does not pass output between runs.
+Cloud assigns every run ID atomically at submission. After a node's dependencies succeed, Cloud
+materializes it against an exact source revision. Completion starts a queue window of up to 24
+hours, bounded by `expiresAt`.
+`expiresAt` must be in the future and no more than
+seven days away. Plans cannot be edited or retried in place.
+```
+
+#### `zeroshot plan validate`
+
+```text
+Validate a merge-plan manifest without contacting a target
+
+Usage: zeroshot plan validate <FILE>
+
+Arguments:
+  <FILE>
+          Merge-plan manifest JSON file
+
+Options:
+  -h, --help
+          Print help
+```
+
+#### `zeroshot plan submit`
+
+```text
+Atomically submit every node in a merge-plan manifest
+
+Usage: zeroshot plan submit [OPTIONS] --target <NAME> --submission-key <KEY> <FILE>
+
+Arguments:
+  <FILE>
+          Merge-plan manifest JSON file
+
+Options:
+      --target <NAME>
+          Submit to this named hosted target
+
+      --submission-key <KEY>
+          Stable idempotency key for safely retrying the atomic submission
+
+  -d, --detach
+          Return after atomic submission instead of polling plan status
+
+  -h, --help
+          Print help
+```
+
+#### `zeroshot plan status`
+
+```text
+Read a merge plan's aggregate status as JSON
+
+Usage: zeroshot plan status --target <NAME> <PLAN_ID>
+
+Arguments:
+  <PLAN_ID>
+          Immutable merge-plan ID
+
+Options:
+      --target <NAME>
+          Use this named hosted target
+
+  -h, --help
+          Print help
+```
+
+#### `zeroshot plan watch`
+
+```text
+Poll a merge plan and stream changed snapshots as NDJSON
+
+Usage: zeroshot plan watch --target <NAME> <PLAN_ID>
+
+Arguments:
+  <PLAN_ID>
+          Immutable merge-plan ID
+
+Options:
+      --target <NAME>
+          Use this named hosted target
+
+  -h, --help
+          Print help
+```
+
+#### `zeroshot plan force-stop`
+
+```text
+Force every nonterminal run in a merge plan to stop
+
+Usage: zeroshot plan force-stop --target <NAME> <PLAN_ID>
+
+Arguments:
+  <PLAN_ID>
+          Immutable merge-plan ID
+
+Options:
+      --target <NAME>
+          Use this named hosted target
+
+  -h, --help
+          Print help
+```
+
+#### `zeroshot plan help`
+
+```text
+Print this message or the help of the given subcommand(s)
+
+Usage: zeroshot plan help [COMMAND]
+
+Commands:
+  validate    Validate a merge-plan manifest without contacting a target
+  submit      Atomically submit every node in a merge-plan manifest
+  status      Read a merge plan's aggregate status as JSON
+  watch       Poll a merge plan and stream changed snapshots as NDJSON
+  force-stop  Force every nonterminal run in a merge plan to stop
+  help        Print this message or the help of the given subcommand(s)
+```
+
 ### `zeroshot run`
 
 ```text
@@ -593,8 +726,14 @@ Options:
 
           The token is used for source checkout and Git delivery. A provider receives it only when the runtime configuration explicitly declares GH_TOKEN.
 
+      --repository <OWNER/NAME>
+          GitHub repository in owner/name form. Requires --target
+
       --branch <BRANCH>
-          Source branch to resolve on the named target. Requires --target
+          Source branch to resolve for the named run. Requires --target
+
+      --revision <SHA>
+          Exact source commit SHA. Requires --target
 
       --submission-key <KEY>
           Stable idempotency key for safely retrying submission
@@ -801,6 +940,7 @@ Commands:
   connection  Inspect and manage named runtime connections
   profile     Manage reusable graph/runtime profiles
   template    Inspect built-in graph templates
+  plan        Validate, submit, and observe hosted merge plans
   run         Submit a graph run locally or to a named target
   list        List runs as JSON
   status      Read a run's current status as JSON

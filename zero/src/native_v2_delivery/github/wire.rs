@@ -5,6 +5,7 @@ use super::*;
 #[derive(Deserialize)]
 pub(super) struct PullRequestWire {
     number: u64,
+    pub(super) title: Option<String>,
     pub(super) body: Option<String>,
     base: ReviewBranchWire,
     head: ReviewBranchWire,
@@ -98,6 +99,18 @@ pub(super) fn require_review_head(
         return Err(GitHubAuthorityError::review_head_not_visible());
     }
     Ok(())
+}
+
+pub(super) fn reference_revision(
+    wire: GitReferenceWire,
+    branch: &str,
+) -> Result<String, GitHubAuthorityError> {
+    let valid_identity = wire.reference == format!("refs/heads/{branch}")
+        && wire.object.kind == "commit"
+        && valid_revision(&wire.object.sha);
+    valid_identity
+        .then_some(wire.object.sha)
+        .ok_or(GitHubAuthorityError::Rejected)
 }
 
 #[cfg(test)]

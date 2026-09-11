@@ -1,4 +1,4 @@
-"""Async client for the Zeroshot executable and direct targets."""
+"""Async client for local, direct, and named hosted Zeroshot targets."""
 
 from __future__ import annotations
 
@@ -15,13 +15,16 @@ from typing import TypedDict, Unpack, overload
 
 from ._binary import resolve_binary
 from ._process import NativeProcess
-from ._projection import _log_event, _status, _summary
-from .errors import ClientClosedError, InvalidRequestError, ProtocolError
+from ._projection import _log_event, _plan_status, _status, _summary
+from .errors import ClientClosedError, InvalidRequestError, ProtocolError, TargetError
+from .plan_errors import MergePlanWaitTimeout
+from .plans import MergePlanRequest, MergePlanStatus
 from .run_errors import RunWaitTimeout
 from .runs import LogEvent, RunRequest, RunResult, RunStatus, RunSummary
 from .runtime import (
     DirectTarget,
     GraphSpec,
+    HostedTarget,
     LocalTarget,
     Preset,
     RuntimePlan,
@@ -54,7 +57,9 @@ class _Submission:
     graph: _Graph
     initial_input: JsonValue
     runtime: _Runtime
+    repository: str | None
     branch: str | None
+    revision: str | None
     submission_key: str
 
 
@@ -63,7 +68,9 @@ class _Overrides:
     title: str | None
     preset: Preset | None
     runtime: _Runtime | None
+    repository: str | None
     branch: str | None
+    revision: str | None
     submission_key: str | None
 
 
@@ -71,7 +78,9 @@ class _SubmitOptions(TypedDict, total=False):
     title: str | None
     preset: Preset | None
     runtime: _Runtime | None
+    repository: str | None
     branch: str | None
+    revision: str | None
     submission_key: str | None
 
 
@@ -80,10 +89,10 @@ class _RunOptions(_SubmitOptions, total=False):
 
 
 class Client:
-    """Submit and observe Zeroshot graph runs.
+    """Submit and observe Zeroshot graph runs and hosted merge plans.
 
     Args:
-        target: Local target by default, or an unauthenticated direct target such as Docker.
+        target: Local target by default, an unauthenticated direct target, or a named hosted target.
         preset: Default executable-owned graph preset. None selects software-change.
         runtime: Default runtime. None requires a runtime on each string submission.
         environment: Source for runtime-declared environment values. None reads the ambient
@@ -151,7 +160,9 @@ class Client:
         title: str | None = None,
         preset: Preset | None = None,
         runtime: _Runtime | None = None,
+        repository: str | None = None,
         branch: str | None = None,
+        revision: str | None = None,
         submission_key: str | None = None,
         wait_timeout: float | None = None,
     ) -> RunResult: ...
@@ -173,9 +184,9 @@ class Client:
 
         Args:
             task: Task text for a built-in preset, or a complete RunRequest.
-            options: Typed keyword options. title, preset, runtime, branch, and submission_key
-                apply to string submissions. wait_timeout is a non-negative observation deadline
-                in seconds; omit it to wait indefinitely.
+            options: Typed keyword options. title, preset, runtime, repository, branch, revision,
+                and submission_key apply to string submissions. wait_timeout is a non-negative
+                observation deadline in seconds; omit it to wait indefinitely.
 
         Returns:
             The terminal result. Graph failure remains data until raise_for_failure() is called.
@@ -211,8 +222,8 @@ class Client:
 
         Args:
             task: Task text for a built-in preset, or a complete RunRequest.
-            options: Typed keyword options for string submissions: title, preset, runtime, branch,
-                and submission_key.
+            options: Typed keyword options for string submissions: title, preset, runtime,
+                repository, branch, revision, and submission_key.
 
         Returns:
             A durable run handle bound to this client's target.
@@ -227,6 +238,58 @@ class Client:
         """
         return await self._submit(task, _overrides(options))
 
+    async def submit_plan(self, request: MergePlanRequest) -> MergePlan:
+        """Validate and atomically submit one merge-only DAG to a hosted target.
+
+        Args:
+            request: Immutable plan metadata, profile selector, and static run DAG.
+
+        Returns:
+            A durable merge-plan handle bound to this client's hosted target.
+
+        Raises:
+            InvalidRequestError: If this client does not use HostedTarget or validation fails.
+            TargetError: If the named target is unavailable or submission fails.
+            ProtocolError: If native output is malformed.
+        """
+        self._require_hosted_target()
+        submission_key = (
+            request.submission_key if request.submission_key is not None else _submission_key()
+        )
+        with tempfile.TemporaryDirectory(prefix="zeroshot-python-plan-") as directory:
+            manifest = _write_json(Path(directory) / "plan.json", request.to_dict())
+            await self._native(static=True).json(["plan", "validate", str(manifest)])
+            await self._ready()
+            value = await self._native().json(
+                [
+                    "plan",
+                    "submit",
+                    str(manifest),
+                    *self._route_arguments(),
+                    "--submission-key",
+                    submission_key,
+                    "--detach",
+                ]
+            )
+        status = _plan_status(value)
+        return MergePlan(self, status.plan_id)
+
+    def get_plan(self, plan_id: str) -> MergePlan:
+        """Reconstruct a durable hosted merge-plan handle without target I/O.
+
+        Args:
+            plan_id: Opaque server-assigned plan identity.
+
+        Returns:
+            A handle resolved lazily against this client's named hosted target.
+
+        Raises:
+            ClientClosedError: If this client is closed.
+            InvalidRequestError: If this client does not use HostedTarget.
+        """
+        self._require_hosted_target()
+        return MergePlan(self, plan_id)
+
     async def _submit(self, request: str | RunRequest, overrides: _Overrides) -> Run:
         self._ensure_open()
         selected = self._submission(request, overrides)
@@ -234,7 +297,10 @@ class Client:
             arguments = self._submission_arguments(selected, Path(directory))
             await self._native(static=True).json([*arguments[:-1], "--validate-only"])
             await self._ready()
-            receipt = await self._native().json(arguments)
+            receipt = None
+            async for value in self._native().json_lines(arguments):
+                if isinstance(value.get("runId"), str):
+                    receipt = value
         if not isinstance(receipt, dict) or not isinstance(receipt.get("runId"), str):
             raise ProtocolError("Zeroshot returned a malformed submission receipt")
         return Run(self, receipt["runId"])
@@ -308,7 +374,9 @@ class Client:
             graph=selected_preset,
             initial_input={"task": request},
             runtime=selected_runtime,
+            repository=overrides.repository,
             branch=overrides.branch,
+            revision=overrides.revision,
             submission_key=(
                 overrides.submission_key
                 if overrides.submission_key is not None
@@ -321,11 +389,12 @@ class Client:
         arguments = ["run", "--title", submission.title, "--input", str(input_path)]
         self._append_graph(arguments, submission.graph, root)
         self._append_runtime(arguments, submission.runtime, root)
-        effective_branch = submission.branch
-        if effective_branch is None and isinstance(self.target, DirectTarget):
-            effective_branch = self.target.default_branch
-        if effective_branch is not None:
-            arguments.extend(["--branch", effective_branch])
+        if submission.repository is not None:
+            arguments.extend(["--repository", submission.repository])
+        if submission.branch is not None:
+            arguments.extend(["--branch", submission.branch])
+        if submission.revision is not None:
+            arguments.extend(["--revision", submission.revision])
         arguments.extend(["--submission-key", submission.submission_key])
         return [*arguments, *self._route_arguments(), "--detach"]
 
@@ -367,10 +436,6 @@ class Client:
                 )
             native = self._native(static=True)
             await native.check(["target", "add", "python-sdk", "--url", target.origin, "--direct"])
-            setup = ["target", "setup", "python-sdk", "--repository", target.repository]
-            if target.default_branch is not None:
-                setup.extend(["--branch", target.default_branch])
-            await native.check(setup)
             self._direct_ready = True
 
     def _ensure_open(self) -> None:
@@ -378,7 +443,7 @@ class Client:
             raise ClientClosedError("the Zeroshot client is closed")
         if self._opened:
             return
-        if isinstance(self.target, LocalTarget):
+        if isinstance(self.target, (LocalTarget, DirectTarget)):
             workspace = self.target.workspace
             self._workspace = (
                 Path.cwd().resolve()
@@ -422,7 +487,49 @@ class Client:
         return environment, secrets
 
     def _route_arguments(self) -> list[str]:
-        return ["--target", "python-sdk"] if isinstance(self.target, DirectTarget) else []
+        if isinstance(self.target, DirectTarget):
+            return ["--target", "python-sdk"]
+        if isinstance(self.target, HostedTarget):
+            return ["--target", self.target.name]
+        return []
+
+    def _require_hosted_target(self) -> HostedTarget:
+        self._ensure_open()
+        if not isinstance(self.target, HostedTarget):
+            raise InvalidRequestError(
+                "merge plans require a named hosted target",
+                code="target.hosted_required",
+            )
+        return self.target
+
+    async def _plan_status(self, plan_id: str) -> MergePlanStatus:
+        self._require_hosted_target()
+        await self._ready()
+        value = await self._native().json(["plan", "status", plan_id, *self._route_arguments()])
+        return _plan_status(value)
+
+    async def _plan_watch(self, plan_id: str) -> AsyncGenerator[MergePlanStatus, None]:
+        self._require_hosted_target()
+        await self._ready()
+        stream = self._native().json_lines(["plan", "watch", plan_id, *self._route_arguments()])
+        unsuccessful_terminal_yielded = False
+        try:
+            async with aclosing(stream) as values:
+                async for value in values:
+                    status = _plan_status(value)
+                    unsuccessful_terminal_yielded = unsuccessful_terminal_yielded or (
+                        status.terminal and not status.succeeded
+                    )
+                    yield status
+        except TargetError:
+            if not unsuccessful_terminal_yielded:
+                raise
+
+    async def _plan_force_stop(self, plan_id: str) -> MergePlanStatus:
+        self._require_hosted_target()
+        await self._ready()
+        value = await self._native().json(["plan", "force-stop", plan_id, *self._route_arguments()])
+        return _plan_status(value)
 
     async def _status(self, run_id: str) -> RunStatus:
         await self._ready()
@@ -460,6 +567,76 @@ class Client:
         await self._ready()
         value = await self._native().json(["force-stop", run_id, *self._route_arguments()])
         return _status(value)
+
+
+class MergePlan:
+    """Durable hosted merge-plan handle bound to one Client target."""
+
+    __slots__ = ("_client", "_id")
+
+    def __init__(self, client: Client, plan_id: str) -> None:
+        self._client = client
+        self._id = plan_id
+
+    @property
+    def id(self) -> str:
+        """Return the opaque server-assigned merge-plan identity."""
+        return self._id
+
+    async def status(self) -> MergePlanStatus:
+        """Read the plan's current aggregate status."""
+        return await self._client._plan_status(self.id)
+
+    def watch(self) -> AsyncIterator[MergePlanStatus]:
+        """Poll and yield changed aggregate snapshots until the plan is terminal.
+
+        Cancelling or closing the iterator detaches observation and leaves runs active.
+        """
+        return self._client._plan_watch(self.id)
+
+    async def wait(self, *, wait_timeout: float | None = None) -> MergePlanStatus:
+        """Wait for a terminal aggregate status without controlling plan lifetime.
+
+        Args:
+            wait_timeout: Non-negative observation deadline in seconds. None waits indefinitely.
+
+        Raises:
+            ValueError: If wait_timeout is negative.
+            MergePlanWaitTimeout: If observation expires; it carries this durable handle.
+            TargetError: If the selected target is unavailable.
+            ProtocolError: If native output is malformed.
+        """
+        if wait_timeout is not None and wait_timeout < 0:
+            raise ValueError("wait_timeout must be non-negative")
+
+        async def observe() -> MergePlanStatus:
+            current = await self.status()
+            if current.terminal:
+                return current
+            stream = self._client._plan_watch(self.id)
+            async with aclosing(stream) as statuses:
+                async for status in statuses:
+                    if status.terminal:
+                        return status
+            current = await self.status()
+            if current.terminal:
+                return current
+            raise ProtocolError("Zeroshot plan watch closed before a terminal status")
+
+        if wait_timeout is None:
+            return await observe()
+        try:
+            async with asyncio.timeout(wait_timeout):
+                return await observe()
+        except TimeoutError as error:
+            raise MergePlanWaitTimeout(self, wait_timeout) from error
+
+    async def force_stop(self) -> MergePlanStatus:
+        """Force every nonterminal run to stop and wait for aggregate termination."""
+        status = await self._client._plan_force_stop(self.id)
+        if status.terminal:
+            return status
+        return await self.wait()
 
 
 class Run:
@@ -590,7 +767,9 @@ def _overrides(options: _SubmitOptions) -> _Overrides:
         options.get("title"),
         options.get("preset"),
         options.get("runtime"),
+        options.get("repository"),
         options.get("branch"),
+        options.get("revision"),
         options.get("submission_key"),
     )
 
@@ -602,7 +781,9 @@ def _exact_submission(request: RunRequest, overrides: _Overrides) -> _Submission
             overrides.title,
             overrides.preset,
             overrides.runtime,
+            overrides.repository,
             overrides.branch,
+            overrides.revision,
             overrides.submission_key,
         )
     ):
@@ -612,7 +793,9 @@ def _exact_submission(request: RunRequest, overrides: _Overrides) -> _Submission
         graph=request.graph,
         initial_input=request.initial_input,
         runtime=request.runtime,
+        repository=request.repository,
         branch=request.branch,
+        revision=request.revision,
         submission_key=(
             request.submission_key if request.submission_key is not None else _submission_key()
         ),

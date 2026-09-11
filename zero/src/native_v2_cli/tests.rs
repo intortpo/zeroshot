@@ -1,8 +1,11 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use openengine_cluster_protocol::{RunTitle, RuntimePlan};
+use openengine_cluster_protocol::{
+    RunTitle, RuntimePlan, SourceBranchId, SourceRepositoryId, SourceRevisionId,
+};
 use openengine_cluster_testkit::assertions::{AssertError, AssertValue};
 use serde_json::{json, Value};
 
@@ -28,6 +31,37 @@ use support::*;
 
 fn args(values: &[&str]) -> Vec<OsString> {
     values.iter().map(OsString::from).collect()
+}
+
+struct EdgeDetachSignal {
+    notification: tokio::sync::watch::Sender<()>,
+}
+
+#[async_trait::async_trait]
+impl DetachSignal for EdgeDetachSignal {
+    async fn wait(&mut self) {
+        let mut receiver = self.notification.subscribe();
+        let _ = receiver.changed().await;
+    }
+}
+
+struct NotifyingOutput {
+    notification: Option<tokio::sync::watch::Sender<()>>,
+    bytes: Vec<u8>,
+}
+
+impl Write for NotifyingOutput {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.bytes.extend_from_slice(bytes);
+        if let Some(notification) = self.notification.take() {
+            let _ = notification.send(());
+        }
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
 }
 
 fn assert_cursor_calls(calls: &[Call], kind: CursorCallKind, expected: &[Option<&str>]) {
@@ -86,6 +120,10 @@ fn run_args(graph: &Path, input: &Path, runtime: &Path, extra: &[&str]) -> Vec<O
         OsString::from("run"),
         OsString::from("--target"),
         OsString::from("prod"),
+        OsString::from("--repository"),
+        OsString::from("open-engine/zeroshot"),
+        OsString::from("--revision"),
+        OsString::from("0123456789abcdef0123456789abcdef01234567"),
         OsString::from("--title"),
         OsString::from("Repair checkout"),
         OsString::from("--graph"),
@@ -95,6 +133,9 @@ fn run_args(graph: &Path, input: &Path, runtime: &Path, extra: &[&str]) -> Vec<O
         OsString::from("--runtime-config"),
         runtime.as_os_str().to_owned(),
     ];
+    if !extra.contains(&"--branch") {
+        values.extend([OsString::from("--branch"), OsString::from("main")]);
+    }
     values.extend(extra.iter().map(OsString::from));
     values
 }
@@ -226,6 +267,10 @@ fn template_list_and_show_are_static_and_emit_ordinary_json() {
         shown.pointer("/initialInput/fields/task/required"),
         Some(&json!(true))
     );
+    assert_eq!(
+        shown.pointer("/initialInput/fields/issueNumber/required"),
+        Some(&json!(false))
+    );
     assert!(
         shown
             .pointer("/initialInput/fields/acceptanceFeedback")
@@ -243,6 +288,12 @@ fn template_list_and_show_are_static_and_emit_ordinary_json() {
         shown.pointer("/root/state/fields/deliveryFeedback/required"),
         Some(&json!(true))
     );
+    for field in ["title", "description", "issueNumber"] {
+        assert_eq!(
+            shown.pointer(&format!("/root/state/fields/{field}/required")),
+            Some(&json!(true))
+        );
+    }
     assert!(shown.to_string().contains("builtin.git-delivery.pr@1"));
     assert!(backend.calls().is_empty());
 }
@@ -284,8 +335,43 @@ async fn run_follows_by_default_and_forwards_per_run_intent_unchanged() {
         ]
     );
     let lines = String::from_utf8(output).assert_value();
-    assert!(lines.contains("\"runId\":\"run-public\""));
+    let mut values = lines
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).assert_value());
+    let source = values.next().assert_value();
+    assert_eq!(
+        source["source"],
+        "open-engine/zeroshot@feature#0123456789abcdef0123456789abcdef01234567"
+    );
+    assert_eq!(source["target"], "prod");
+    assert!(source["dirty"].is_boolean());
+    assert_eq!(values.next().assert_value()["runId"], "run-public");
     assert!(lines.contains("\"phase\":\"finished\""));
+}
+
+#[tokio::test]
+async fn rejected_named_submission_does_not_emit_source_metadata() {
+    let files = FixtureFiles::new(graph(), json!({"task":"reject it"}));
+    let command = parse_native_v2_args(run_args(
+        &files.graph,
+        &files.input,
+        &files.runtime,
+        &["--detach"],
+    ))
+    .assert_value();
+    let backend = FakeBackend::with_failed_submit();
+    let mut output = std::io::Cursor::new(Vec::new());
+
+    let result = execute_native_v2_cli(command, &backend, &mut NeverDetach, &mut output)
+        .await
+        .map_err(|error| error.to_string());
+
+    assert_eq!(
+        result,
+        Err("Zeroshot OECP request failed: submission rejected".to_owned())
+    );
+    assert_eq!(output.position(), 0);
+    assert!(matches!(backend.calls().as_slice(), [Call::Submit { .. }]));
 }
 
 #[tokio::test]
@@ -326,6 +412,37 @@ async fn ctrl_c_detaches_observation_without_force_stop() {
             .iter()
             .any(|call| matches!(call, Call::Force { .. }))
     );
+}
+
+#[tokio::test]
+async fn detach_notification_survives_a_completed_subscription_branch() {
+    let backend = FakeBackend::with_reconnecting_watch();
+    let (notification, _receiver) = tokio::sync::watch::channel(());
+    let mut signal = EdgeDetachSignal {
+        notification: notification.clone(),
+    };
+    let mut output = NotifyingOutput {
+        notification: Some(notification),
+        bytes: Vec::new(),
+    };
+    let command =
+        parse_native_v2_args(args(&["watch", "run-public", "--target", "prod"])).assert_value();
+
+    let outcome = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        execute_native_v2_cli(command, &backend, &mut signal, &mut output),
+    )
+    .await
+    .expect("detach notification remains observable")
+    .assert_value();
+
+    assert_eq!(outcome, CliOutcome::Detached);
+    assert!(
+        String::from_utf8(output.bytes)
+            .assert_value()
+            .contains("\"cursor\":\"v2:1\"")
+    );
+    assert_cursor_calls(&backend.calls(), CursorCallKind::Watch, &[None]);
 }
 
 #[tokio::test]

@@ -25,6 +25,7 @@ pub const TARGET_RUN_PATH: &str = "/native-v2/run";
 pub const TARGET_SESSION_PATH: &str = "/native-v2/oecp-session";
 pub const TARGET_OECP_PATH: &str = "/native-v2/oecp";
 pub const TARGET_PRIVATE_BOOTSTRAP_PATH: &str = "/native-v2/private-bootstrap";
+pub const TARGET_OPERATOR_DIAGNOSTICS_PATH_PREFIX: &str = "/native-v2/operator-diagnostics/";
 pub const TARGET_DISCOVERY_KIND: &str = "zeroshot.native-v2-target/v2";
 pub const TARGET_CONTROLLER_AUDIENCE: &str = "controller";
 pub const HOSTED_RUNS_KIND: &str = "zeroshot.hosted-runs/v1";
@@ -254,6 +255,29 @@ pub struct TargetRunReceipt {
     pub run_id: RunId,
 }
 
+/// One bounded, sanitized platform diagnostic retained outside public run observation.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct TargetOperatorDiagnostic {
+    pub id: String,
+    pub run_id: RunId,
+    pub code: String,
+    pub operation: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exit_status: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+    pub stdout_truncated: bool,
+    pub stderr_truncated: bool,
+}
+
+/// Private target snapshot of the small retained operator-diagnostic buffer.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct TargetOperatorDiagnostics {
+    pub diagnostics: Vec<TargetOperatorDiagnostic>,
+}
+
 /// A hosted authority requires a run so it can route to one exact task attempt. Direct targets
 /// may omit it for target-wide operations such as listing runs.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -364,6 +388,8 @@ pub struct TargetDiscoveryExtensions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hosted_runs: Option<TargetHostedRunsDiscovery>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub merge_plans: Option<crate::TargetMergePlansDiscovery>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub connections: Option<TargetConnectionsDiscovery>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub run_profiles: Option<TargetRunProfilesDiscovery>,
@@ -392,7 +418,10 @@ pub struct TargetDiscoveryDocument {
 impl TargetDiscoveryExtensions {
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.hosted_runs.is_none() && self.connections.is_none() && self.run_profiles.is_none()
+        self.hosted_runs.is_none()
+            && self.merge_plans.is_none()
+            && self.connections.is_none()
+            && self.run_profiles.is_none()
     }
 }
 

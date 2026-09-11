@@ -2,9 +2,10 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use openengine_cluster_protocol::{
-    RunAttachEventNotification, RunAttachParams, RunConnectionValues, RunForceParams, RunId,
-    RunListParams, RunLogEventNotification, RunLogsParams, RunStatusParams, RunSubmitResult,
-    RunTitle, RunWatchParams, RuntimePlan,
+    MergePlan, MergePlanState, RunAttachEventNotification, RunAttachParams, RunConnectionValues,
+    RunForceParams, RunId, RunListParams, RunLogEventNotification, RunLogsParams, RunProfile,
+    RunProfileName, RunProfileScope, RunStatusParams, RunSubmitResult, RunTitle, RunWatchParams,
+    RuntimePlan,
 };
 use openengine_cluster_testkit::assertions::AssertValue;
 use serde_json::{json, Value};
@@ -30,11 +31,6 @@ pub(super) enum Call {
     },
     TargetLogin {
         name: String,
-    },
-    TargetSetup {
-        name: String,
-        repository: String,
-        default_branch: Option<String>,
     },
     Submit {
         target: Option<String>,
@@ -135,6 +131,7 @@ where
 #[derive(Clone, Default)]
 pub(super) struct FakeBackend {
     calls: Arc<Mutex<Vec<Call>>>,
+    failed_submit: bool,
     pending_watch: bool,
     reconnect_watch: bool,
     permanent_reopen_watch: bool,
@@ -142,6 +139,7 @@ pub(super) struct FakeBackend {
     attach_behavior: AttachBehavior,
     failed_watch: bool,
     queued_lifecycle: bool,
+    terminal_plan_state: Option<MergePlanState>,
 }
 
 #[derive(Clone, Copy)]
@@ -151,6 +149,13 @@ pub(super) enum CursorCallKind {
 }
 
 impl FakeBackend {
+    pub(super) fn with_failed_submit() -> Self {
+        Self {
+            failed_submit: true,
+            ..Self::default()
+        }
+    }
+
     pub(super) fn with_pending_watch() -> Self {
         Self {
             pending_watch: true,
@@ -186,6 +191,13 @@ impl FakeBackend {
         }
     }
 
+    pub(super) fn with_terminal_plan_state(state: MergePlanState) -> Self {
+        Self {
+            terminal_plan_state: Some(state),
+            ..Self::default()
+        }
+    }
+
     pub(super) fn with_reconnecting_attach_after_disconnect() -> Self {
         Self {
             attach_behavior: AttachBehavior::Disconnect,
@@ -217,6 +229,54 @@ impl FakeBackend {
     pub(super) fn calls(&self) -> Vec<Call> {
         self.calls.lock().assert_value().clone()
     }
+
+    fn terminal_plan(&self) -> Result<MergePlan, NativeV2CliError> {
+        self.terminal_plan_state
+            .map(terminal_merge_plan)
+            .ok_or_else(|| {
+                NativeV2CliError::Target("target does not advertise merge plans".to_owned())
+            })
+    }
+}
+
+fn merge_plan_profile() -> RunProfile {
+    let runtime = serde_json::from_str(
+        r#"{
+            "harness":"codex","provider":"openai","size":"medium","nodes":{
+                "worker":{"kind":"agent","model":"gpt-5.6-sol"},
+                "acceptance":{"kind":"agent","model":"gpt-5.6-sol"},
+                "code":{"kind":"agent","model":"gpt-5.6-sol"},
+                "review_repair":{"kind":"agent","model":"gpt-5.6-sol"},
+                "delivery_repair":{"kind":"agent","model":"gpt-5.6-sol"},
+                "deliver":{"kind":"git_delivery","connections":{"github":["GH_TOKEN"]}}
+            }
+        }"#,
+    )
+    .assert_value();
+    RunProfile {
+        id: "profile-plan".to_owned(),
+        name: RunProfileName::new("software-change").assert_value(),
+        scope: RunProfileScope::Org,
+        graph: BuiltinGraphTemplate::SoftwareChange
+            .materialize(TemplateDelivery::Merge)
+            .assert_value(),
+        runtime,
+        is_default: false,
+    }
+}
+
+fn terminal_merge_plan(state: MergePlanState) -> MergePlan {
+    serde_json::from_value(json!({
+        "planId":"plan-public",
+        "title":"Release",
+        "state":state,
+        "repository":"open-engine/zeroshot",
+        "branch":"main",
+        "submittedAt":"2026-09-10T00:00:00Z",
+        "expiresAt":"2026-09-11T00:00:00Z",
+        "runs":[]
+    }))
+    .assert_value()
 }
 
 #[async_trait]
@@ -241,15 +301,41 @@ impl NativeV2CliBackend for FakeBackend {
         Ok(())
     }
 
-    async fn target_setup(&self, request: TargetSetup) -> Result<(), NativeV2CliError> {
-        self.calls.lock().assert_value().push(Call::TargetSetup {
-            name: request.name,
-            repository: request.repository,
-            default_branch: request
-                .default_branch
-                .map(|branch| branch.as_str().to_owned()),
-        });
-        Ok(())
+    async fn profile_show(
+        &self,
+        _target: Option<&str>,
+        _selector: RunProfileSelector,
+    ) -> Result<RunProfile, NativeV2CliError> {
+        if self.terminal_plan_state.is_some() {
+            return Ok(merge_plan_profile());
+        }
+        Err(NativeV2CliError::Target(
+            "target does not advertise profile management".to_owned(),
+        ))
+    }
+
+    async fn merge_plan_submit(
+        &self,
+        _target: &str,
+        _request: PreparedMergePlanRequest,
+    ) -> Result<MergePlan, NativeV2CliError> {
+        self.terminal_plan()
+    }
+
+    async fn merge_plan_status(
+        &self,
+        _target: &str,
+        _plan_id: MergePlanId,
+    ) -> Result<MergePlan, NativeV2CliError> {
+        self.terminal_plan()
+    }
+
+    async fn merge_plan_force(
+        &self,
+        _target: &str,
+        _plan_id: MergePlanId,
+    ) -> Result<MergePlan, NativeV2CliError> {
+        self.terminal_plan()
     }
 
     async fn run_submit(
@@ -262,6 +348,7 @@ impl NativeV2CliBackend for FakeBackend {
             connections,
             github_token,
             run_id: _,
+            source: _,
             profile: _,
         } = request;
         self.calls.lock().assert_value().push(Call::Submit {
@@ -274,6 +361,9 @@ impl NativeV2CliBackend for FakeBackend {
             branch: intent.branch.map(|branch| branch.as_str().to_owned()),
             submission_key: intent.submission_key.as_str().to_owned(),
         });
+        if self.failed_submit {
+            return Err(NativeV2CliError::Protocol("submission rejected".to_owned()));
+        }
         Ok(RunSubmitResult {
             run_id: RunId::new("run-public"),
         })

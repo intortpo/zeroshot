@@ -49,6 +49,12 @@ enum CliCommand {
         command: TemplateCommand,
     },
 
+    /// Validate, submit, and observe hosted merge plans.
+    Plan {
+        #[command(subcommand)]
+        command: PlanCommand,
+    },
+
     /// Submit a graph run locally or to a named target.
     ///
     /// When --target is omitted, the run uses the current local repository. A foreground run
@@ -87,6 +93,47 @@ enum UtilityCommand {
 }
 
 #[derive(Debug, Subcommand)]
+#[command(after_long_help = r#"MANIFEST
+The JSON manifest is strict and self-contained:
+
+  {
+    "schema": "zeroshot.merge-plan/v1",
+    "title": "Release checkout update",
+    "source": {"repository": "owner/repo", "branch": "main"},
+    "profile": "org:software-change",
+    "expiresAt": "<RFC3339 timestamp within 7 days>",
+    "runs": {
+      "backend": {"input": {"task": "Update the API."}},
+      "integrate": {"needs": ["backend"], "input": {"task": "Run release tests."}}
+    }
+  }
+
+Every run uses the same source and profile. The profile must contain exactly one `builtin.git-delivery.merge@2` node;
+pull-request delivery is rejected. Agent bindings must not declare `GH_TOKEN`; only the Git delivery
+binding may declare it. `needs` gates readiness but does not pass output between runs.
+Cloud assigns every run ID atomically at submission. After a node's dependencies succeed, Cloud
+materializes it against an exact source revision. Completion starts a queue window of up to 24
+hours, bounded by `expiresAt`.
+`expiresAt` must be in the future and no more than
+seven days away. Plans cannot be edited or retried in place."#)]
+enum PlanCommand {
+    /// Validate a merge-plan manifest without contacting a target.
+    Validate(PlanFileArgs),
+
+    /// Atomically submit every node in a merge-plan manifest.
+    Submit(PlanSubmitArgs),
+
+    /// Read a merge plan's aggregate status as JSON.
+    Status(PlanSelectorArgs),
+
+    /// Poll a merge plan and stream changed snapshots as NDJSON.
+    Watch(PlanSelectorArgs),
+
+    /// Force every nonterminal run in a merge plan to stop.
+    ForceStop(PlanSelectorArgs),
+}
+
+#[derive(Debug, Subcommand)]
 enum TargetCommand {
     /// Register a named target.
     Add(TargetAddArgs),
@@ -97,11 +144,6 @@ enum TargetCommand {
     /// private file. Set ZERO_CREDENTIAL_STORE to auto, system, or file to override
     /// automatic selection.
     Login(TargetNameArgs),
-
-    /// Configure the local profile for a named target.
-    ///
-    /// This changes only the local named-target registry; it does not configure the remote target.
-    Setup(TargetSetupArgs),
 
     /// Serve an unauthenticated direct target.
     ///
@@ -224,21 +266,6 @@ struct TargetNameArgs {
     /// Local target name.
     #[arg(value_name = "NAME")]
     name: String,
-}
-
-#[derive(Debug, Args)]
-struct TargetSetupArgs {
-    /// Local target name.
-    #[arg(value_name = "NAME")]
-    name: String,
-
-    /// GitHub repository in owner/name form.
-    #[arg(long, value_name = "OWNER/NAME")]
-    repository: String,
-
-    /// Default source branch used when a run does not specify --branch.
-    #[arg(long, value_name = "BRANCH")]
-    branch: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -375,9 +402,17 @@ struct RunArgs {
     #[arg(long, value_name = "NAME")]
     target: Option<String>,
 
-    /// Source branch to resolve on the named target. Requires --target.
+    /// GitHub repository in owner/name form. Requires --target.
+    #[arg(long, value_name = "OWNER/NAME")]
+    repository: Option<String>,
+
+    /// Source branch to resolve for the named run. Requires --target.
     #[arg(long, value_name = "BRANCH")]
     branch: Option<String>,
+
+    /// Exact source commit SHA. Requires --target.
+    #[arg(long, value_name = "SHA")]
+    revision: Option<String>,
 
     /// Stable idempotency key for safely retrying submission.
     #[arg(long, value_name = "KEY")]
@@ -393,6 +428,43 @@ struct RunArgs {
 
     #[command(flatten)]
     delivery: DeliveryArgs,
+}
+
+#[derive(Debug, Args)]
+struct PlanFileArgs {
+    /// Merge-plan manifest JSON file.
+    #[arg(value_name = "FILE")]
+    file: PathBuf,
+}
+
+#[derive(Debug, Args)]
+struct PlanSubmitArgs {
+    /// Merge-plan manifest JSON file.
+    #[arg(value_name = "FILE")]
+    file: PathBuf,
+
+    /// Submit to this named hosted target.
+    #[arg(long, value_name = "NAME")]
+    target: String,
+
+    /// Stable idempotency key for safely retrying the atomic submission.
+    #[arg(long, value_name = "KEY")]
+    submission_key: String,
+
+    /// Return after atomic submission instead of polling plan status.
+    #[arg(short = 'd', long)]
+    detach: bool,
+}
+
+#[derive(Debug, Args)]
+struct PlanSelectorArgs {
+    /// Immutable merge-plan ID.
+    #[arg(value_name = "PLAN_ID")]
+    plan_id: String,
+
+    /// Use this named hosted target.
+    #[arg(long, value_name = "NAME")]
+    target: String,
 }
 
 #[derive(Debug, Args)]

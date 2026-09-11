@@ -23,6 +23,9 @@ use crate::native_v2_delivery::GITHUB_TOKEN_ENV;
 
 #[path = "submission/profiles.rs"]
 mod profiles;
+
+#[path = "named_source.rs"]
+mod named_source;
 pub(super) use profiles::materialize_profile;
 use profiles::{ResolvedRunProfile, resolve_run_profile};
 
@@ -77,6 +80,9 @@ pub fn try_execute_native_v2_static(
         return Ok(Some(CliOutcome::Completed));
     }
     let outcome = match command {
+        NativeV2CliCommand::PlanValidate { file } => {
+            return super::merge_plans::validate_file(file, output).map(Some);
+        }
         NativeV2CliCommand::TemplateList => execute_template_list(output)?,
         NativeV2CliCommand::TemplateShow { template, delivery } => {
             execute_template_show(*template, *delivery, output)?
@@ -134,6 +140,7 @@ where
         intent,
         connections,
         github_token,
+        source: None,
         profile: resolved.remote_selector,
     })
 }
@@ -146,7 +153,8 @@ async fn prepare_validated_submission_with_environment<F>(
 where
     F: Fn(&str) -> Option<OsString>,
 {
-    let params = prepare_submission_with_environment(run, resolved, available)?;
+    let mut params = prepare_submission_with_environment(run, resolved, available)?;
+    params.source = named_source::resolve(run, params.github_token.as_deref()).await?;
     NativeV2Admission
         .validate_intent(&params.intent, DeliveryPolicy::Optional)
         .await
@@ -154,12 +162,14 @@ where
     Ok(params)
 }
 
-pub(super) async fn submit_run<B>(
+pub(super) async fn submit_run<B, W>(
     run: &RunCommand,
     context: &CliExecutionContext<'_, B>,
+    output: &mut W,
 ) -> Result<Option<RunSubmitResult>, NativeV2CliError>
 where
     B: NativeV2CliBackend,
+    W: Write,
 {
     let resolved = resolve_run_profile(run, context.backend).await?;
     let params =
@@ -167,14 +177,34 @@ where
     if run.validate_only {
         return Ok(None);
     }
-    context
+    let source_record = named_source_record(run, &params);
+    let receipt = context
         .backend
         .run_submit(run.target.as_deref(), params)
-        .await
-        .map(Some)
+        .await?;
+    if let Some(record) = source_record {
+        write_json(output, &record)?;
+    }
+    Ok(Some(receipt))
 }
 
-fn validate_github_token(value: String) -> Result<String, NativeV2CliError> {
+fn named_source_record(run: &RunCommand, params: &PreparedRunRequest) -> Option<serde_json::Value> {
+    let target = run.target.as_ref()?;
+    let source = params.source.as_ref()?;
+    let resolved = &source.resolved;
+    Some(serde_json::json!({
+        "target": target,
+        "source": format!(
+            "{}@{}#{}",
+            resolved.repository.as_str(),
+            resolved.branch.as_str(),
+            resolved.revision.as_str()
+        ),
+        "dirty": source.dirty,
+    }))
+}
+
+pub(super) fn validate_github_token(value: String) -> Result<String, NativeV2CliError> {
     if value.is_empty() || value.len() > 4_096 || value.contains('\0') {
         Err(NativeV2CliError::GitHubToken)
     } else {
@@ -207,7 +237,7 @@ fn prepare_intent(
     })
 }
 
-fn select_connections<F>(
+pub(super) fn select_connections<F>(
     runtime: &RuntimePlan,
     available: F,
 ) -> Result<RunConnectionValues, NativeV2CliError>
@@ -484,7 +514,7 @@ fn validate_graph_profile(graph: &GraphSpec) -> Result<(), NativeV2CliError> {
     ))
 }
 
-fn read_json<T>(kind: &'static str, path: &Path) -> Result<T, NativeV2CliError>
+pub(super) fn read_json<T>(kind: &'static str, path: &Path) -> Result<T, NativeV2CliError>
 where
     T: serde::de::DeserializeOwned,
 {

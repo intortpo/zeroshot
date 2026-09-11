@@ -1,4 +1,6 @@
+use std::future::Future;
 use std::io::Write;
+use std::pin::Pin;
 use std::time::Duration;
 
 use openengine_cluster_protocol::{
@@ -19,6 +21,8 @@ mod attach;
 mod connections;
 #[path = "execution/context.rs"]
 mod context;
+#[path = "execution/merge_plans.rs"]
+mod merge_plans;
 #[path = "execution/profiles.rs"]
 mod profiles;
 #[path = "execution/status.rs"]
@@ -61,6 +65,9 @@ where
     if let Some(outcome) = try_execute_native_v2_static(&command, output)? {
         return Ok(outcome);
     }
+    if command.is_plan_operation() {
+        return merge_plans::execute(command, context, signal, output).await;
+    }
     if command.is_connection_operation() {
         return connections::execute_connection(command, context.backend, output).await;
     }
@@ -87,7 +94,6 @@ where
     match command {
         NativeV2CliCommand::TargetAdd(request) => backend.target_add(request).await?,
         NativeV2CliCommand::TargetLogin { name } => backend.target_login(&name).await?,
-        NativeV2CliCommand::TargetSetup(request) => backend.target_setup(request).await?,
         _ => {
             return Err(NativeV2CliError::Usage(
                 "expected a target operation".to_owned(),
@@ -250,7 +256,7 @@ where
     S: DetachSignal,
     W: Write,
 {
-    let Some(receipt) = submit_run(&run, context).await? else {
+    let Some(receipt) = submit_run(&run, context, output).await? else {
         write_json(output, &serde_json::json!({ "valid": true }))?;
         return Ok(CliOutcome::Completed);
     };
@@ -372,6 +378,31 @@ enum DurableItem {
     Closed(SubscriptionCloseReason),
 }
 
+enum SubscriptionStep<E> {
+    Detached,
+    Reconnect,
+    Item(Option<E>),
+}
+
+async fn next_or_detach<E, N, D>(
+    next: N,
+    mut detach: Pin<&mut D>,
+) -> Result<SubscriptionStep<E>, NativeV2CliError>
+where
+    N: Future<Output = Result<Option<E>, NativeV2CliError>>,
+    D: Future<Output = ()> + ?Sized,
+{
+    tokio::select! {
+        biased;
+        () = detach.as_mut() => Ok(SubscriptionStep::Detached),
+        item = next => match item {
+            Ok(item) => Ok(SubscriptionStep::Item(item)),
+            Err(NativeV2CliError::Disconnected) => Ok(SubscriptionStep::Reconnect),
+            Err(error) => Err(error),
+        },
+    }
+}
+
 impl DurableItem {
     fn cursor(&self) -> Option<&Cursor> {
         match self {
@@ -394,9 +425,12 @@ where
 {
     let mut from_cursor = follow.initial_cursor.clone();
     let mut opened = false;
+    let detach = signal.wait();
+    tokio::pin!(detach);
     loop {
         let subscription = tokio::select! {
-            () = signal.wait() => return Ok(CliOutcome::Detached),
+            biased;
+            () = &mut detach => return Ok(CliOutcome::Detached),
             result = follow.open(from_cursor.clone()) => match result {
                 Ok(subscription) => {
                     opened = true;
@@ -412,23 +446,23 @@ where
         };
         let mut subscription = subscription;
         loop {
-            let item = tokio::select! {
-                () = signal.wait() => return Ok(CliOutcome::Detached),
-                item = subscription.next() => item,
-            };
-            match item {
-                Ok(Some(DurableItem::Closed(SubscriptionCloseReason::Done))) => {
+            match next_or_detach(subscription.next(), detach.as_mut()).await? {
+                SubscriptionStep::Detached => return Ok(CliOutcome::Detached),
+                SubscriptionStep::Item(Some(DurableItem::Closed(
+                    SubscriptionCloseReason::Done,
+                ))) => {
                     return Ok(follow.kind.done_outcome());
                 }
-                Ok(Some(DurableItem::Closed(SubscriptionCloseReason::SlowConsumer)))
-                | Ok(None)
-                | Err(NativeV2CliError::Disconnected) => break,
-                Ok(Some(event)) => {
+                SubscriptionStep::Item(Some(DurableItem::Closed(
+                    SubscriptionCloseReason::SlowConsumer,
+                )))
+                | SubscriptionStep::Item(None)
+                | SubscriptionStep::Reconnect => break,
+                SubscriptionStep::Item(Some(event)) => {
                     if let Some(outcome) = write_durable_event(event, &mut from_cursor, output)? {
                         return Ok(outcome);
                     }
                 }
-                Err(error) => return Err(error),
             }
         }
         tokio::time::sleep(Duration::from_millis(100)).await;

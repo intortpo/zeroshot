@@ -1,26 +1,30 @@
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use openengine_cluster_protocol::RunId;
 use tokio::process::Command;
 use tokio::time::timeout;
 
 use crate::native_v2_delivery::git_auth::encode_basic_credential;
+use crate::native_v2_target_authority::OperatorDiagnosticStore;
 
 use super::{
-    GitHubAuthorityError, GitHubChecks, GitHubCredential, GitHubDeliveryAuthority,
-    GitHubHeadSynchronization, GitHubHeadUpdateOutcome, GitHubMergeRequestOutcome,
-    GitHubPushRequest, GitHubReviewObservation, GitHubReviewReceipt, GitHubReviewRequest,
-    GitHubReviewState, valid_head_update, valid_revision,
+    GitHubAuthorityError, GitHubChecks, GitHubConflictMaterialization, GitHubConflictOutcome,
+    GitHubConflictRequest, GitHubCredential, GitHubDeliveryAuthority, GitHubHeadSynchronization,
+    GitHubHeadUpdateOutcome, GitHubMergeRequestOutcome, GitHubPushRequest, GitHubReviewObservation,
+    GitHubReviewReceipt, GitHubReviewRequest, GitHubReviewState, valid_head_update, valid_revision,
 };
 
 mod api;
+mod conflict;
+mod metadata;
+mod push;
 
 const DEFAULT_API_DEADLINE: Duration = Duration::from_secs(2 * 60);
 const DEFAULT_PUSH_DEADLINE: Duration = Duration::from_secs(10 * 60);
-const PULL_REQUEST_TITLE: &str = "feat: complete Zeroshot task";
-const PULL_REQUEST_BODY: &str = "Created by Zeroshot v2.";
 
 #[derive(Clone, Debug)]
 pub struct GhCliAuthorityConfig {
@@ -47,12 +51,31 @@ impl GhCliAuthorityConfig {
 #[derive(Clone, Debug)]
 pub struct GhCliDeliveryAuthority {
     config: GhCliAuthorityConfig,
+    operator_diagnostics: Option<OperatorDiagnosticReporter>,
+}
+
+#[derive(Clone, Debug)]
+struct OperatorDiagnosticReporter {
+    run_id: RunId,
+    store: Arc<OperatorDiagnosticStore>,
 }
 
 impl GhCliDeliveryAuthority {
     #[must_use]
     pub fn new(config: GhCliAuthorityConfig) -> Self {
-        Self { config }
+        Self {
+            config,
+            operator_diagnostics: None,
+        }
+    }
+
+    pub(crate) fn with_operator_diagnostics(
+        mut self,
+        run_id: RunId,
+        store: Arc<OperatorDiagnosticStore>,
+    ) -> Self {
+        self.operator_diagnostics = Some(OperatorDiagnosticReporter { run_id, store });
+        self
     }
 
     async fn find_review(
@@ -99,6 +122,7 @@ impl GhCliDeliveryAuthority {
         request: &GitHubReviewRequest,
         credential: GitHubCredential<'_>,
     ) -> Result<GitHubReviewReceipt, GitHubAuthorityError> {
+        let body = pull_request_body(request)?;
         let value = self
             .api(
                 &[
@@ -106,9 +130,9 @@ impl GhCliDeliveryAuthority {
                     "--method".to_owned(),
                     "POST".to_owned(),
                     "-f".to_owned(),
-                    format!("title={PULL_REQUEST_TITLE}"),
+                    format!("title={}", request.title),
                     "-f".to_owned(),
-                    format!("body={}", pull_request_body(request)),
+                    format!("body={body}"),
                     "-f".to_owned(),
                     format!("head={}", request.head_branch),
                     "-f".to_owned(),
@@ -117,8 +141,63 @@ impl GhCliDeliveryAuthority {
                 credential,
             )
             .await?;
-        let review = serde_json::from_value(value).map_err(|_| GitHubAuthorityError::Rejected)?;
+        let review: PullRequestWire =
+            serde_json::from_value(value).map_err(|_| GitHubAuthorityError::Rejected)?;
+        if review.title.as_deref() != Some(request.title.as_str())
+            || review.body.as_deref() != Some(body.as_str())
+        {
+            return Err(GitHubAuthorityError::Rejected);
+        }
         review_receipt(review, request)
+    }
+
+    async fn refresh_review_metadata(
+        &self,
+        request: &GitHubReviewRequest,
+        review: &GitHubReviewReceipt,
+        credential: GitHubCredential<'_>,
+    ) -> Result<(), GitHubAuthorityError> {
+        let mut wire = self.pull_request(review, credential).await?;
+        require_review_identity(&wire, review)?;
+        let body = refresh_pull_request_body(wire.body.as_deref(), request)?;
+        if wire.title.as_deref() == Some(request.title.as_str())
+            && wire.body.as_deref() == Some(body.as_str())
+        {
+            return Ok(());
+        }
+        wire = self
+            .patch_review(
+                review,
+                &[format!("title={}", request.title), format!("body={body}")],
+                credential,
+            )
+            .await?;
+        if wire.title.as_deref() != Some(request.title.as_str())
+            || wire.body.as_deref() != Some(body.as_str())
+        {
+            return Err(GitHubAuthorityError::Rejected);
+        }
+        Ok(())
+    }
+
+    async fn patch_review(
+        &self,
+        review: &GitHubReviewReceipt,
+        fields: &[String],
+        credential: GitHubCredential<'_>,
+    ) -> Result<PullRequestWire, GitHubAuthorityError> {
+        let mut arguments = vec![
+            format!("repos/{}/pulls/{}", review.repository, review.review_id),
+            "--method".to_owned(),
+            "PATCH".to_owned(),
+        ];
+        for field in fields {
+            arguments.extend(["-f".to_owned(), field.clone()]);
+        }
+        let value = self.api(&arguments, credential).await?;
+        let wire = serde_json::from_value(value).map_err(|_| GitHubAuthorityError::Rejected)?;
+        require_review_identity(&wire, review)?;
+        Ok(wire)
     }
 
     async fn policy_snapshot(
@@ -199,17 +278,7 @@ impl GitHubDeliveryAuthority for GhCliDeliveryAuthority {
         request: &GitHubPushRequest,
         credential: GitHubCredential<'_>,
     ) -> Result<(), GitHubAuthorityError> {
-        let mut command = authenticated_git_command(&self.config, &request.workspace, credential);
-        command
-            .arg("push")
-            .arg("--porcelain")
-            .arg("--no-verify")
-            .arg(format!(
-                "https://github.com/{}.git",
-                request.target.repository
-            ))
-            .arg(format!("HEAD:refs/heads/{}", request.head_branch));
-        bounded_status(command, self.config.push_deadline).await
+        push::push_branch(self, request, credential).await
     }
 
     async fn open_or_update_review(
@@ -218,7 +287,11 @@ impl GitHubDeliveryAuthority for GhCliDeliveryAuthority {
         credential: GitHubCredential<'_>,
     ) -> Result<GitHubReviewReceipt, GitHubAuthorityError> {
         let review = match self.find_review(request, credential).await? {
-            Some(review) => Ok(review),
+            Some(review) => {
+                self.refresh_review_metadata(request, &review, credential)
+                    .await?;
+                Ok(review)
+            }
             None => {
                 self.confirm_review_head(request, credential).await?;
                 self.create_review(request, credential).await
@@ -304,6 +377,14 @@ impl GitHubDeliveryAuthority for GhCliDeliveryAuthority {
     ) -> Result<(), GitHubAuthorityError> {
         head::synchronize_review_head(self, request, credential).await
     }
+
+    async fn materialize_merge_conflict(
+        &self,
+        request: &GitHubConflictRequest,
+        credential: GitHubCredential<'_>,
+    ) -> Result<GitHubConflictOutcome, GitHubAuthorityError> {
+        conflict::materialize(self, request, credential).await
+    }
 }
 
 enum MergeAction {
@@ -347,10 +428,28 @@ mod head;
 mod policy;
 mod source_issue;
 mod wire;
+pub(super) use metadata::valid_generated_description;
 use policy::{PolicySnapshot, classify_policy, include_check_logs, query_arguments};
-use source_issue::{connect_source_issue, pull_request_body};
+use source_issue::{connect_source_issue, pull_request_body, refresh_pull_request_body};
 use api::check_log_tail;
-use wire::{PullRequestWire, review_receipt};
+use wire::{PullRequestWire, require_review_identity, review_receipt};
+
+#[cfg(test)]
+pub(super) fn test_review_request() -> GitHubReviewRequest {
+    GitHubReviewRequest {
+        target: super::DeliveryTarget::new(
+            "acme/project",
+            "main",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        )
+        .expect("valid test delivery target"),
+        head_branch: "zeroshot/v2-run".to_owned(),
+        head_revision: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".to_owned(),
+        title: "fix: repair checkout".to_owned(),
+        description: "Repair the checkout flow.".to_owned(),
+        source_issue: None,
+    }
+}
 
 fn clean_command(
     config: &GhCliAuthorityConfig,
@@ -376,8 +475,20 @@ fn git_command(
     workspace: &std::path::Path,
     credential: GitHubCredential<'_>,
 ) -> Command {
-    let mut command = clean_command(config, &config.git_program, credential);
+    let mut command = local_git_command(config, workspace);
     command
+        .env("GH_HOST", "github.com")
+        .env("GH_TOKEN", credential.expose());
+    command
+}
+
+fn local_git_command(config: &GhCliAuthorityConfig, workspace: &std::path::Path) -> Command {
+    let mut command = Command::new(&config.git_program);
+    command
+        .kill_on_drop(true)
+        .env_clear()
+        .env("HOME", &config.home_directory)
+        .env("LANG", "C")
         .env("GIT_CONFIG_NOSYSTEM", "1")
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_TERMINAL_PROMPT", "0")
@@ -386,7 +497,10 @@ fn git_command(
         .arg("-c")
         .arg(format!("safe.directory={}", workspace.display()))
         .arg("-C")
-        .arg(workspace);
+        .arg(workspace)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
     command
 }
 
@@ -421,6 +535,22 @@ async fn bounded_status(
         .success()
         .then_some(())
         .ok_or(GitHubAuthorityError::Rejected)
+}
+
+async fn bounded_git_output(
+    command: &mut Command,
+    deadline: Duration,
+    maximum_bytes: usize,
+) -> Result<String, GitHubAuthorityError> {
+    command.stdout(Stdio::piped());
+    let output = timeout(deadline, command.output())
+        .await
+        .map_err(|_| GitHubAuthorityError::Unavailable)?
+        .map_err(|_| GitHubAuthorityError::Unavailable)?;
+    if !output.status.success() || output.stdout.len() > maximum_bytes {
+        return Err(GitHubAuthorityError::Rejected);
+    }
+    String::from_utf8(output.stdout).map_err(|_| GitHubAuthorityError::Rejected)
 }
 
 #[cfg(test)]

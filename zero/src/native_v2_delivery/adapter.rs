@@ -1,10 +1,11 @@
 use super::*;
 
+mod conflict;
 mod head;
 mod input;
 mod review;
 mod sync;
-use input::source_issue;
+use input::delivery_input;
 use review::{crash_outcome, review_completion, ReviewProgress, ReviewStep};
 
 #[derive(Clone)]
@@ -214,15 +215,17 @@ impl NativeV2DeliveryAdapter {
         &self,
         preparation: DeliveryPreparation<'_, '_>,
     ) -> Result<GitHubReviewReceipt, DeliveryStop> {
-        let source_issue = source_issue(&preparation.invocation.node.input)?;
+        let input = delivery_input(&preparation.invocation.node.input)?;
         let head_revision = self
-            .prepare_head(preparation.session, preparation.control)
+            .prepare_head(preparation.session, preparation.control, &input.title)
             .await?;
         let review_request = GitHubReviewRequest {
             target: self.config.target.clone(),
             head_branch: delivery_branch(preparation.invocation.node.reference.run_id.as_str()),
             head_revision,
-            source_issue,
+            title: input.title,
+            description: input.description,
+            source_issue: input.source_issue,
         };
         self.push_review_head(&preparation, &review_request).await?;
         let review = self
@@ -247,11 +250,16 @@ impl NativeV2DeliveryAdapter {
         &self,
         session: &DeliverySession,
         control: &DriverControl,
+        commit_message: &str,
     ) -> Result<String, DeliveryStop> {
         emit(control, "delivery: preparing workspace revision").await?;
         match self
             .git
-            .prepare_revision(&session.workspace, &self.config.target.base_revision)
+            .prepare_revision(
+                &session.workspace,
+                &self.config.target.base_revision,
+                commit_message,
+            )
             .await
         {
             Ok(revision) => Ok(revision),
@@ -280,10 +288,15 @@ impl NativeV2DeliveryAdapter {
             head_revision: review.head_revision.clone(),
         };
         emit(preparation.control, "delivery: pushing run branch").await?;
-        self.authority
+        if self
+            .authority
             .push_branch(&push, preparation.credentials.current())
             .await
-            .map_err(|_| crash_outcome())?;
+            .is_err()
+        {
+            emit(preparation.control, "delivery: Git push failed").await?;
+            return Err(crash_outcome());
+        }
         Ok(())
     }
 
@@ -332,7 +345,9 @@ impl NativeV2DeliveryAdapter {
     ) -> Result<ReviewStep, DeliveryStop> {
         match drive.mode {
             DeliveryMode::PullRequest => self.advance_pull_request(drive, progress).await,
-            DeliveryMode::Merge => self.advance_merge(drive, progress).await,
+            DeliveryMode::MergeV1 | DeliveryMode::Merge => {
+                self.advance_merge(drive, progress).await
+            }
         }
     }
 
@@ -350,10 +365,11 @@ impl NativeV2DeliveryAdapter {
                     drive,
                     DELIVERY_OPENED_LABEL,
                     "GitHub authoritatively confirmed the pull request is open",
+                    None,
                 )
                 .await
             }
-            ReviewProgress::Merged | ReviewProgress::Closed => Err(crash_outcome()),
+            ReviewProgress::Merged(_) | ReviewProgress::Closed => Err(crash_outcome()),
         }
     }
 
@@ -363,24 +379,21 @@ impl NativeV2DeliveryAdapter {
         progress: ReviewProgress,
     ) -> Result<ReviewStep, DeliveryStop> {
         match progress {
-            ReviewProgress::Merged => {
+            ReviewProgress::Merged(merge_revision) => {
                 review_completion(
                     drive,
                     DELIVERY_MERGED_LABEL,
                     "GitHub authoritatively confirmed merge",
+                    Some(&merge_revision),
                 )
                 .await
             }
             ReviewProgress::Conflict => {
-                review_completion(
-                    drive,
-                    DELIVERY_CONFLICT_LABEL,
-                    "GitHub authoritatively reported a merge conflict",
-                )
-                .await
+                self.complete_conflict(drive, "GitHub authoritatively reported a merge conflict")
+                    .await
             }
             ReviewProgress::CiFailed(diagnostic) => {
-                review_completion(drive, DELIVERY_CI_FAILED_LABEL, &diagnostic).await
+                review_completion(drive, DELIVERY_CI_FAILED_LABEL, &diagnostic, None).await
             }
             ReviewProgress::Mergeable => self.advance_mergeable(drive).await,
             ReviewProgress::Pending => {
@@ -410,12 +423,12 @@ impl NativeV2DeliveryAdapter {
                 return self.advance_review_head(drive).await;
             }
             GitHubMergeRequestOutcome::Conflict => {
-                return review_completion(
-                    drive,
-                    DELIVERY_CONFLICT_LABEL,
-                    "GitHub authoritatively rejected merge due to conflict",
-                )
-                .await;
+                return self
+                    .complete_conflict(
+                        drive,
+                        "GitHub authoritatively rejected merge due to conflict",
+                    )
+                    .await;
             }
         }
         Ok(ReviewStep::Continue)

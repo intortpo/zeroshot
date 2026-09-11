@@ -32,16 +32,27 @@ class DirectTarget:
 
     Args:
         origin: Target HTTP(S) origin. Native validation permits plain HTTP only on loopback.
-        repository: GitHub repository in owner/name form used for source resolution.
-        default_branch: Default source branch. A request-level branch overrides this value.
+        workspace: Git worktree used to select source and report dirty state. None captures the
+            current directory when the client opens.
     """
 
     origin: str
-    repository: str = field(kw_only=True)
-    default_branch: str | None = field(default=None, kw_only=True)
+    workspace: str | PathLike[str] | None = field(default=None, kw_only=True)
 
 
-Target: TypeAlias = LocalTarget | DirectTarget
+@dataclass(frozen=True, slots=True)
+class HostedTarget:
+    """Use a named hosted target already configured and logged in through the CLI.
+
+    Args:
+        name: Exact local target name from ``zeroshot target list``. The SDK reuses that
+            target's stored origin and login.
+    """
+
+    name: str
+
+
+Target: TypeAlias = LocalTarget | DirectTarget | HostedTarget
 
 
 @dataclass(frozen=True, slots=True)

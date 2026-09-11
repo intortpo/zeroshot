@@ -1,5 +1,8 @@
-use super::wire::{IssueCommentWire, IssueWire, require_review_identity};
 use super::*;
+use super::metadata::{generated_body, generated_body_range, refresh_generated_body};
+use super::wire::{IssueCommentWire, IssueWire, require_review_identity};
+
+const LEGACY_UNMANAGED_BODY: &str = "Created by Zeroshot v2.";
 
 pub(super) async fn connect_source_issue(
     authority: &GhCliDeliveryAuthority,
@@ -10,25 +13,17 @@ pub(super) async fn connect_source_issue(
     let Some(issue) = request.source_issue.as_ref() else {
         return Ok(());
     };
-    let mut wire = authority.pull_request(review, credential).await?;
+    let wire = authority.pull_request(review, credential).await?;
     require_review_identity(&wire, review)?;
     let closing_reference = closing_reference(issue.number);
     if !body_has_closing_reference(wire.body.as_deref(), &closing_reference) {
-        let body = append_closing_reference(wire.body.as_deref(), &closing_reference);
-        let value = authority
-            .api(
-                &[
-                    format!("repos/{}/pulls/{}", review.repository, review.review_id),
-                    "--method".to_owned(),
-                    "PATCH".to_owned(),
-                    "-f".to_owned(),
-                    format!("body={body}"),
-                ],
-                credential,
-            )
+        let body = refresh_pull_request_body(wire.body.as_deref(), request)?;
+        let updated = authority
+            .patch_review(review, &[format!("body={body}")], credential)
             .await?;
-        wire = serde_json::from_value(value).map_err(|_| GitHubAuthorityError::Rejected)?;
-        require_review_identity(&wire, review)?;
+        if updated.body.as_deref() != Some(body.as_str()) {
+            return Err(GitHubAuthorityError::Rejected);
+        }
     }
     comment_on_source_issue(authority, request, review, credential).await
 }
@@ -106,11 +101,53 @@ fn closing_reference(issue_number: u64) -> String {
     format!("Closes #{issue_number}")
 }
 
-pub(super) fn pull_request_body(request: &GitHubReviewRequest) -> String {
+fn generated_review_content(request: &GitHubReviewRequest) -> String {
     request.source_issue.as_ref().map_or_else(
-        || PULL_REQUEST_BODY.to_owned(),
-        |issue| format!("{PULL_REQUEST_BODY}\n\n{}", closing_reference(issue.number)),
+        || request.description.clone(),
+        |issue| {
+            format!(
+                "{}\n\n{}",
+                request.description,
+                closing_reference(issue.number)
+            )
+        },
     )
+}
+
+pub(super) fn pull_request_body(
+    request: &GitHubReviewRequest,
+) -> Result<String, GitHubAuthorityError> {
+    generated_body(&generated_review_content(request))
+}
+
+pub(super) fn refresh_pull_request_body(
+    current: Option<&str>,
+    request: &GitHubReviewRequest,
+) -> Result<String, GitHubAuthorityError> {
+    if let Some(body) = current {
+        if has_unowned_legacy_closing_reference(body)? {
+            return Err(GitHubAuthorityError::Rejected);
+        }
+    }
+    refresh_generated_body(current, &generated_review_content(request))
+}
+
+fn has_unowned_legacy_closing_reference(body: &str) -> Result<bool, GitHubAuthorityError> {
+    let suffix = match generated_body_range(body)? {
+        Some(range) => &body[range.end..],
+        None => body.strip_prefix(LEGACY_UNMANAGED_BODY).unwrap_or_default(),
+    };
+    Ok(is_canonical_closing_reference_suffix(suffix))
+}
+
+fn is_canonical_closing_reference_suffix(suffix: &str) -> bool {
+    let Some(line) = suffix.strip_prefix("\n\n") else {
+        return false;
+    };
+    let line = line.split_once('\n').map_or(line, |(line, _)| line);
+    line.strip_prefix("Closes #").is_some_and(|number| {
+        !number.is_empty() && number.bytes().all(|byte| byte.is_ascii_digit())
+    })
 }
 
 fn body_has_closing_reference(body: Option<&str>, closing_reference: &str) -> bool {
@@ -118,15 +155,6 @@ fn body_has_closing_reference(body: Option<&str>, closing_reference: &str) -> bo
         body.lines()
             .any(|line| line.trim().eq_ignore_ascii_case(closing_reference))
     })
-}
-
-fn append_closing_reference(body: Option<&str>, closing_reference: &str) -> String {
-    let body = body.unwrap_or_default().trim_end();
-    if body.is_empty() {
-        format!("{PULL_REQUEST_BODY}\n\n{closing_reference}")
-    } else {
-        format!("{body}\n\n{closing_reference}")
-    }
 }
 
 fn delivery_comment_marker(head_branch: &str) -> String {
@@ -144,36 +172,89 @@ fn comments_have_marker(comments: &[IssueCommentWire], marker: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use openengine_cluster_testkit::assertions::AssertValue;
-
     use super::*;
-    use crate::native_v2_delivery::{DeliveryTarget, GitHubSourceIssue};
+    use crate::native_v2_delivery::GitHubSourceIssue;
 
     #[test]
-    fn reference_is_created_and_repaired_without_replacing_body() {
+    fn reference_is_created_inside_generated_metadata() {
         let request = GitHubReviewRequest {
-            target: DeliveryTarget::new(
-                "acme/project",
-                "main",
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            )
-            .assert_value(),
-            head_branch: "zeroshot/v2-run".to_owned(),
-            head_revision: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".to_owned(),
             source_issue: Some(GitHubSourceIssue { number: 208 }),
+            ..test_review_request()
         };
         assert_eq!(
-            pull_request_body(&request),
-            "Created by Zeroshot v2.\n\nCloses #208"
-        );
-        assert_eq!(
-            append_closing_reference(Some("Human context"), "Closes #208"),
-            "Human context\n\nCloses #208"
+            pull_request_body(&request).unwrap(),
+            concat!(
+                "<!-- zeroshot-delivery:generated:v1:start -->\n",
+                "Repair the checkout flow.\n\n",
+                "Closes #208\n",
+                "<!-- zeroshot-delivery:generated:v1:end -->"
+            )
         );
         assert!(body_has_closing_reference(
             Some("Human context\n\ncloses #208"),
             "Closes #208"
         ));
+    }
+
+    #[test]
+    fn refresh_replaces_managed_issue_reference_and_preserves_human_text() {
+        let original = GitHubReviewRequest {
+            description: "Old description.".to_owned(),
+            source_issue: Some(GitHubSourceIssue { number: 208 }),
+            ..test_review_request()
+        };
+        let current = format!(
+            "Human preface.\n\n{}\n\nHuman notes.\n\nCloses #999",
+            pull_request_body(&original).unwrap()
+        );
+        let changed = GitHubReviewRequest {
+            source_issue: Some(GitHubSourceIssue { number: 209 }),
+            ..test_review_request()
+        };
+        assert_eq!(
+            refresh_pull_request_body(Some(&current), &changed).unwrap(),
+            concat!(
+                "Human preface.\n\n",
+                "<!-- zeroshot-delivery:generated:v1:start -->\n",
+                "Repair the checkout flow.\n\n",
+                "Closes #209\n",
+                "<!-- zeroshot-delivery:generated:v1:end -->\n\n",
+                "Human notes.\n\n",
+                "Closes #999"
+            )
+        );
+
+        let removed = GitHubReviewRequest {
+            source_issue: None,
+            ..test_review_request()
+        };
+        let body = refresh_pull_request_body(Some(&current), &removed).unwrap();
+        assert!(!body.contains("Closes #208"));
+        assert!(body.contains("Human preface."));
+        assert!(body.contains("Human notes."));
+        assert!(body.contains("Closes #999"));
+    }
+
+    #[test]
+    fn refresh_rejects_unowned_legacy_reference_without_rewriting_body() {
+        let marked = concat!(
+            "<!-- zeroshot-delivery:generated:v1:start -->\n",
+            "Old description.\n",
+            "<!-- zeroshot-delivery:generated:v1:end -->\n\n",
+            "Closes #208"
+        );
+        let unmanaged = "Created by Zeroshot v2.\n\nCloses #208";
+        let request = GitHubReviewRequest {
+            source_issue: Some(GitHubSourceIssue { number: 209 }),
+            ..test_review_request()
+        };
+
+        for body in [marked, unmanaged] {
+            assert_eq!(
+                refresh_pull_request_body(Some(body), &request),
+                Err(GitHubAuthorityError::Rejected)
+            );
+        }
     }
 
     #[test]

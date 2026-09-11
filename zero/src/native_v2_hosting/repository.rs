@@ -11,6 +11,9 @@ use crate::native_v2_delivery::DeliveryTarget;
 use crate::native_v2_delivery::git_auth::encode_basic_credential;
 use crate::native_v2_contract::ResolvedSource;
 
+#[cfg(all(test, unix))]
+mod tests;
+
 const GIT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const MAX_GIT_OUTPUT_BYTES: usize = 4_096;
 
@@ -36,7 +39,8 @@ pub(super) async fn install_repository(
         uid: writer.uid(),
         gid: writer.gid(),
     };
-    git.run(None, &clone_arguments(&request)).await?;
+    initialize_repository(&git, &request).await?;
+    fetch_source(&git, request.workspace, request.resolved).await?;
     checkout_revision(&git, request.workspace, request.resolved.revision.as_str()).await?;
     let revision = git
         .capture(
@@ -55,20 +59,32 @@ pub(super) async fn install_repository(
     .map_err(|_| RepositoryInstallError)
 }
 
-fn clone_arguments(request: &RepositoryInstall<'_>) -> Vec<OsString> {
-    vec![
-        OsString::from("clone"),
-        OsString::from("--no-tags"),
-        OsString::from("--no-checkout"),
+async fn initialize_repository(
+    git: &GitProcess<'_>,
+    request: &RepositoryInstall<'_>,
+) -> Result<(), RepositoryInstallError> {
+    git.run(
+        None,
+        &[
+            OsString::from("init"),
+            OsString::from("--quiet"),
+            request.workspace.as_os_str().to_owned(),
+        ],
+    )
+    .await?;
+    let arguments = [
+        OsString::from("remote"),
+        OsString::from("add"),
+        OsString::from("origin"),
         request.source.to_owned(),
-        request.workspace.as_os_str().to_owned(),
-    ]
+    ];
+    git.run(Some(request.workspace), &arguments).await
 }
 
-async fn checkout_revision(
+async fn fetch_source(
     git: &GitProcess<'_>,
     workspace: &Path,
-    revision: &str,
+    source: &ResolvedSource,
 ) -> Result<(), RepositoryInstallError> {
     git.run(
         Some(workspace),
@@ -76,10 +92,18 @@ async fn checkout_revision(
             OsString::from("fetch"),
             OsString::from("--no-tags"),
             OsString::from("origin"),
-            OsString::from(revision),
+            OsString::from(format!("refs/heads/{}", source.branch.as_str())),
+            OsString::from(source.revision.as_str()),
         ],
     )
-    .await?;
+    .await
+}
+
+async fn checkout_revision(
+    git: &GitProcess<'_>,
+    workspace: &Path,
+    revision: &str,
+) -> Result<(), RepositoryInstallError> {
     git.run(
         Some(workspace),
         &[
@@ -157,6 +181,10 @@ impl GitProcess<'_> {
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
             .env("GIT_TERMINAL_PROMPT", "0")
+            // Checkout and the agent share a UID. Detached maintenance can leave an orphan
+            // under that UID after Git exits, preventing the agent's containment registration.
+            .arg("-c")
+            .arg("maintenance.autoDetach=false")
             .arg("-c")
             .arg("core.hooksPath=/dev/null");
         if let Some(token) = self.token {

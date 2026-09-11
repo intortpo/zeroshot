@@ -4,18 +4,19 @@ use std::path::PathBuf;
 use clap::Parser;
 use openengine_cluster_protocol::{
     ConnectionKey, ConnectionScope, Cursor, EnvironmentVariableName, ExecutionRef, IdempotencyKey,
-    RunTitle, SourceBranchId,
+    RunTitle, SourceBranchId, SourceRepositoryId, SourceRevisionId,
 };
 
 use super::{
-    AttachArgs, Cli, CliCommand, ConnectionCommand, ConnectionScopeArg, RunArgs, RunLogsArgs,
-    RunSelectorArgs, RunWatchArgs, TargetCommand, TemplateCommand, TemplateName, UtilityCommand,
+    AttachArgs, Cli, CliCommand, ConnectionCommand, ConnectionScopeArg, PlanCommand,
+    PlanSelectorArgs, PlanSubmitArgs, RunArgs, RunLogsArgs, RunSelectorArgs, RunWatchArgs,
+    TargetCommand, TemplateCommand, TemplateName, UtilityCommand,
 };
 use crate::native_v2_cli::{
     BuiltinGraphTemplate, ConnectionInput, ConnectionRoute, ConnectionSetCommand,
-    NativeV2CliCommand, NativeV2CliError, ProfileQualifier, ProfileReference, RunCommand, RunGraph,
-    RunLogsCommand, RunRuntime, RunSelection, RunSelector, RunWatchCommand, TargetAdd, TargetServe,
-    TargetSetup, TemplateDelivery,
+    MergePlanSelector, MergePlanSubmitCommand, NativeV2CliCommand, NativeV2CliError,
+    ProfileQualifier, ProfileReference, RunCommand, RunGraph, RunLogsCommand, RunRuntime,
+    RunSelection, RunSelector, RunWatchCommand, TargetAdd, TargetServe, TemplateDelivery,
 };
 
 #[path = "convert/profile_commands.rs"]
@@ -63,6 +64,7 @@ impl CliCommand {
             Self::Connection { command } => command.into_command(),
             Self::Profile { command } => command.into_command(),
             Self::Template { command } => command.into_command(),
+            Self::Plan { command } => command.into_command(),
             Self::Run(args) => args.into_command(),
             Self::Utility(command) => command.into_command(),
         }
@@ -166,14 +168,6 @@ impl TargetCommand {
                 validate_public_id(&args.name, "target name")?;
                 Ok(NativeV2CliCommand::TargetLogin { name: args.name })
             }
-            Self::Setup(args) => {
-                validate_public_id(&args.name, "target name")?;
-                Ok(NativeV2CliCommand::TargetSetup(TargetSetup {
-                    name: args.name,
-                    repository: args.repository,
-                    default_branch: optional_branch(args.branch)?,
-                }))
-            }
             Self::Serve(args) => Ok(NativeV2CliCommand::TargetServe(TargetServe {
                 listen: args.listen,
                 public_origin: args.public_origin,
@@ -199,6 +193,40 @@ impl TemplateCommand {
     }
 }
 
+impl PlanCommand {
+    fn into_command(self) -> Result<NativeV2CliCommand, NativeV2CliError> {
+        match self {
+            Self::Validate(args) => Ok(NativeV2CliCommand::PlanValidate { file: args.file }),
+            Self::Submit(args) => args.into_command(),
+            Self::Status(args) => plan_selector(args).map(NativeV2CliCommand::PlanStatus),
+            Self::Watch(args) => plan_selector(args).map(NativeV2CliCommand::PlanWatch),
+            Self::ForceStop(args) => plan_selector(args).map(NativeV2CliCommand::PlanForceStop),
+        }
+    }
+}
+
+impl PlanSubmitArgs {
+    fn into_command(self) -> Result<NativeV2CliCommand, NativeV2CliError> {
+        let target = required_target(self.target)?;
+        let submission_key = IdempotencyKey::new(self.submission_key)
+            .map_err(|error| usage(format!("invalid --submission-key: {error}")))?;
+        Ok(NativeV2CliCommand::PlanSubmit(MergePlanSubmitCommand {
+            target,
+            file: self.file,
+            detach: self.detach,
+            submission_key,
+        }))
+    }
+}
+
+fn plan_selector(args: PlanSelectorArgs) -> Result<MergePlanSelector, NativeV2CliError> {
+    validate_public_id(&args.plan_id, "plan ID")?;
+    Ok(MergePlanSelector {
+        target: required_target(args.target)?,
+        plan_id: openengine_cluster_protocol::MergePlanId::new(args.plan_id),
+    })
+}
+
 impl TemplateName {
     fn into_template(self) -> Result<BuiltinGraphTemplate, NativeV2CliError> {
         let name = match self {
@@ -212,7 +240,7 @@ impl TemplateName {
 
 impl RunArgs {
     fn into_command(self) -> Result<NativeV2CliCommand, NativeV2CliError> {
-        let (target, branch) = run_route(self.target, self.branch)?;
+        let route = run_route(self.target, self.repository, self.branch, self.revision)?;
         let selection = run_selection(RunSelectionArgs {
             profile: self.profile,
             graph: self.graph,
@@ -222,12 +250,14 @@ impl RunArgs {
             delivery: self.delivery.selection(),
         })?;
         Ok(NativeV2CliCommand::Run(RunCommand {
-            target,
+            target: route.target,
             title: RunTitle::new(self.title)
                 .map_err(|error| usage(format!("invalid --title: {error}")))?,
             input: self.input,
             selection,
-            branch,
+            repository: route.repository,
+            branch: route.branch,
+            revision: route.revision,
             detach: self.detach,
             validate_only: self.validate_only,
             submission_key: submission_key(self.submission_key)?,
@@ -319,16 +349,40 @@ fn run_runtime(
     }
 }
 
+struct ParsedRunRoute {
+    target: Option<String>,
+    repository: Option<SourceRepositoryId>,
+    branch: Option<SourceBranchId>,
+    revision: Option<SourceRevisionId>,
+}
+
 fn run_route(
     target: Option<String>,
+    repository: Option<String>,
     branch: Option<String>,
-) -> Result<(Option<String>, Option<SourceBranchId>), NativeV2CliError> {
+    revision: Option<String>,
+) -> Result<ParsedRunRoute, NativeV2CliError> {
     let target = validated_target(target)?;
-    let branch = optional_branch(branch)?;
-    if target.is_none() && branch.is_some() {
-        return Err(usage("--branch requires --target"));
+    if target.is_none() && (repository.is_some() || branch.is_some() || revision.is_some()) {
+        return Err(usage(
+            "--repository, --branch, and --revision require --target",
+        ));
     }
-    Ok((target, branch))
+    let repository = repository
+        .map(SourceRepositoryId::new)
+        .transpose()
+        .map_err(|error| usage(format!("invalid --repository: {error}")))?;
+    let branch = optional_branch(branch)?;
+    let revision = revision
+        .map(SourceRevisionId::new)
+        .transpose()
+        .map_err(|error| usage(format!("invalid --revision: {error}")))?;
+    Ok(ParsedRunRoute {
+        target,
+        repository,
+        branch,
+        revision,
+    })
 }
 
 fn run_graph(
@@ -430,6 +484,11 @@ fn template_delivery(
         ));
     }
     Ok(delivery)
+}
+
+fn required_target(target: String) -> Result<String, NativeV2CliError> {
+    validate_public_id(&target, "target name")?;
+    Ok(target)
 }
 
 fn validated_target(target: Option<String>) -> Result<Option<String>, NativeV2CliError> {

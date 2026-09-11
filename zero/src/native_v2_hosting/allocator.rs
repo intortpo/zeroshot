@@ -31,6 +31,7 @@ use crate::native_v2_contract::{AdmittedRun, RuntimePlan};
 use crate::native_v2_delivery::{GhCliAuthorityConfig, GhCliDeliveryAuthority, NativeV2DeliveryConfig};
 use crate::native_v2_portable_controller::WorkspaceIdentity;
 use crate::native_v2_supervisor::RunRuntimeExit;
+use crate::native_v2_target_authority::OperatorDiagnosticStore;
 
 use super::{ProductionHostingError, set_traversable_directory};
 use super::repository::{RepositoryInstall, install_repository, production_source};
@@ -47,6 +48,7 @@ pub(super) struct ProductionCapsuleConfig {
     pub gh_program: PathBuf,
     pub process_pool: HostedProcessPool,
     pub claude_turn_timeout: Duration,
+    pub operator_diagnostics: Arc<OperatorDiagnosticStore>,
 }
 
 type FilesystemPreparer =
@@ -93,8 +95,8 @@ impl ProductionCapsuleAllocator {
         github_token: Option<&str>,
     ) -> Result<AllocatedCapsule, CapsuleAllocationUnavailable> {
         let run_root = run_directory(&self.config.storage_root, run_id);
-        std::fs::create_dir(&run_root).map_err(|_| CapsuleAllocationUnavailable)?;
-        set_traversable_directory(&run_root).map_err(|_| CapsuleAllocationUnavailable)?;
+        std::fs::create_dir(&run_root).map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
+        set_traversable_directory(&run_root).map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
         let allocation = self.build_capsule(run_id, admitted, github_token).await;
         if allocation.is_err() {
             let _ = remove_run_directory(&run_root);
@@ -111,7 +113,7 @@ impl ProductionCapsuleAllocator {
         let process_pool = self
             .process_pools
             .acquire()
-            .map_err(|_| CapsuleAllocationUnavailable)?;
+            .map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
         let active_process_pool = process_pool.process_pool();
         let run_root = run_directory(&self.config.storage_root, run_id);
         let workspace = run_root.join("workspace");
@@ -128,7 +130,7 @@ impl ProductionCapsuleAllocator {
             github_token,
         })
         .await
-        .map_err(|_| CapsuleAllocationUnavailable)?;
+        .map_err(|_| CapsuleAllocationUnavailable::SourceCheckout)?;
         let github_config = GhCliAuthorityConfig {
             git_program: self.config.git_program.clone(),
             gh_program: self.config.gh_program.clone(),
@@ -142,12 +144,17 @@ impl ProductionCapsuleAllocator {
                     filesystem.workspace.clone(),
                     target,
                 ),
-                github: Arc::new(GhCliDeliveryAuthority::new(github_config)),
+                github: Arc::new(
+                    GhCliDeliveryAuthority::new(github_config).with_operator_diagnostics(
+                        run_id.clone(),
+                        self.config.operator_diagnostics.clone(),
+                    ),
+                ),
             },
         )
-        .map_err(|_| CapsuleAllocationUnavailable)?;
+        .map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
         let workspace_identity = WorkspaceIdentity::capture(&filesystem.workspace)
-            .map_err(|_| CapsuleAllocationUnavailable)?;
+            .map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
         let endpoint = Arc::new(NativeCapsuleNodeEndpoint::new(Arc::new(candidate)));
         let runner = Arc::new(RemoteCapsuleNodeRunner::new(endpoint.clone()));
         let (loss_sender, loss) = watch::channel(false);
@@ -164,7 +171,7 @@ impl ProductionCapsuleAllocator {
             .await
             .insert(run_id.clone(), state.clone());
         if replaced.is_some() {
-            return Err(CapsuleAllocationUnavailable);
+            return Err(CapsuleAllocationUnavailable::Runtime);
         }
         monitor_workspace_identity(filesystem.workspace, workspace_identity, loss_sender);
         let cleanup = Arc::new(ProductionCapsuleCleanup {
@@ -205,7 +212,7 @@ impl ProductionCapsuleAllocator {
                         &filesystem.runtime_home,
                         &self.config.executable_search_path,
                     )
-                    .map_err(|_| CapsuleAllocationUnavailable)?;
+                    .map_err(|_| CapsuleAllocationUnavailable::Runtime)?;
                 Ok(NativeV2HarnessConfig::Claude(ClaudeAdapterConfig {
                     provider: *provider,
                     executable: self.config.claude_executable.clone(),
@@ -218,7 +225,7 @@ impl ProductionCapsuleAllocator {
                     process_pool,
                 }))
             }
-            RuntimePlan::Agy { .. } => Err(CapsuleAllocationUnavailable),
+            RuntimePlan::Agy { .. } => Err(CapsuleAllocationUnavailable::Runtime),
         }
     }
 
@@ -258,7 +265,7 @@ impl CapsuleAllocator for ProductionCapsuleAllocator {
     ) -> Result<AllocatedCapsule, CapsuleAllocationUnavailable> {
         let _turn = self.allocation_turn.lock().await;
         if !self.allocated.lock().await.insert(run_id.clone()) {
-            return Err(CapsuleAllocationUnavailable);
+            return Err(CapsuleAllocationUnavailable::Runtime);
         }
         self.allocate_one(run_id, admitted, github_token).await
     }
@@ -358,7 +365,7 @@ fn production_filesystem(
         runtime_home,
         process_pool,
     })
-    .map_err(|_| CapsuleAllocationUnavailable)
+    .map_err(|_| CapsuleAllocationUnavailable::Runtime)
 }
 
 fn run_directory(root: &Path, run_id: &RunId) -> PathBuf {

@@ -1,8 +1,8 @@
 # Python SDK
 
-`the-open-engine-zeroshot` is a typed asynchronous client for local and direct targets. Each platform
-wheel contains the corresponding Zeroshot executable, which keeps the client and engine on one
-release line.
+`the-open-engine-zeroshot` is a typed asynchronous client for local, direct, and named hosted
+targets. Each platform wheel contains the corresponding Zeroshot executable, which keeps the client
+and engine on one release line.
 
 ## Install and run
 
@@ -60,19 +60,15 @@ the same way. Neither action stops native work; only `await run.force_stop()` ch
 
 ## Run on a direct target
 
-Local execution uses `LocalTarget`. A direct target, including the Docker image, needs its origin
-and source repository:
+Local execution uses `LocalTarget`. A direct target, including the Docker image, needs its origin;
+source is selected from the invoking Git worktree or per-run overrides:
 
 ```python
 from zeroshot import Client, DirectTarget, UniformRuntime
 
 
 async def run_direct(runtime: UniformRuntime) -> None:
-    target = DirectTarget(
-        "http://127.0.0.1:8080",
-        repository="owner/repository",
-        default_branch="main",
-    )
+    target = DirectTarget("http://127.0.0.1:8080")
 
     async with Client(target=target, runtime=runtime) as client:
         result = await client.run("Update the parser.")
@@ -80,8 +76,52 @@ async def run_direct(runtime: UniformRuntime) -> None:
     result.raise_for_failure()
 ```
 
-The Python target contract does not include hosted authentication, so use the CLI for a hosted
-target.
+## Submit a hosted merge plan
+
+Log in with the CLI first, then pass that target's local name to `HostedTarget`. A plan uses one
+explicit repository and branch plus one hosted profile. The profile must contain exactly one
+`builtin.git-delivery.merge@2` node. Agent bindings must not declare `GH_TOKEN`; only the Git
+delivery binding may declare it.
+
+```python
+from datetime import UTC, datetime, timedelta
+
+from zeroshot import Client, HostedTarget, MergePlanRequest, MergePlanRun
+
+
+async def submit_release_plan() -> None:
+    request = MergePlanRequest(
+        title="Release checkout update",
+        repository="the-open-engine/zeroshot",
+        branch="main",
+        profile="org:software-change",
+        expires_at=(datetime.now(UTC) + timedelta(days=1)).isoformat(),
+        runs={
+            "backend": MergePlanRun(input={"task": "Update the API."}),
+            "frontend": MergePlanRun(input={"task": "Update the client."}),
+            "integrate": MergePlanRun(
+                input={"task": "Verify the combined changes and run the release tests."},
+                needs=("backend", "frontend"),
+            ),
+        },
+        submission_key="checkout-release-1",
+    )
+
+    async with Client(target=HostedTarget("cloud")) as client:
+        plan = await client.submit_plan(request)
+        status = await plan.wait(wait_timeout=21_600)
+
+    if not status.succeeded:
+        raise RuntimeError(f"merge plan ended as {status.state}")
+```
+
+Submission is atomic, and every node receives a stable run ID. `needs` gates readiness only; plan
+nodes have no output interpolation or shared mutable input. After dependencies merge, Cloud
+materializes the node against an exact source revision. When materialization completes, `readyAt`
+is set and the node gets a queue window of up to 24 hours, bounded by plan expiry. A merge conflict
+is repaired by the conflicting run itself in the same checkout and delivery loop. A descendant
+cannot repair a failed predecessor; it ends as `dependency_failed`. The v1 API has no aggregate
+event stream, so `MergePlan.watch()` polls and yields changed snapshots.
 
 ## Pass exact protocol documents
 
