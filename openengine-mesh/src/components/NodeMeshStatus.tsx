@@ -33,10 +33,12 @@ import {
   Clapperboard,
   FolderArchive,
   GitMerge,
+  Lock,
 } from 'lucide-react';
 import { NodeSpec, Workspace, UserProfile, PetriViewMode, SystemTier } from '../types';
 import { agentCognitionService } from '../services/agentCognitionService';
 import { TIER_DEFINITIONS } from '../services/tierService';
+import { lockPetriSession } from './auth/PetriAuthGuard';
 
 interface NodeMeshStatusProps {
   localNode: NodeSpec;
@@ -1050,6 +1052,17 @@ export const NodeMeshStatus: React.FC<NodeMeshStatusProps> = ({
           <span>Jobs:</span>
           <span className="text-stone-800 font-semibold">{activeRunsCount}</span>
         </div>
+
+        {/* Lock Session Button */}
+        <button
+          type="button"
+          onClick={() => lockPetriSession()}
+          className="flex items-center space-x-1 px-2 py-1 rounded-lg border border-[#1A1D1A]/30 hover:border-[#1A1D1A] bg-[#EDE8DC]/80 hover:bg-[#1A1D1A] text-[#1A1D1A] hover:text-[#FAF8F3] transition-colors cursor-pointer text-xs font-mono"
+          title="Lock site session (Require password)"
+        >
+          <Lock className="w-3 h-3" />
+          <span className="hidden xl:inline text-[11px] font-bold uppercase">Lock</span>
+        </button>
 
         {/* Frameless Window Controls */}
         <div className="hidden sm:flex items-center space-x-1 pl-3 border-l border-stone-200">

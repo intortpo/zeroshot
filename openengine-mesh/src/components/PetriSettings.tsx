@@ -11,8 +11,10 @@ import {
   FileCode2,
   Sparkles,
   Sliders,
+  Lock,
 } from 'lucide-react';
 import { Workspace, UserProfile } from '../types';
+import { lockPetriSession, updatePetriPassword } from './auth/PetriAuthGuard';
 
 export interface PetriSettingsConfig {
   targetUri: string;
@@ -102,6 +104,26 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
   const [testRunning, setTestRunning] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passNotice, setPassNotice] = useState<string | null>(null);
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) {
+      setPassNotice('Please enter a new password.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPassNotice('Passwords do not match.');
+      return;
+    }
+    await updatePetriPassword(newPassword);
+    setPassNotice('Root password updated successfully.');
+    setNewPassword('');
+    setConfirmPassword('');
+    setTimeout(() => setPassNotice(null), 3500);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -430,6 +452,74 @@ export const PetriSettings: React.FC<PetriSettingsProps> = ({
               <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 text-xs">
                 <div className="font-medium text-stone-800">Compare-and-Swap Delivery</div>
                 <div className="text-stone-500 mt-0.5">Authoritative branch updates advance only through CAS responses and required CI contexts.</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Access Protection & Cryptographic Passcode */}
+          <div className="bg-white/80 backdrop-blur-2xl border border-stone-200/90 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <Lock className="w-4 h-4 text-stone-700" />
+                <h2 className="text-sm font-semibold text-stone-900">
+                  Site Access Protection & Password
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => lockPetriSession()}
+                className="px-2.5 py-1 text-[11px] font-mono border border-[#1A1D1A] bg-[#EDE8DC] hover:bg-[#1A1D1A] hover:text-white rounded-lg transition-colors cursor-pointer"
+              >
+                Lock Session Now
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Configure the master password protecting this zero-petri instance. All visitors must authenticate against this credential before gaining access to the workspace.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
+                    New Passcode
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-stone-700 block mb-1">
+                    Confirm Passcode
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+              </div>
+
+              {passNotice && (
+                <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 p-2 rounded-xl">
+                  {passNotice}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={handleUpdatePassword}
+                  className="px-4 py-2 bg-[#1A1D1A] hover:bg-[#333] text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs"
+                >
+                  Update Access Password
+                </button>
               </div>
             </div>
           </div>
