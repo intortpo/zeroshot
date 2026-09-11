@@ -715,6 +715,8 @@ function inferPetriKind(text: string): PetriItemKind {
                       onUpdateUser={(updated) => {
                         setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
                       }}
+                      onSubmitIntent={handleCreateIntent}
+                      onExecuteCode={handleExecuteCodingTurn}
                     />
                   </div>
                 )}
